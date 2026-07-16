@@ -1,0 +1,77 @@
+import { Suspense } from 'react';
+import Link from 'next/link';
+
+import { apiFetch } from '@/lib/api-client';
+
+async function getDocumentaires() {
+  try {
+    const res = await apiFetch<any>(
+      `/api/v1/webtv/videos/?category=documentary&page_size=50`,
+      { next: { revalidate: 3600 } }
+    );
+    return res;
+  } catch (err) {
+    return { results: [], count: 0 };
+  }
+}
+
+function DocCard({ video }: any) {
+  return (
+    <Link href={`/web-tv/${video.slug}`}>
+      <div className="group cursor-pointer overflow-hidden rounded-xl">
+        <div className="relative aspect-video bg-slate-900">
+          {video.thumbnail_url && (
+            <img
+              src={video.thumbnail_url}
+              alt={video.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            />
+          )}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+            <span className="material-symbols-outlined text-5xl text-white opacity-0 group-hover:opacity-100">
+              play_circle
+            </span>
+          </div>
+        </div>
+        <div className="p-4 bg-slate-900">
+          <h3 className="text-white font-semibold line-clamp-2">{video.title}</h3>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export const metadata = {
+  title: 'Documentaires - Art du Kivu',
+};
+
+export default async function DocumentairesPage() {
+  const data = await getDocumentaires();
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-slate-950 to-black pt-32 pb-20">
+      <div className="container mx-auto px-4">
+        <Link href="/web-tv" className="flex items-center gap-2 text-primary hover:text-[#B8240C] mb-8">
+          <span className="material-symbols-outlined">arrow_back</span>
+          Retour
+        </Link>
+        <h1 className="text-5xl font-bold text-white mb-4">Documentaires</h1>
+        <p className="text-white/60 mb-12">Explorez nos documentaires exclusifs.</p>
+
+        {data.results?.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {data.results.map((video: any) => (
+              <Suspense key={video.id} fallback={<div className="bg-slate-800 rounded-xl h-48 animate-pulse" />}>
+                <DocCard video={video} />
+              </Suspense>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <p className="text-white/60">Aucun documentaire disponible</p>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

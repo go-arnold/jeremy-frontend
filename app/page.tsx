@@ -1,0 +1,128 @@
+import HeroSection     from "@/components/home/HeroSection";
+import NewsCarousel    from "@/components/home/NewsCarousel";
+import ContentCarousel from "@/components/home/ContentCarousel";
+import HitsList        from "@/components/home/HitsList";
+import Top10Card       from "@/components/home/Top10Card";
+import MagazineGrid    from "@/components/home/MagazineGrid";
+import { apiFetch } from "@/lib/api-client";
+import {
+  mapApiBannerToHero,
+  mapApiALaUneToNewsCards,
+  mapApiHitToTrack,
+  mapApiMagazineArticle,
+} from "@/lib/mappers";
+import { cacheConfig } from "@/lib/cache";
+
+import {
+  heroData as mockedHero,
+  newsCards as mockedNews,
+  contentCards as mockedContent,
+  hitsOfMonth as mockedHits,
+  top10 as mockedTop10,
+  magazineArticles as mockedMagazine,
+} from "@/data/home";
+
+async function getHomeData() {
+  try {
+    // According to YAML, /api/v1/home/ returns aggregated payload
+    // Cache for 15 minutes (home content updates regularly)
+    const data = await apiFetch<any>("/api/v1/home/", {}, 900000);
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch home data:", error);
+    return null;
+  }
+}
+
+export default async function HomePage() {
+  const homeData = await getHomeData();
+
+  // API returns: { banner, a_la_une, hits_du_mois, magazine: { hero, articles } }
+  // Map each field using the correct mapper, fall back to mocked data gracefully
+  const heroData = mapApiBannerToHero(homeData?.banner, mockedHero);
+
+  // a_la_une → news cards carousel (artist of month, podcast, event)
+  const newsCards = homeData?.a_la_une
+    ? mapApiALaUneToNewsCards(homeData.a_la_une)
+    : mockedNews;
+  const displayNews = newsCards.length > 0 ? newsCards : mockedNews;
+
+  // hits_du_mois → HitsList + Top10Card
+  const hitsRaw: any[] = homeData?.hits_du_mois || [];
+  const hitsOfMonth = hitsRaw.length > 0
+    ? hitsRaw.map((h, i) => mapApiHitToTrack(h, i))
+    : mockedHits;
+  const top10 = hitsRaw.length > 0
+    ? hitsRaw.slice(0, 10).map((h, i) => mapApiHitToTrack(h, i))
+    : mockedTop10;
+
+  // magazine → MagazineGrid
+  const magArticlesRaw: any[] = [
+    ...(homeData?.magazine?.hero ? [homeData.magazine.hero] : []),
+    ...(homeData?.magazine?.articles || []),
+  ];
+  const magazineArticles = magArticlesRaw.length > 0
+    ? magArticlesRaw.map(mapApiMagazineArticle)
+    : mockedMagazine;
+
+  // Content cards: no direct API equivalent → always use mocked static cards
+  const contentCards = mockedContent;
+
+  return (
+    
+    <div className="flex flex-col w-full">
+
+      {/* ─── Hero pleine largeur ─── */}
+      <HeroSection data={heroData} />
+
+      {/*
+        Sections internes : centrées avec max-w-7xl sur desktop
+        Chaque composant gère son propre lg:max-w-7xl lg:mx-auto lg:px-8
+      */}
+
+
+      <NewsCarousel cards={displayNews} />
+
+      <ContentCarousel cards={contentCards} />
+
+      {/* ── Hits + Top 10 côte à côte sur desktop ── */}
+      <div className="
+        mt-10 px-4
+        lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full
+        lg:grid lg:grid-cols-[1fr_360px] lg:gap-10 lg:items-start
+      ">
+        <section>
+          <HitsList
+            tracks={hitsOfMonth}
+            title="Hits du Mois"
+            subtitle="Goma Vibes"
+            seeAllHref="/top-morceaux"
+          />
+        </section>
+
+        {/* Top10 collé en sticky sur desktop */}
+        <aside className="hidden lg:block">
+          <Top10Card
+            tracks={top10}
+            period="JUIN 2026"
+            seeAllHref="/top-artistes"
+          />
+        </aside>
+      </div>
+
+      {/* Top10 mobile uniquement */}
+      <div className="lg:hidden">
+        <Top10Card
+          tracks={top10}
+          period="JUIN 2026"
+          seeAllHref="/top-artistes"
+        />
+      </div>
+
+      <MagazineGrid articles={magazineArticles} />
+
+      {/* Espace bas de page */}
+      <div className="h-10" />
+    </div>
+  );
+}

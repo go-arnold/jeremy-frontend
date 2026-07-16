@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────
+   KIVU ART — Palette extraite du logo
+   Logo colors: Rouge vif #E63012, Bleu marine #0D2347, 
+   Blanc cassé #F0EDE8, Fond sombre #12100F
+   ───────────────────────────────────────── */
+
+@theme {
+  /* Couleurs primaires tirées du logo */
+  --color-primary:        #E63012;   /* Rouge-orange vif du badge "ART DU" */
+  --color-primary-dark:   #B8240C;   /* Rouge plus profond pour hover */
+  --color-primary-glow:   #E63012;   /* Pour les effets lumineux */
+
+  --color-navy:           #0D2347;   /* Bleu marine du texte "kivu" */
+  --color-navy-mid:       #162E5C;   /* Bleu intermédiaire */
+
+  /* Fonds */
+  --color-background-dark: #12100F;  /* Fond principal très sombre */
+  --color-surface:          #1A1714;  /* Cartes / surfaces */
+  --color-surface-raised:   #221E1B;  /* Cartes élevées */
+  --color-border:           rgba(230, 48, 18, 0.12); /* Bordure teintée rouge */
+
+  /* Accents */
+  --color-accent-teal:    #00A896;   /* Teal modernisé (moins flashy) */
+  --color-accent-gold:    #D4A843;   /* Or chaud pour détails premium */
+  --color-accent-yellow:  #F5C518;   /* Jaune vif (badges) */
+
+  /* Texte */
+  --color-text-primary:   #F0EDE8;   /* Blanc cassé chaud */
+  --color-text-muted:     #8A8178;   /* Gris chaud */
+  --color-text-faint:     #4A443E;   /* Gris très atténué */
+
+  /* Alias pour compatibilité */
+  --color-kivu-teal:      #00A896;
+  --color-card-dark:      #1A1714;
+  --color-background-light: #F0EDE8;
+
+  /* Typographie */
+  --font-display: "Epilogue", sans-serif;
+
+  /* Rayons */
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* ── Texture de fond ── */
+.kivu-texture {
+  background-color: #12223c; /*rgba(18, 34, 60, 0.)    // #12223c */
+  background-image: 
+    radial-gradient(circle at 30% 50%, rgba(230, 48, 18, 0.16) 0%, transparent 40%),
+    radial-gradient(circle at 70% 20%, rgba(18, 34, 60, 0.7) 0%, transparent 50%),
+    radial-gradient(#0f0e0e 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 18px 18px;
+}
+
+
+
+/* ── Glassmorphism navbar — teinte navy du logo ── */
+.glass-nav {
+  background: #0d172fd1;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(230, 48, 18, 0.15);
+}
+
+/* ── Glow interne rouge (primary) ── */
+.inner-glow {
+  box-shadow: inset 0 0 40px rgba(230, 48, 18, 0.08);
+}
+
+/* ── Glow externe (hover cards) ── */
+.card-glow:hover {
+  box-shadow: 0 0 24px rgba(230, 48, 18, 0.15), 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ── Badge "En Direct" pulsé ── */
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 168, 150, 0.15);
+  border: 1px solid rgba(0, 168, 150, 0.4);
+  color: #00A896;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ── Scrollbar cachée ── */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 768px) {
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  *::-webkit-scrollbar { display: none; }
+}
+
+/* ── Séparateur décoratif couleur logo ── */
+.kivu-divider {
+  height: 2px;
+  background: linear-gradient(90deg, #E63012, #0D2347, transparent);
+  border-radius: 999px;
+}
+
+/* ── Animations ── */
+@keyframes bar-bounce {
+  0%, 100% { height: 10%; }
+  50%       { height: 100%; }
+}
+.bar-bounce {
+  animation: bar-bounce 1s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s ease forwards;
+}
+
+input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #e83f1e;
+            cursor: pointer;
+            margin-top: -4px;
+            box-shadow: 0 0 0 4px rgba(239, 77, 2, 0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #f20303;
+            border-radius: 2px;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-nav {
+            background: rgba(231, 7, 7, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+
+
+
+/* #12223c le bleu du logo version rgb: (18,34,60)
+        #12223c le rouge du logo, rgb: (253,34,4)
+*/
+
