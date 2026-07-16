@@ -63,6 +63,16 @@ export default function LiveStreamPlayer({
           enableWorker: true,
           lowLatencyMode: true,
           backBufferLength: 90,
+          // MediaMTX's HLS server ties each viewer to a session via a cross-origin cookie
+          // (`cookieCheck`) — without withCredentials, the browser never sends it back on the
+          // frontend's own origin, so every request looks like a brand-new viewer to MediaMTX
+          // (erratic 200/500s, and a stale client-side buffer overlapping a freshly-reset
+          // session's audio). Must be paired with nginx reflecting the real request Origin
+          // instead of "*" for /live-hls/ — a wildcard origin is invalid once credentials are
+          // actually sent.
+          xhrSetup: (xhr: XMLHttpRequest) => {
+            xhr.withCredentials = true;
+          },
         });
 
         hlsInstanceRef.current = hls;
