@@ -27,8 +27,9 @@ function FreestyleCard({ video }: any) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
           )}
+          {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-            <span className="material-symbols-outlined text-5xl text-white opacity-0 group-hover:opacity-100">
+            <span className="material-symbols-outlined text-5xl text-white drop-shadow-lg">
               play_circle
             </span>
           </div>

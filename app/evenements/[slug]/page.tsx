@@ -57,6 +57,9 @@ export default async function EvenementDetailPage({ params }: Props) {
         <EventAbout about={event.about} />
         <EventSchedule items={event.schedule} />
         <EventVenue venue={event.venue} />
+        <div className="px-4">
+          <ShareEventWidget title={event.title} slug={event.slug} />
+        </div>
         <SimilarEvents events={similar} />
         <BookingButton slug={event.slug} price={event.price} />
       </main>

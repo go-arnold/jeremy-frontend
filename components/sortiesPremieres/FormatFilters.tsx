@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import type { FormatFilter, ReleaseFormat } from "@/types/sortiesPremieres";
 
-export default function FormatFilters({ filters }: { filters: FormatFilter[] }) {
-  const [active, setActive] = useState<ReleaseFormat>("all");
+interface Props {
+  filters: FormatFilter[];
+  active: ReleaseFormat;
+  onChange: (format: ReleaseFormat) => void;
+}
 
+export default function FormatFilters({ filters, active, onChange }: Props) {
   return (
     <div className="mb-8">
       <h3 className="text-xs uppercase tracking-widest font-bold text-primary mb-4">
@@ -17,7 +20,7 @@ export default function FormatFilters({ filters }: { filters: FormatFilter[] }) 
           return (
             <button
               key={f.id}
-              onClick={() => setActive(f.id)}
+              onClick={() => onChange(f.id)}
               className={`flex h-10 shrink-0 items-center justify-center rounded-xl px-6 transition-colors ${
                 isActive
                   ? "bg-primary"

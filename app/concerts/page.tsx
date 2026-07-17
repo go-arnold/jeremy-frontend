@@ -3,12 +3,10 @@ import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api-client';
 
-async function getDocumentaires() {
+async function getConcerts() {
   try {
-    // Real backend category value is "docs" (WebTVVideo.CATEGORY_CHOICES) — "documentary"
-    // never matched anything, so this page always rendered empty regardless of real data.
     const res = await apiFetch<any>(
-      `/api/v1/webtv/videos/?category=docs&page_size=50`,
+      `/api/v1/webtv/videos/?category=concerts&page_size=50`,
       { next: { revalidate: 3600 } }
     );
     return res;
@@ -17,7 +15,7 @@ async function getDocumentaires() {
   }
 }
 
-function DocCard({ video }: any) {
+function ConcertCard({ video }: any) {
   return (
     <Link href={`/web-tv/${video.slug}`}>
       <div className="group cursor-pointer overflow-hidden rounded-xl">
@@ -45,11 +43,11 @@ function DocCard({ video }: any) {
 }
 
 export const metadata = {
-  title: 'Documentaires - Art du Kivu',
+  title: 'Concerts - Art du Kivu',
 };
 
-export default async function DocumentairesPage() {
-  const data = await getDocumentaires();
+export default async function ConcertsPage() {
+  const data = await getConcerts();
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 to-black pt-32 pb-20">
@@ -58,20 +56,20 @@ export default async function DocumentairesPage() {
           <span className="material-symbols-outlined">arrow_back</span>
           Retour
         </Link>
-        <h1 className="text-5xl font-bold text-white mb-4">Documentaires</h1>
-        <p className="text-white/60 mb-12">Explorez nos documentaires exclusifs.</p>
+        <h1 className="text-5xl font-bold text-white mb-4">Concerts</h1>
+        <p className="text-white/60 mb-12">Revivez les meilleurs concerts filmés du Kivu.</p>
 
         {data.results?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {data.results.map((video: any) => (
               <Suspense key={video.id} fallback={<div className="bg-slate-800 rounded-xl h-48 animate-pulse" />}>
-                <DocCard video={video} />
+                <ConcertCard video={video} />
               </Suspense>
             ))}
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-white/60">Aucun documentaire disponible</p>
+            <p className="text-white/60">Aucun concert disponible</p>
           </div>
         )}
       </div>

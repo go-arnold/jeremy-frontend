@@ -8,6 +8,9 @@ export default function InterviewsSectionDesktop({ interviews }: { interviews: D
         <span className="material-symbols-outlined text-primary">mic</span>
         <h2 className="text-white text-xl font-bold tracking-tight">Interviews</h2>
         <div className="kivu-divider flex-1" />
+        <a className="text-primary text-xs font-bold hover:text-[#F0EDE8] transition-colors" href="/interviews">
+          Voir tout
+        </a>
       </div>
 
       {/* Grille 3 colonnes */}
@@ -25,7 +28,7 @@ export default function InterviewsSectionDesktop({ interviews }: { interviews: D
                 style={{ backgroundImage: `url('${interview.imageUrl}')` }}
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
                   <span className="material-symbols-outlined text-white text-3xl" style={{ marginLeft: "3px" }}>
                     play_arrow
                   </span>

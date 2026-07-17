@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import VideoPlayer from "@/components/media/VideoPlayer";
 import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
 import EngagementBar from "@/components/ui/EngagementBar";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLiveRoom } from "@/hooks/useLiveRoom";
 import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+
+// Past this length, the description gets truncated on mobile with a "Voir plus" toggle instead
+// of pushing the player/engagement bar far below the fold.
+const DESCRIPTION_TRUNCATE_LENGTH = 160;
 
 interface WebTVVideo {
   id: string;
@@ -39,10 +44,21 @@ async function sendChatMessage(slug: string, message: string) {
 
 export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
   const [playing, setPlaying] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   useConsumptionHeartbeat(playing, "webtv", video.numericId, video.title, video.thumbnail);
+
+  const isLongDescription = (video.description?.length || 0) > DESCRIPTION_TRUNCATE_LENGTH;
 
   return (
     <div className="min-h-screen pt-20 pb-16 px-4 lg:px-8 max-w-5xl mx-auto flex flex-col gap-6">
+      <Link
+        href="/web-tv"
+        className="inline-flex items-center gap-2 self-start px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors font-bold text-sm"
+      >
+        <span className="material-symbols-outlined text-lg">arrow_back</span>
+        Web TV
+      </Link>
+
       {video.isLive ? (
         <LiveStreamPlayer
           hlsUrl={video.playbackHlsUrl || ""}
@@ -51,21 +67,40 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
           thumbnail={video.thumbnail}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          hideTitleBar
         />
       ) : (
         <VideoPlayer
           src={video.videoUrl || ""}
           title={video.title}
-          description={video.description}
           thumbnail={video.thumbnail}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          hideTitleBar
         />
       )}
 
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-black text-[#F0EDE8]">{video.title}</h1>
-        {video.description && <p className="text-[#8A8178] text-sm leading-relaxed">{video.description}</p>}
+        {video.description && (
+          <>
+            <p
+              className={`text-[#8A8178] text-sm leading-relaxed ${
+                !descExpanded && isLongDescription ? "line-clamp-3 lg:line-clamp-none" : ""
+              }`}
+            >
+              {video.description}
+            </p>
+            {isLongDescription && (
+              <button
+                onClick={() => setDescExpanded((v) => !v)}
+                className="lg:hidden text-primary text-xs font-bold self-start"
+              >
+                {descExpanded ? "Voir moins" : "Voir plus"}
+              </button>
+            )}
+          </>
+        )}
         {video.publishedAt && <p className="text-[#4A443E] text-xs">{video.publishedAt}</p>}
       </div>
 

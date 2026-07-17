@@ -42,13 +42,12 @@ export default function FreestylesSectionDesktop({ videos }: { videos: Freestyle
               <h4 className="text-white text-sm font-bold leading-snug">{video.title}</h4>
               <p className="text-gray-400 text-[10px]">{video.author}</p>
             </div>
-            {video.showPlayButton && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-12 h-12 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur shadow-lg">
-                  <span className="material-symbols-outlined text-2xl">play_arrow</span>
-                </div>
+            {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur shadow-lg">
+                <span className="material-symbols-outlined text-2xl">play_arrow</span>
               </div>
-            )}
+            </div>
           </Link>
         ))}
       </div>

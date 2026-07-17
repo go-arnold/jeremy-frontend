@@ -123,6 +123,7 @@ export default function WebTVPage() {
           {/* MOBILE */}
           <main className="lg:hidden flex flex-col gap-8 pb-8 pt-4 mx-5">
             <PremierSection video={premierVideo as any} />
+            <LiveVsVideosSeparator isLive={!!liveVideo} />
             <div id="studio-sessions"><StudioSessionsSection sessions={studioSessions.length > 0 ? studioSessions as any : mockedStudio} /></div>
             <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
             <div id="docs"><DocsSection docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
@@ -141,6 +142,7 @@ export default function WebTVPage() {
               <PremierSectionDesktop video={premierVideo as any} />
               <div id="studio-sessions"><StudioSessionsDesktop sessions={studioSessions.length > 0 ? studioSessions as any : mockedStudio} /></div>
             </div>
+            <LiveVsVideosSeparator isLive={!!liveVideo} />
             <div id="freestyles"><FreestylesSectionDesktop videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
             <div id="docs"><DocsSectionDesktop docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
             <div id="interviews"><InterviewsSectionDesktop interviews={interviewVideos.length > 0 ? interviewVideos as any : mockedInterviews} /></div>
@@ -153,6 +155,28 @@ export default function WebTVPage() {
           </main>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Séparateur live / vidéos — distingue clairement le direct (le cas échéant) du reste ──
+function LiveVsVideosSeparator({ isLive }: { isLive: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      {isLive && (
+        <span className="flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+          </span>
+          En direct
+        </span>
+      )}
+      <div className="kivu-divider flex-1" />
+      <span className="text-[#8A8178] text-xs font-black uppercase tracking-[0.2em] shrink-0">
+        Toutes les vidéos
+      </span>
+      <div className="kivu-divider flex-1" />
     </div>
   );
 }

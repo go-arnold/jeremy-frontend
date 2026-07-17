@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 
+// Desktop sidebar's primary nav group — unchanged.
 const mainLinks = [
   { href: "/",           icon: "home",          label: "Accueil" },
   { href: "/blog",       icon: "article",       label: "Blog" },
@@ -13,13 +14,26 @@ const mainLinks = [
   { href: "/podcasts",   icon: "podcasts",      label: "Podcasts" },
 ];
 
+// Mobile bottom bar — Web TV takes Événements' slot here specifically.
+const mobileBottomLinks = [
+  { href: "/",           icon: "home",          label: "Accueil" },
+  { href: "/blog",       icon: "article",       label: "Blog" },
+  { href: "/communaute", icon: "groups",        label: "Communauté" },
+  { href: "/web-tv",     icon: "tv",            label: "Web TV" },
+  { href: "/podcasts",   icon: "podcasts",      label: "Podcasts" },
+];
+
+// Hamburger drawer (mobile) — same as the bottom bar, but Podcasts (already reachable from the
+// bottom bar itself) is swapped for Événements so it isn't just duplicated verbatim.
+const mobileDrawerMainLinks = mobileBottomLinks.map((l) =>
+  l.href === "/podcasts" ? { href: "/evenements", icon: "event", label: "Événements" } : l
+);
+
 const secondaryLinks = [
   { href: "/magazine",   icon: "article",         label: "Magazine" },
   { href: "/sorties-premieres", icon: "new_releases",   label: "Sorties" },
   { href: "/emissions",  icon: "live_tv",         label: "Émissions" },
 ];
-
-const allLinks = [...mainLinks, ...secondaryLinks];
 
 // ── Item sidebar desktop ──────────────────────────
 function SidebarItem({ href, icon, label, active }: {
@@ -83,8 +97,9 @@ function BottomItem({ href, icon, label, active, iconOnly = false, small = false
 }
 
 // ── Drawer menu mobile ────────────────
-function DrawerMenu({ open, onClose, pathname, links }: {
+function DrawerMenu({ open, onClose, pathname, links, isAuthenticated, onLogout }: {
   open: boolean; onClose: () => void; pathname: string; links: any[];
+  isAuthenticated: boolean; onLogout: () => void;
 }) {
   if (!open) return null;
   return (
@@ -130,6 +145,18 @@ function DrawerMenu({ open, onClose, pathname, links }: {
             {link.label}
           </Link>
         ))}
+
+        {/* Déconnexion — icône/couleur distincte de "Mon Profil", jamais confondue avec la
+            navigation, visible directement dans le menu sans devoir passer par le profil. */}
+        {isAuthenticated && (
+          <button
+            onClick={() => { onLogout(); onClose(); }}
+            className="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-sm transition-all text-[#E63012]/80 hover:text-[#E63012] hover:bg-[#E63012]/10"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>logout</span>
+            Se déconnecter
+          </button>
+        )}
       </div>
     </>
   );
@@ -139,7 +166,7 @@ function DrawerMenu({ open, onClose, pathname, links }: {
 export default function Navbar() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, logout } = useAuth();
 
   // While the initial auth check is in flight, don't show either state — avoids a
   // flash of "SE CONNECTER" for already-authenticated users on every page load.
@@ -150,7 +177,7 @@ export default function Navbar() {
       : { href: "/auth/login", icon: "login", label: "SE CONNECTER" };
 
   const allSecondaryLinks = authLink ? [...secondaryLinks, authLink] : secondaryLinks;
-  const allLinksForDrawer = [...mainLinks, ...allSecondaryLinks];
+  const allLinksForDrawer = [...mobileDrawerMainLinks, ...allSecondaryLinks];
 
   return (
     <>
@@ -175,8 +202,8 @@ export default function Navbar() {
             small={true}
           />
 
-          {/* 4 liens du milieu : Blog, Communauté, Événements, Podcasts */}
-          {mainLinks.filter(l => l.href !== "/").map((l) => (
+          {/* 4 liens du milieu : Blog, Communauté, Web TV, Podcasts */}
+          {mobileBottomLinks.filter(l => l.href !== "/").map((l) => (
             <BottomItem key={l.href} {...l} active={pathname === l.href} small={true} />
           ))}
 
@@ -206,6 +233,8 @@ export default function Navbar() {
         onClose={() => setDrawerOpen(false)}
         pathname={pathname}
         links={allLinksForDrawer}
+        isAuthenticated={isAuthenticated}
+        onLogout={logout}
       />
 
       {/* ══════════════════════════════════════
@@ -244,6 +273,17 @@ export default function Navbar() {
                 active={pathname === link.href}
               />
             ))}
+            {/* Déconnexion — icône/couleur distincte de "Mon Profil" (account_circle) pour que
+                les deux états d'authentification restent clairement différenciables. */}
+            {isAuthenticated && (
+              <button
+                onClick={logout}
+                className="group flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 text-[#E63012]/70 hover:text-[#E63012] hover:bg-[#E63012]/10"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>logout</span>
+                <span className="flex-1 text-left">Se déconnecter</span>
+              </button>
+            )}
           </div>
         </div>
 

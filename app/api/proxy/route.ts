@@ -34,6 +34,7 @@ function getCacheTTL(endpoint: string, method: string): number | null {
 export async function GET(request: Request) { return handleProxy(request); }
 export async function POST(request: Request) { return handleProxy(request); }
 export async function PUT(request: Request) { return handleProxy(request); }
+export async function PATCH(request: Request) { return handleProxy(request); }
 export async function DELETE(request: Request) { return handleProxy(request); }
 
 async function handleProxy(request: Request) {

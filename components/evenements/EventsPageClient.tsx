@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FeaturedEvent, EventGridItem, EventCity } from "@/types/evenements";
+import { shareContent } from "@/lib/share";
 
 import EventsHeader        from "./EventsHeader";
 import FeaturedEventCard   from "./FeaturedEventCard";
@@ -213,10 +214,16 @@ const router = useRouter();
                 <span>Voir Détails</span>
                 <span className="material-symbols-outlined text-lg">arrow_forward</span>
               </button>
-              <button className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white hover:bg-white/20 transition-colors">
-                <span className="material-symbols-outlined text-lg">bookmark_border</span>
-              </button>
-              <button className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white hover:bg-white/20 transition-colors">
+              {/* Pas de "bookmark_border" — les événements n'ont aucune capacité de
+                  sauvegarde côté backend (pas d'EngagementActionsMixin), contrairement au
+                  share qui ne dépend d'aucune API. */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  shareContent({ title: event.title, url: `/evenements/${event.slug}` }).catch(() => {});
+                }}
+                className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white hover:bg-white/20 transition-colors"
+              >
                 <span className="material-symbols-outlined text-lg">share</span>
               </button>
             </div>

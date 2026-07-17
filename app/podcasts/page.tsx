@@ -24,10 +24,19 @@ import type { FeaturedEpisode, SelectionEpisode, RecentEpisode, LatestPickEpisod
 export default function PodcastsPage() {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [categoryIdByLabel, setCategoryIdByLabel] = useState<Record<string, string>>({});
+  const [activeCategory, setActiveCategory] = useState("Tout");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+
+  const buildEpisodesUrl = (category: string, page: number) => {
+    const params = new URLSearchParams({ page: String(page), page_size: "15" });
+    const categoryId = categoryIdByLabel[category];
+    if (category !== "Tout" && categoryId) params.set("category", categoryId);
+    return `/api/v1/podcasts/episodes/?${params.toString()}`;
+  };
 
   useEffect(() => {
     async function init() {
@@ -41,7 +50,14 @@ export default function PodcastsPage() {
         setHasMore(!!epData.next);
 
         const catResults = catData.results || (Array.isArray(catData) ? catData : []);
-        const mappedCats = catResults.map((c: any) => typeof c === 'string' ? c : (c.label || c.title || c.name || "Podcast"));
+        const idByLabel: Record<string, string> = {};
+        const mappedCats = catResults.map((c: any) => {
+          if (typeof c === 'string') return c;
+          const label = c.label || c.title || c.name || "Podcast";
+          idByLabel[label] = c.id;
+          return label;
+        });
+        setCategoryIdByLabel(idByLabel);
         setCategories(["Tout", ...mappedCats]);
       } catch (error) {
         console.error("Failed to fetch podcasts initial data:", error);
@@ -55,10 +71,27 @@ export default function PodcastsPage() {
     init();
   }, []);
 
+  const handleCategoryChange = async (category: string) => {
+    if (category === activeCategory) return;
+    setActiveCategory(category);
+    setLoading(true);
+    setInitialDataLoaded(false);
+    try {
+      const data = await apiFetch<PaginatedResponse<any>>(buildEpisodesUrl(category, 1));
+      setEpisodes(data.results.map(mapApiPodcastToEpisode));
+      setHasMore(!!data.next);
+    } catch (error) {
+      console.error("Failed to filter podcasts by category:", error);
+    } finally {
+      setLoading(false);
+      setInitialDataLoaded(true);
+    }
+  };
+
   const loadMore = async (page: number) => {
     setLoadingLoadingMore(true);
     try {
-      const data = await apiFetch<PaginatedResponse<any>>(`/api/v1/podcasts/episodes/?page=${page}&page_size=15`);
+      const data = await apiFetch<PaginatedResponse<any>>(buildEpisodesUrl(activeCategory, page));
       const newEps = data.results.map(mapApiPodcastToEpisode);
       setEpisodes(prev => [...prev, ...newEps]);
       setHasMore(!!data.next);
@@ -100,7 +133,7 @@ export default function PodcastsPage() {
         <>
           {/* MOBILE */}
           <main className="lg:hidden pb-14">
-            <PodcastCategoryFilter categories={categories as any} />
+            <PodcastCategoryFilter categories={categories as any} onChange={handleCategoryChange} />
             <FeaturedEpisodeCard episode={featuredEpisode as any} />
             <SelectionEpisodeCard episode={selectionEpisode as any} />
             <RecentEpisodesList episodes={recentEpisodes as any} />
@@ -125,7 +158,11 @@ export default function PodcastsPage() {
                     Interviews, culture et sons du Kivu
                   </p>
                 </div>
-                <PodcastFilterDesktop categories={categories as any} />
+                <PodcastFilterDesktop
+                  categories={categories as any}
+                  active={activeCategory}
+                  onChange={handleCategoryChange}
+                />
               </div>
             </div>
 
@@ -181,20 +218,29 @@ export default function PodcastsPage() {
 
 // ── Components defined in same file (moved below page for clarity) ──
 
-function PodcastFilterDesktop({ categories }: { categories: string[] }) {
+function PodcastFilterDesktop({
+  categories,
+  active,
+  onChange,
+}: {
+  categories: string[];
+  active: string;
+  onChange: (cat: string) => void;
+}) {
   return (
     <div className="flex items-center gap-2">
-      {categories.map((cat, i) => (
-        <div
+      {categories.map((cat) => (
+        <button
           key={cat}
+          onClick={() => onChange(cat)}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-            i === 0
+            cat === active
               ? "bg-primary text-white shadow-lg shadow-primary/20"
               : "bg-white/5 border border-white/10 text-[#8A8178] hover:text-[#F0EDE8] hover:bg-white/10"
           }`}
         >
           {cat}
-        </div>
+        </button>
       ))}
     </div>
   );

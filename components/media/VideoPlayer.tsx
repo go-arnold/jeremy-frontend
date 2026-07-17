@@ -11,6 +11,9 @@ interface VideoPlayerProps {
   onPause?: () => void;
   onFullscreen?: (isFullscreen: boolean) => void;
   autoplay?: boolean;
+  /** Set when the caller already renders its own title/description block below the player
+   * (e.g. WebTV/Émissions detail pages) — avoids showing the same title/description twice. */
+  hideTitleBar?: boolean;
 }
 
 export default function VideoPlayer({
@@ -22,6 +25,7 @@ export default function VideoPlayer({
   onPause,
   onFullscreen,
   autoplay = false,
+  hideTitleBar = false,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -280,7 +284,7 @@ export default function VideoPlayer({
       </div>
 
       {/* Title and Description */}
-      {(title || description) && (
+      {!hideTitleBar && (title || description) && (
         <div className="p-6 bg-gradient-to-b from-slate-900 to-slate-950">
           <h3 className="text-white font-bold text-xl mb-2">{title}</h3>
           {description && <p className="text-white/60 text-sm line-clamp-2">{description}</p>}

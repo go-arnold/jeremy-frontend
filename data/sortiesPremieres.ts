@@ -6,7 +6,8 @@ import type {
 
 export const formatFilters: FormatFilter[] = [
   { id: "all", label: "Toutes les sorties" },
-  { id: "musique", label: "Musique" },
+  { id: "album", label: "Album" },
+  { id: "single", label: "Single" },
   { id: "clip", label: "Clip" },
   { id: "documentaire", label: "Documentaire" },
   { id: "expo", label: "Expo" },

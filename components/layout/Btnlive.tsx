@@ -11,7 +11,7 @@ export default function Page () {
                         <span className="w-0.5 h-3 bg-primary animate-[pulse_1.5s_ease-in-out_infinite]"></span>
                         <span className="w-0.5 h-2 bg-primary animate-[pulse_1.2s_ease-in-out_infinite]"></span>
                     </span>
-                <Link href="/live-music">
+                <Link href="/radio-en-direct">
                     <span>Direct : Kivu FM</span>
                 </Link>
             </div>

@@ -22,7 +22,7 @@ import { fetchActivity } from "@/lib/services/profile";
 import { shareContent } from "@/lib/share";
 import ProfileHeader    from "@/components/monProfil/ProfileHeader";
 import ProfileStats     from "@/components/monProfil/ProfileStats";
-import ProfileTabs      from "@/components/monProfil/ProfileTabs";
+import ProfileTabs, { type ProfileTabId } from "@/components/monProfil/ProfileTabs";
 import FavoriteArtists  from "@/components/monProfil/FavoriteArtists";
 import ListenHistory    from "@/components/monProfil/ListenHistory";
 import Accomplishments  from "@/components/monProfil/Accomplishments";
@@ -48,6 +48,7 @@ export default function MonProfilPage() {
   const [savedItems, setSavedItems] = useState<ReturnType<typeof mapApiSavedItemToSavedEntry>[]>([]);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProfileTabId>("apercu");
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -100,7 +101,7 @@ export default function MonProfilPage() {
       return stat;
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoriteArtists, badges]);
+  }, [favoriteArtists, badges, listenHistory]);
 
   if (loading) {
     return (
@@ -147,14 +148,19 @@ export default function MonProfilPage() {
         </header>
         <ProfileHeader profile={profile} onEdit={() => setIsEditOpen(true)} onShare={handleShareProfile} />
         <ProfileStats stats={profileStats} />
-        <ProfileTabs />
-        <FavoriteArtists artists={favoriteArtists} />
-        <div className="grid grid-cols-1 gap-6">
-          <ListenHistory items={listenHistory} />
-          <Accomplishments badges={badges} totalUnlocked={unlockedBadges} />
+        <ProfileTabs active={activeTab} onChange={setActiveTab} />
+        {activeTab === "apercu" ? (
+          <>
+            <FavoriteArtists artists={favoriteArtists} />
+            <div className="grid grid-cols-1 gap-6">
+              <ListenHistory items={listenHistory} />
+              <Accomplishments badges={badges} totalUnlocked={unlockedBadges} />
+              <SavedItems items={savedItems} />
+            </div>
+          </>
+        ) : (
           <ActivityFeed items={activity} />
-          <SavedItems items={savedItems} />
-        </div>
+        )}
         <div className="h-4" />
       </main>
 
@@ -190,18 +196,22 @@ export default function MonProfilPage() {
             <div className="flex flex-col gap-8 pt-20">
 
               {/* Tabs */}
-              <ProfileTabs />
+              <ProfileTabs active={activeTab} onChange={setActiveTab} />
 
-              {/* Artistes favoris */}
-              <FavoriteArtistsDesktop artists={favoriteArtists} />
+              {activeTab === "apercu" ? (
+                <>
+                  {/* Artistes favoris */}
+                  <FavoriteArtistsDesktop artists={favoriteArtists} />
 
-              {/* Historique + Accomplissements côte à côte */}
-              <div className="grid grid-cols-2 gap-6">
-                <ListenHistoryDesktop items={listenHistory} />
-                <AccomplishmentsDesktop badges={badges} totalUnlocked={unlockedBadges} />
-              </div>
-
-              <ActivityFeed items={activity} />
+                  {/* Historique + Accomplissements côte à côte */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <ListenHistoryDesktop items={listenHistory} />
+                    <AccomplishmentsDesktop badges={badges} totalUnlocked={unlockedBadges} />
+                  </div>
+                </>
+              ) : (
+                <ActivityFeed items={activity} />
+              )}
             </div>
 
           </div>

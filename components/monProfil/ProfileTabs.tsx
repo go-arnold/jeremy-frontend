@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+export type ProfileTabId = "apercu" | "activite";
 
-const TABS = [
+const TABS: { id: ProfileTabId; label: string }[] = [
   { id: "apercu", label: "Aperçu" },
   { id: "activite", label: "Activité" },
 ];
 
-export default function ProfileTabs() {
-  const [active, setActive] = useState("apercu");
+interface Props {
+  active: ProfileTabId;
+  onChange: (tab: ProfileTabId) => void;
+}
 
+export default function ProfileTabs({ active, onChange }: Props) {
   return (
     <div className="p-1 bg-surface-dark rounded-xl flex relative">
       <div
@@ -19,7 +22,7 @@ export default function ProfileTabs() {
       {TABS.map((tab) => (
         <button
           key={tab.id}
-          onClick={() => setActive(tab.id)}
+          onClick={() => onChange(tab.id)}
           className={`flex-1 py-2 text-sm z-10 text-center transition-colors ${
             active === tab.id
               ? "font-bold text-white"

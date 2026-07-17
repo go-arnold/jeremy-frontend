@@ -3,9 +3,14 @@ import { useState } from "react";
 import Link from "next/link";
 import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
 import VideoPlayer from "@/components/media/VideoPlayer";
+import { shareContent } from "@/lib/share";
 
 export default function PremierSectionDesktop({ video }: { video: PremierVideo }) {
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const handleShare = () => {
+    shareContent({ title: video.title, url: video.href || "/web-tv" }).catch(() => {});
+  };
 
   return (
     <section className="flex flex-col gap-4">
@@ -61,11 +66,11 @@ export default function PremierSectionDesktop({ video }: { video: PremierVideo }
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent pointer-events-none" />
 
-            {/* Play button */}
-            <div 
-              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            {/* Play — toujours visible (icône obligatoire, pas seulement au survol) */}
+            <div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
-              <div className="flex w-20 h-20 items-center justify-center rounded-full bg-primary/90 text-white shadow-[0_0_40px_rgba(230,48,18,0.5)] backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform">
+              <div className="flex w-20 h-20 items-center justify-center rounded-full bg-primary/90 text-white shadow-[0_0_40px_rgba(230,48,18,0.5)] backdrop-blur-sm transform group-hover:scale-105 transition-transform">
                 <span className="material-symbols-outlined" style={{ fontSize: "44px", marginLeft: "5px" }}>
                   play_arrow
                 </span>
@@ -97,7 +102,10 @@ export default function PremierSectionDesktop({ video }: { video: PremierVideo }
                   <span className="material-symbols-outlined text-lg">add</span>
                   Ma liste
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all border border-white/10">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all border border-white/10"
+                >
                   <span className="material-symbols-outlined text-lg">share</span>
                 </button>
               </div>

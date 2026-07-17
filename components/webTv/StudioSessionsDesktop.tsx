@@ -27,8 +27,8 @@ export default function StudioSessionsDesktop({ sessions }: { sessions: StudioSe
                 className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
                 style={{ backgroundImage: `url('${session.imageUrl}')` }}
               />
-              {/* Hover play */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+              {/* Play — toujours visible */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-colors">
                 <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white shadow-lg">
                   <span className="material-symbols-outlined text-2xl" style={{ marginLeft: "2px" }}>play_arrow</span>
                 </div>
