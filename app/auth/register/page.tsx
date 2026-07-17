@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register, isAuthenticated, loading: authLoading } = useAuth();
+  const { register, refreshUser, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -23,8 +23,14 @@ export default function RegisterPage() {
   }, [isAuthenticated, authLoading, router]);
 
   // (PDF) Google login should land on the home page, not the profile page.
+  // The Google flow sets cookies via a raw fetch (bypassing AuthProvider), so `user` state never
+  // updates on its own — without refreshUser() here, the redirect to "/" lands on a page that
+  // still thinks you're logged out.
   const { googleLoading, triggerGoogleLogin } = useGoogleAuth(
-    () => router.push('/'),
+    async () => {
+      await refreshUser();
+      router.push('/');
+    },
     (message) => setError(message)
   );
 
