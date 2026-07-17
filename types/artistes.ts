@@ -47,6 +47,9 @@ export interface GalleryPhoto {
 
 export interface ArtisteDetail {
   id: string;
+  /** Real numeric DB id — `id` above is slug-based for routing; the favorites endpoint
+   * (`POST /users/{userId}/favorites/`) needs the actual `artist_id`. Absent on mock data. */
+  artistId?: number | null;
   name: string;
   city: string;
   country: string;

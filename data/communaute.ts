@@ -1,10 +1,10 @@
 import type {
   FilterTab,
   TalentPost,
-  Challenge,
-  Poll,
   ArtPost,
   FeedItem,
+  ApiChallenge,
+  ApiPoll,
 } from "@/types/communaute";
 
 export const filterTabs: FilterTab[] = [
@@ -35,34 +35,34 @@ const gomaKing: TalentPost = {
   type: "audio",
 };
 
-const freestyleChallenge: Challenge = {
-  id: "challenge-1",
-  theme: "Résilience",
-  endsIn: "04:12:59",
-  isLive: true,
-  participants: {
-    avatars: [
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDOqIJc1IHBb6vNaHZz1mlvEvyU81kbif74P3saVIdhvX8EUdZ7SIrWVoCaOKmS7UW_CNFz1zDS6LSPD_5yBJMrlz9yF3V99PYtBX6-IeZVv0rgl4svqlMgm7HTVkxOYZ13Rzb8ht6UPhKJr3hD2JKM4WiVGuZbUrkdWMixoTRvgSih2TZbFRRN3KzEYNbwPxr3XCAhoVZPhdJ4vLCyy07jXMj1QcbtmgUy1L0gZHjAD7wyiLAP6a4JVPCEGVS7K6FK9YQnbNO6UJU",
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC8BV3jefXV6wqVrGWIa_6oanKBzVYdRE4YDjQrO64M7Td8UabQyUdnxLHMV77U3phbyTa7jia3e03N-oz8_28171izVK0yY4CM846z_Q8xMqTwWUKGaqXxa8843VbW6dUl1Uv5uVfP-DzEBHHrAPZ6eQB8V93hBa2BRGwb0rRihjaGaNJ4Kmn_Qlq6tGpzXrCu-nRacDKU-nImDZRvX_7hyZc0aQZI93UyvuhABFUGV0eXkAzteCOP86owtrI82xld6sNgQGWj6GE",
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC1iJCYAkBtlx-E09sZOaJ_QP86Lpn4ABem5Ngn4Xf-Ak9SiZtR3BvovHdq0tq5db1pBDj-EcR-wVilCbInXjjVSo9u_RcmBIdbU8AIrkK5uHcg0WhgXlGlFx8wb1aasJ-wIxFBfDy3SYGe2H-DU7vvrHhsFmA_Tm9C0u-2zn-msYKVVtdefB8orM_Agt1vqaxV1FUkrTjWUYu0ASucAqhGpXnovjGoXUUtBatu4_Jhz3-SxOFE-mlN2DfBJVhLpyKk6TtgKZF-Nvw",
-    ],
-    extraCount: 124,
+export const mockChallenges: ApiChallenge[] = [
+  {
+    id: -1,
+    title: "Défi Freestyle : Résilience",
+    slug: "defi-freestyle-resilience",
+    description: "Propose ton meilleur freestyle sur le thème de la résilience.",
+    cover_url: null,
+    prize: "Mise en avant sur la page d'accueil",
+    deadline: new Date(Date.now() + 1000 * 60 * 60 * 26).toISOString(),
+    participant_count: 124,
+    is_active: true,
   },
-};
+];
 
-const flowPoll: Poll = {
-  id: "poll-1",
-  question: "Qui a le meilleur flow cette semaine ?",
-  totalVotes: 1500,
-  options: [
-    { id: "mc-kivu", label: "MC Kivu", percentage: 62, isLeading: true },
-    { id: "lil-beni", label: "Lil Beni", percentage: 38, isLeading: false },
-  ],
-  voterAvatars: [
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCPaXR1h-TRPVZ73cnEOXLfx_8hN7fALXMUhAkKgSdwsnsA6yIsdP2kDvE6hkosjjiU5Y7xObwN8DpJGLpWC77Bf6Ye9WhguerFab9OYkLV-Z7Gt0SgDaAzObdZRRjesIfTCrabXalkKZ4siDX6GLQeovumvO28bCcuFdcv5O9Vsw3fy8_YsVXAPmK1xHW65J82uNfH_FDJvWTB-e1JQBjHW5gnjWZ6yhMH7XfEnQ9DbxktRqjQw8Cy9oKznVIZVaa0vOAKrSGkZqo",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuB1p6P-3k8b0gvbAOgavLvA0EYPo1iNfuMTsbQ7RiPG7jLHpvNASMzLPje3UIHidTmxDUVJxKPoNK-BaxjGAmbpIrvNPdwkoLymVZn9CPuzRS8JV86iZdgddn6DoqXFiV3Avz-iKEu9UhivxZeFU6txJRRn_qyjQBKziv9eZ1XePiqG1Q_3jb0TyW97YVyGxES6R70WFA4Jb4Qh1SUizSCKTkvD01lhodeU1ucFEHRFJNIdlejd-Ai6oQsPECTJHG17UVtrkJqd1Ls",
-  ],
-};
+export const mockPolls: ApiPoll[] = [
+  {
+    id: -1,
+    question: "Qui a le meilleur flow cette semaine ?",
+    vote_count: 1500,
+    options: [
+      { id: -1, text: "MC Kivu", vote_count: 930, percentage: 62 },
+      { id: -2, text: "Lil Beni", vote_count: 570, percentage: 38 },
+    ],
+    expires_at: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+];
 
 const bukavuArtPost: ArtPost = {
   id: "art-1",
@@ -82,7 +82,5 @@ const bukavuArtPost: ArtPost = {
 
 export const feedItems: FeedItem[] = [
   { type: "talent", data: gomaKing },
-  { type: "challenge", data: freestyleChallenge },
-  { type: "poll", data: flowPoll },
   { type: "art", data: bukavuArtPost },
 ];

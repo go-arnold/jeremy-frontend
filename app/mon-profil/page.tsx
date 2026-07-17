@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -17,6 +18,8 @@ import {
   mapApiMediaRankingToListenHistoryItem,
   mapApiSavedItemToSavedEntry,
 } from "@/lib/mappers";
+import { fetchActivity } from "@/lib/services/profile";
+import { shareContent } from "@/lib/share";
 import ProfileHeader    from "@/components/monProfil/ProfileHeader";
 import ProfileStats     from "@/components/monProfil/ProfileStats";
 import ProfileTabs      from "@/components/monProfil/ProfileTabs";
@@ -24,7 +27,10 @@ import FavoriteArtists  from "@/components/monProfil/FavoriteArtists";
 import ListenHistory    from "@/components/monProfil/ListenHistory";
 import Accomplishments  from "@/components/monProfil/Accomplishments";
 import SavedItems from "@/components/monProfil/SavedItems";
+import ActivityFeed from "@/components/monProfil/ActivityFeed";
+import EditProfileModal from "@/components/monProfil/EditProfileModal";
 import Avatar from "@/components/ui/Avatar";
+import type { ActivityEntry } from "@/types/monProfil";
 
 function formatSecondsAsHours(totalSeconds: number): string {
   const hours = totalSeconds / 3600;
@@ -40,6 +46,8 @@ export default function MonProfilPage() {
   const [badges, setBadges] = useState(mockedBadges);
   const [profileStats, setProfileStats] = useState(mockedProfileStats);
   const [savedItems, setSavedItems] = useState<ReturnType<typeof mapApiSavedItemToSavedEntry>[]>([]);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -64,6 +72,10 @@ export default function MonProfilPage() {
     apiFetch<any[]>(`/api/v1/users/${user.id}/saved/`)
       .then((data) => setSavedItems(data.map(mapApiSavedItemToSavedEntry)))
       .catch((error) => console.error("Failed to fetch saved items:", error));
+
+    fetchActivity(user.id)
+      .then(setActivity)
+      .catch((error) => console.error("Failed to fetch activity:", error));
 
     Promise.all([
       apiFetch<any[]>(`/api/v1/gamification/badges/`),
@@ -106,11 +118,16 @@ export default function MonProfilPage() {
     displayName: user?.username || user?.email?.split('@')[0] || "Utilisateur",
     handle: user?.handle || `@${user?.username || 'user'}`,
     avatar: user?.avatar_url || mockedProfile.avatar,
+    coverImage: user?.cover_image_url || mockedProfile.coverImage,
     bio: user?.bio || mockedProfile.bio,
     isOnline: user?.is_online !== undefined ? user.is_online : mockedProfile.isOnline,
   };
 
   const unlockedBadges = badges.filter((b) => b.unlocked).length;
+
+  const handleShareProfile = () => {
+    shareContent({ title: profile.displayName, url: "/mon-profil", text: `Découvrez le profil de ${profile.displayName} sur Art du Kivu` }).catch(() => {});
+  };
 
   return (
     <div className="text-white font-display min-h-screen flex flex-col relative w-full overflow-hidden">
@@ -118,28 +135,24 @@ export default function MonProfilPage() {
           MOBILE — layout original inchangé
       ══════════════════════════════════════ */}
       <main className="lg:hidden flex-1 px-5 overflow-y-auto w-full flex flex-col gap-6 pb-20">
-        <header className="relative z-20 flex items-center justify-between py-4">
-          <h2 className="text-xl font-extrabold tracking-tight text-white uppercase tracking-wider">Mon Profil</h2>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={logout}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 transition-all text-white"
-              title="Déconnexion"
-            >
-              <span className="material-symbols-outlined text-xl">logout</span>
-            </button>
-            <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/5 active:scale-95 transition-all text-white">
-              <span className="material-symbols-outlined">settings</span>
-            </button>
-          </div>
+        {/* (PDF) "Paramètres" et le titre "Mon profil" retirés — seule la déconnexion reste. */}
+        <header className="relative z-20 flex items-center justify-end py-4">
+          <button
+            onClick={logout}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 transition-all text-white"
+            title="Déconnexion"
+          >
+            <span className="material-symbols-outlined text-xl">logout</span>
+          </button>
         </header>
-        <ProfileHeader profile={profile} />
+        <ProfileHeader profile={profile} onEdit={() => setIsEditOpen(true)} onShare={handleShareProfile} />
         <ProfileStats stats={profileStats} />
         <ProfileTabs />
         <FavoriteArtists artists={favoriteArtists} />
         <div className="grid grid-cols-1 gap-6">
           <ListenHistory items={listenHistory} />
           <Accomplishments badges={badges} totalUnlocked={unlockedBadges} />
+          <ActivityFeed items={activity} />
           <SavedItems items={savedItems} />
         </div>
         <div className="h-4" />
@@ -151,7 +164,7 @@ export default function MonProfilPage() {
       <div className="hidden lg:flex flex-col w-full">
 
         {/* ── Cover banner ── */}
-        <ProfileCoverBanner avatarUrl={profile.avatar} coverUrl={profile.coverImage} onLogout={logout} />
+        <ProfileCoverBanner coverUrl={profile.coverImage} onLogout={logout} />
 
         {/* ── Corps ── */}
         <div className="max-w-7xl mx-auto px-8 w-full pb-16">
@@ -161,7 +174,7 @@ export default function MonProfilPage() {
             <aside className="flex flex-col gap-5">
 
               {/* Avatar flottant sur la cover */}
-              <ProfileSidebarCard profile={profile} />
+              <ProfileSidebarCard profile={profile} onEdit={() => setIsEditOpen(true)} onShare={handleShareProfile} />
 
               {/* Stats */}
               <ProfileStatsDesktop stats={profileStats} />
@@ -187,11 +200,22 @@ export default function MonProfilPage() {
                 <ListenHistoryDesktop items={listenHistory} />
                 <AccomplishmentsDesktop badges={badges} totalUnlocked={unlockedBadges} />
               </div>
+
+              <ActivityFeed items={activity} />
             </div>
 
           </div>
         </div>
       </div>
+
+      <EditProfileModal
+        open={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        currentUsername={user?.username || ""}
+        currentBio={user?.bio || ""}
+        currentAvatar={profile.avatar}
+        currentCover={profile.coverImage}
+      />
     </div>
   );
 }
@@ -205,7 +229,8 @@ import type { UserProfile, ProfileStat, FavoriteArtist, ListenHistoryItem, Badge
 
 // ... (Sub-components updated to handle actions) ...
 
-function ProfileCoverBanner({ avatarUrl, coverUrl, onLogout }: { avatarUrl: string; coverUrl?: string; onLogout: () => void }) {
+// (PDF) "Paramètres" et le titre "Mon profil" retirés — seule la déconnexion reste.
+function ProfileCoverBanner({ coverUrl, onLogout }: { coverUrl?: string; onLogout: () => void }) {
   return (
     <div className="relative w-full h-56 overflow-hidden">
       {coverUrl ? (
@@ -223,28 +248,21 @@ function ProfileCoverBanner({ avatarUrl, coverUrl, onLogout }: { avatarUrl: stri
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#12100F]" />
 
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 pt-4 max-w-7xl mx-auto">
-        <h2 className="text-xl font-extrabold tracking-tight text-white uppercase tracking-widest">Mon Profil</h2>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-[#B8240C] transition-all text-sm font-black uppercase tracking-wider shadow-lg"
-          >
-            <span className="material-symbols-outlined text-lg">logout</span>
-            Déconnexion
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/30 backdrop-blur-md text-white hover:bg-white/10 transition-colors text-sm font-bold border border-white/10">
-            <span className="material-symbols-outlined text-lg">settings</span>
-            Paramètres
-          </button>
-        </div>
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-end px-8 pt-4 max-w-7xl mx-auto">
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-[#B8240C] transition-all text-sm font-black uppercase tracking-wider shadow-lg"
+        >
+          <span className="material-symbols-outlined text-lg">logout</span>
+          Déconnexion
+        </button>
       </div>
     </div>
   );
 }
 
 // ── Sidebar card profil ─────────────────────────────
-function ProfileSidebarCard({ profile }: { profile: UserProfile }) {
+function ProfileSidebarCard({ profile, onEdit, onShare }: { profile: UserProfile; onEdit: () => void; onShare: () => void }) {
   return (
     <div
       className="rounded-2xl p-6 flex flex-col items-center gap-4"
@@ -276,11 +294,17 @@ function ProfileSidebarCard({ profile }: { profile: UserProfile }) {
 
       {/* Actions */}
       <div className="flex gap-2 w-full">
-        <button className="flex-1 h-10 bg-primary hover:bg-[#B8240C] text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+        <button
+          onClick={onEdit}
+          className="flex-1 h-10 bg-primary hover:bg-[#B8240C] text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+        >
           <span className="material-symbols-outlined text-sm">edit</span>
           Éditer
         </button>
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center text-[#8A8178] hover:text-white hover:bg-white/5 transition-colors border border-white/10">
+        <button
+          onClick={onShare}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-[#8A8178] hover:text-white hover:bg-white/5 transition-colors border border-white/10"
+        >
           <span className="material-symbols-outlined text-lg">share</span>
         </button>
       </div>
@@ -378,15 +402,15 @@ function FavoriteArtistsDesktop({ artists }: { artists: FavoriteArtist[] }) {
     >
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-base font-black text-[#F0EDE8] uppercase tracking-wider">Artistes Favoris</h3>
-        <a className="text-xs font-bold text-primary hover:text-[#F0EDE8] transition-colors" href="#">
+        <Link href="/artistes" className="text-xs font-bold text-primary hover:text-[#F0EDE8] transition-colors">
           Voir tout
-        </a>
+        </Link>
       </div>
 
       {/* Grille 6+ colonnes sur desktop */}
       <div className="grid grid-cols-6 gap-4">
         {artists.map((artist) => (
-          <div key={artist.id} className="flex flex-col items-center gap-2 cursor-pointer group">
+          <Link key={artist.id} href={`/artistes/${artist.id}`} className="flex flex-col items-center gap-2 cursor-pointer group">
             <Avatar
               src={artist.avatar}
               alt={artist.name}
@@ -396,15 +420,15 @@ function FavoriteArtistsDesktop({ artists }: { artists: FavoriteArtist[] }) {
             <span className="text-xs font-medium text-center text-[#8A8178] group-hover:text-[#F0EDE8] transition-colors truncate w-full text-center">
               {artist.name}
             </span>
-          </div>
+          </Link>
         ))}
-        {/* Ajouter */}
-        <div className="flex flex-col items-center gap-2 cursor-pointer group">
+        {/* (PDF) "+" redirige vers la page Artistes */}
+        <Link href="/artistes" className="flex flex-col items-center gap-2 cursor-pointer group">
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center border border-dashed border-white/20 group-hover:border-primary transition-all">
             <span className="material-symbols-outlined text-white/40 group-hover:text-primary">add</span>
           </div>
           <span className="text-xs font-medium text-[#4A443E] group-hover:text-primary transition-colors">Ajouter</span>
-        </div>
+        </Link>
       </div>
     </div>
   );

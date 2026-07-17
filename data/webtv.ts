@@ -12,6 +12,7 @@ export const filterTabs: FilterTab[] = [
   { label: "Studio Sessions" },
   { label: "Docs" },
   { label: "Interviews" },
+  { label: "Concerts" },
 ];
 
 export const premierVideo: PremierVideo = {
@@ -125,5 +126,55 @@ export const docVideos: DocVideo[] = [
     imageUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCnbWCdVlPbvRJgwKGt1PMpUugRgJrdH00Wb26JcOHjH6n0iz83Pg0qVeQhkBb7bn8ADePTGck8BzwSzv1rw5YLrJCrUhROAJT1irDK1-D4b_OKLvc-QIC9jCXLFkigFEd-GT-QblUfxelnD2Y7-gyDYIXNG7beDHqqhVAWPgl6qtRYrcWwGy3Mcq8o-uHiWV6pcxTZNmaBOTWosKEb4pMthwzZiWcS1N_UKThALUhzghDiTS3mlaIi2D6t3a4kOiA3vfxtS9lqgK8",
     imageAlt: "Colorful street art mural on a brick wall",
+  },
+];
+
+export const interviewVideos: DocVideo[] = [
+  {
+    id: "interview-1",
+    title: "Face à Face : Imani K.",
+    description: "La fondatrice de KivuTech revient sur son parcours et l'essor de la tech à Goma.",
+    tag: "Interview",
+    date: "Nov 3, 2026",
+    duration: "31:20",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBTJm6yRd-gyv97tdAd6FqlYQ8bZ4vm4h7CjA18NL63etQgr_qXv-PI1hkGkug8FQVjuT61OL1GH_FZDBN-kGxOdOjaVzjsQhkJIWRiynSxuL8WAr6JKEjshqwFXEC9kRvs_7wg2WCghodWSalJ94thnqJZCboghRJeqjRhaa7JUkEgrsfySlXdLMUjwUAOH6G3DI-NGU76hfKTFU_sA5fls5Sp_UySlJ8ArQI5x3exnRCBS4xxXboURxza68hp_nFoElFx7QdHT6s",
+    imageAlt: "Portrait d'une entrepreneure assise face à la caméra dans un décor de studio",
+  },
+  {
+    id: "interview-2",
+    title: "Coulisses avec Urban Kivu",
+    description: "Le collectif de rap le plus en vue de la région parle de son prochain album.",
+    tag: "Artistes",
+    date: "Oct 8, 2026",
+    duration: "22:45",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuC12DL-JiWR3zxdv3CB595XtjFKeUO8nXHUBhuzRk6zrdQD0ny6V5HxbOj6qs1kftws5I2VwlTmeMUscS2LqMwkEwwNejAoq1oPffH1ijOsN4lMAhTzl_6hhLfz7Le7VjWEXDtXtdhdrUU9X_WWMwILUwFeKFHh45asd9ED31yjkbMMFnOvW8GMyalzkNwm8JUdH3q6A5BG9hJBSo2UsJy6sPX9mAm5tAPgy4H3CqxPigXbwqcMGhbUR-hO6rX0wpkJzDTP9CajjmE",
+    imageAlt: "Groupe de rappeurs assis ensemble pour une interview",
+  },
+];
+
+export const concertVideos: DocVideo[] = [
+  {
+    id: "concert-1",
+    title: "Kivu Live Festival — Set complet",
+    description: "Revivez le concert d'ouverture du festival Kivu Live, scène principale.",
+    tag: "Concert",
+    date: "Aug 19, 2026",
+    duration: "48:32",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDzTrxP4TMSCy8KBy4MAqGdn3o3YDlQzjQ9ttpkyS-QXjtiRNKN2A1qxmJZBa4NJnBHRJQXMG0wknulHbtSWKnSVc926s0cl7tRSMZc5VIhSs09cmSsRsXa3eOc9DDbOl-We8a0No-cXs3NtMO4wl1sCpezpMo5728iWeX7hXR-aRd4ySjbP0PwmpXMRLduCPmjhY8EcCv-vvasNEOjeS5sniqN9AZTQFoTJFTpFaIr05rna8_iZBwdou9DHRXoGt5vt3MS78FZFAE",
+    imageAlt: "Concert scène avec éclairage bleu sombre et effets de fumée",
+  },
+  {
+    id: "concert-2",
+    title: "Acoustic Night: Bukavu Sessions",
+    description: "Une soirée acoustique intimiste avec les talents montants de Bukavu.",
+    tag: "Concert",
+    date: "Jul 2, 2026",
+    duration: "36:14",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDAIBr4MbHCQtHW-r_XaWCpmLofynWVu2KRZBpy305b-vyh5inc7iBQ7kFmprZBR0hbOyKTo4sslxAGVKCqBKoAW3gLiXI8P-oEZNJzYR1NN0lPpPTvTr2wMhzakn0ik1cAVcPsW1-aUTHVtHMYHs8QSJTQ98KpFRslMWELaNFkcXKoy-MYU5Fn4GDg55rH-bzGi--yKiwB_IxIX7xg1MjCUatLtG_JB4nXF_KS-4bbCV4R45xQxsOhZO0IEE2hsc7WzHLGETjJHGM",
+    imageAlt: "Musicien jouant de la guitare acoustique sur une scène tamisée",
   },
 ];

@@ -11,6 +11,7 @@ export default function FilterBar({ tabs }: Props) {
       case "Studio Sessions": return "#studio-sessions";
       case "Docs": return "#docs";
       case "Interviews": return "#interviews";
+      case "Concerts": return "#concerts";
       default: return "#top";
     }
   };

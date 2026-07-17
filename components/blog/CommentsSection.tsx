@@ -2,25 +2,69 @@
 import { useState } from "react";
 import type { Comment } from "@/types/blog";
 import Avatar from "@/components/ui/Avatar";
+import { useAuth } from "@/providers/AuthProvider";
+import { postArticleComment, fetchArticleComments } from "@/lib/services/articles";
 
-export default function CommentsSection({ comments: initial }: { comments: Comment[] }) {
+export default function CommentsSection({ slug, comments: initial }: { slug: string; comments: Comment[] }) {
+  const { isAuthenticated } = useAuth();
   const [comments, setComments] = useState(initial);
-  const [text, setText]         = useState("");
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!text.trim()) return;
-    setComments((prev) => [
-      {
-        id: `tmp-${Date.now()}`,
-        author: "Moi",
-        avatar: "",
-        content: text.trim(),
-        publishedAt: "À l'instant",
-        likes: 0,
-      },
-      ...prev,
-    ]);
-    setText("");
+    if (!isAuthenticated) {
+      window.location.href = "/auth/login";
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const created = await postArticleComment(slug, text.trim());
+      setComments((prev) => [
+        {
+          id: created.id.toString(),
+          author: created.author_name,
+          avatar: created.author_avatar || "",
+          content: created.content,
+          publishedAt: "À l'instant",
+          likes: created.like_count || 0,
+        },
+        ...prev,
+      ]);
+      setText("");
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const data = await fetchArticleComments(slug, nextPage);
+      setComments((prev) => [
+        ...prev,
+        ...data.results.map((c) => ({
+          id: c.id.toString(),
+          author: c.author_name,
+          avatar: c.author_avatar || "",
+          content: c.content,
+          publishedAt: "Récemment",
+          likes: c.like_count || 0,
+        })),
+      ]);
+      setPage(nextPage);
+      setHasMore(!!data.next);
+    } catch (err) {
+      console.error("Failed to load more comments:", err);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   return (
@@ -44,13 +88,15 @@ export default function CommentsSection({ comments: initial }: { comments: Comme
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder-gray-500"
-            placeholder="Ajouter un commentaire..."
+            disabled={submitting}
+            className="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder-gray-500 disabled:opacity-50"
+            placeholder={isAuthenticated ? "Ajouter un commentaire..." : "Connectez-vous pour commenter..."}
             type="text"
           />
           <button
             onClick={handleSubmit}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-primary hover:text-white transition"
+            disabled={submitting}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-primary hover:text-white transition disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[20px]">send</span>
           </button>
@@ -64,22 +110,20 @@ export default function CommentsSection({ comments: initial }: { comments: Comme
         ))}
       </div>
 
-      <button className="w-full mt-6 py-2.5 text-sm font-semibold text-text-muted border border-white/10 rounded-lg hover:bg-white/5 transition">
-        Voir plus de commentaires
-      </button>
+      {hasMore && comments.length > 0 && (
+        <button
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+          className="w-full mt-6 py-2.5 text-sm font-semibold text-text-muted border border-white/10 rounded-lg hover:bg-white/5 transition disabled:opacity-50"
+        >
+          {loadingMore ? "Chargement..." : "Voir plus de commentaires"}
+        </button>
+      )}
     </section>
   );
 }
 
 function CommentItem({ comment }: { comment: Comment }) {
-  const [liked, setLiked] = useState(false);
-  const [count, setCount] = useState(comment.likes);
-
-  function toggle() {
-    setLiked((l) => !l);
-    setCount((n) => (liked ? n - 1 : n + 1));
-  }
-
   return (
     <div className="flex gap-3">
       <Avatar src={comment.avatar} alt={comment.author} size="sm" />
@@ -89,25 +133,14 @@ function CommentItem({ comment }: { comment: Comment }) {
           <span className="text-xs text-text-muted">{comment.publishedAt}</span>
         </div>
         <p className="text-sm text-gray-300 leading-relaxed">{comment.content}</p>
-        <div className="flex gap-4 mt-2">
-          <button
-            onClick={toggle}
-            className={`text-xs flex items-center gap-1 transition ${
-              liked ? "text-primary" : "text-text-muted hover:text-white"
-            }`}
-          >
-            <span
-              className="material-symbols-outlined text-[14px]"
-              style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
-            >
-              favorite
-            </span>
-            {count}
-          </button>
-          <button className="text-xs text-text-muted hover:text-white">
-            Répondre
-          </button>
-        </div>
+        {/* No per-comment like endpoint exists server-side — showing the real count as a
+            plain (non-interactive) number rather than a toggle that would never persist. */}
+        {comment.likes > 0 && (
+          <div className="flex gap-1 items-center mt-2 text-xs text-text-muted">
+            <span className="material-symbols-outlined text-[14px]">favorite</span>
+            {comment.likes}
+          </div>
+        )}
       </div>
     </div>
   );

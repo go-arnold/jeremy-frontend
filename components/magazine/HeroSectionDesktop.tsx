@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { HeroArticle} from "@/types/magazine";
 
 export default function HeroSectionDesktop({ article }: { article: HeroArticle }) {
@@ -61,10 +62,13 @@ export default function HeroSectionDesktop({ article }: { article: HeroArticle }
                   <span className="text-accent-gold text-xs">{article.author.role}</span>
                 </div>
                 <div className="ml-auto">
-                  <button className="flex items-center gap-2 bg-primary hover:bg-[#B8240C] text-white px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] shadow-lg shadow-primary/20">
+                  <Link
+                    href={article.slug ? `/blog/${article.slug}` : "#"}
+                    className="flex items-center gap-2 bg-primary hover:bg-[#B8240C] text-white px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] shadow-lg shadow-primary/20"
+                  >
                     <span className="material-symbols-outlined text-lg">article</span>
                     Lire l'article
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}

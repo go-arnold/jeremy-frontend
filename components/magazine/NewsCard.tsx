@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { NewsArticle } from "@/types/magazine";
 
 interface Props {
@@ -5,12 +6,13 @@ interface Props {
 }
 
 export default function NewsCard({ article }: Props) {
-  const { variant, category, title, subtitle, imageUrl, imageAlt, author, date, quote } = article;
+  const { variant, category, title, subtitle, imageUrl, imageAlt, author, date, quote, slug } = article;
+  const href = slug ? `/blog/${slug}` : "#";
 
   /* ── Variante : image portrait tall (ex: MUSIQUE) ── */
   if (variant === "tall-image") {
     return (
-      <article className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20">
+      <Link href={href} className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20 block">
         <div className="relative aspect-[3/4] overflow-hidden">
           <div className="absolute top-3 left-3 z-10">
             <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded border border-white/10">
@@ -31,14 +33,14 @@ export default function NewsCard({ article }: Props) {
             {subtitle && <p className="text-gray-400 text-xs">{subtitle}</p>}
           </div>
         </div>
-      </article>
+      </Link>
     );
   }
 
   /* ── Variante : image carrée avec texte en dessous (ex: MODE) ── */
   if (variant === "square-image") {
     return (
-      <article className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20">
+      <Link href={href} className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20 block">
         <div className="relative aspect-square overflow-hidden">
           <div className="absolute top-3 left-3 z-10">
             <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded border border-white/10">
@@ -63,14 +65,14 @@ export default function NewsCard({ article }: Props) {
             </div>
           )}
         </div>
-      </article>
+      </Link>
     );
   }
 
   /* ── Variante : texte seul (ex: LITTÉRATURE) ── */
   if (variant === "text-only") {
     return (
-      <article className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden p-5 border border-white/5 relative group hover:border-primary/30 transition-colors">
+      <Link href={href} className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden p-5 border border-white/5 relative group hover:border-primary/30 transition-colors block">
         <span className="text-primary text-[10px] font-bold uppercase tracking-wider mb-2 block">
           {category}
         </span>
@@ -80,18 +82,18 @@ export default function NewsCard({ article }: Props) {
         )}
         <div className="flex justify-between items-center border-t border-white/5 pt-3">
           {date && <span className="text-xs text-gray-500">{date}</span>}
-          <button className="bg-primary/20 hover:bg-primary text-primary hover:text-white rounded-full p-1 transition-colors ml-auto">
+          <span className="bg-primary/20 group-hover:bg-primary text-primary group-hover:text-white rounded-full p-1 transition-colors ml-auto">
             <span className="material-symbols-outlined text-sm block">arrow_outward</span>
-          </button>
+          </span>
         </div>
-      </article>
+      </Link>
     );
   }
 
   /* ── Variante : image courte avec overlay bas (ex: URBAN) ── */
   if (variant === "short-image") {
     return (
-      <article className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20">
+      <Link href={href} className="break-inside-avoid bg-surface-dark rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 shadow-lg shadow-black/20 block">
         <div className="relative aspect-[4/5] overflow-hidden">
           <div className="absolute top-3 left-3 z-10">
             <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded border border-white/10">
@@ -110,7 +112,7 @@ export default function NewsCard({ article }: Props) {
             <h4 className="text-white font-bold text-sm leading-tight">{title}</h4>
           </div>
         </div>
-      </article>
+      </Link>
     );
   }
 

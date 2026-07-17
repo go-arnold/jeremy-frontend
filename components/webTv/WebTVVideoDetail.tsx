@@ -6,9 +6,11 @@ import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
 import EngagementBar from "@/components/ui/EngagementBar";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLiveRoom } from "@/hooks/useLiveRoom";
+import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
 
 interface WebTVVideo {
   id: string;
+  numericId?: number | null;
   slug: string;
   title: string;
   description?: string;
@@ -36,6 +38,9 @@ async function sendChatMessage(slug: string, message: string) {
 }
 
 export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
+  const [playing, setPlaying] = useState(false);
+  useConsumptionHeartbeat(playing, "webtv", video.numericId, video.title, video.thumbnail);
+
   return (
     <div className="min-h-screen pt-20 pb-16 px-4 lg:px-8 max-w-5xl mx-auto flex flex-col gap-6">
       {video.isLive ? (
@@ -44,6 +49,8 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
           title={video.title}
           status="live"
           thumbnail={video.thumbnail}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
         />
       ) : (
         <VideoPlayer
@@ -51,6 +58,8 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
           title={video.title}
           description={video.description}
           thumbnail={video.thumbnail}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
         />
       )}
 

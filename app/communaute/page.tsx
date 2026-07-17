@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { feedItems as mockedFeed } from "@/data/communaute";
+import { feedItems as mockedFeed, mockChallenges, mockPolls } from "@/data/communaute";
 import SubmitTalentCard from "@/components/communaute/SubmitTalentCard";
 import FilterTabs, { type FilterTab } from "@/components/communaute/FilterTabs";
 import TalentPostCard   from "@/components/communaute/TalentPostCard";
@@ -10,6 +10,8 @@ import PollCard         from "@/components/communaute/PollCard";
 import ArtPostCard      from "@/components/communaute/ArtPostCard";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiPostToCommunityItem } from "@/lib/mappers";
+import { fetchChallenges, fetchPolls } from "@/lib/services/community";
+import type { ApiChallenge, ApiPoll } from "@/types/communaute";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 
@@ -32,6 +34,8 @@ function buildEndpoint(filter: string, page: number): string {
 
 export default function CommunautePage() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<ApiChallenge[]>([]);
+  const [polls, setPolls] = useState<ApiPoll[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -56,7 +60,17 @@ export default function CommunautePage() {
   useEffect(() => {
     setLoading(true);
     setInitialDataLoaded(false);
-    fetchPosts(activeFilter, 1, false).finally(() => {
+    Promise.all([
+      fetchPosts(activeFilter, 1, false),
+      fetchChallenges().then(
+        (data) => setChallenges(data.results.length > 0 ? data.results : mockChallenges),
+        () => setChallenges(mockChallenges)
+      ),
+      fetchPolls().then(
+        (data) => setPolls(data.results.length > 0 ? data.results : mockPolls),
+        () => setPolls(mockPolls)
+      ),
+    ]).finally(() => {
       setLoading(false);
       setInitialDataLoaded(true);
     });
@@ -90,11 +104,6 @@ export default function CommunautePage() {
     );
   }
 
-  // Sépare les types pour les placer dans les bonnes colonnes
-  const talentAndArt  = posts.filter((i) => i.type === "talent" || i.type === "art");
-  const challenges    = posts.filter((i) => i.type === "challenge");
-  const polls         = posts.filter((i) => i.type === "poll");
-
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
 
@@ -103,9 +112,15 @@ export default function CommunautePage() {
         <SubmitTalentCard />
         <div className="flex flex-col gap-6 px-4">
           <FilterTabs tabs={FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
+          {challenges.map((challenge) => (
+            <ChallengeCard key={challenge.id} challenge={challenge} />
+          ))}
+          {polls.map((poll) => (
+            <PollCard key={poll.id} poll={poll} />
+          ))}
           {showEmptyState ? (
-            <EmptyState 
-              message="Communauté tranquille" 
+            <EmptyState
+              message="Communauté tranquille"
               description="Soyez le premier à partager votre talent ou une création avec le Kivu !"
               icon="forum"
             />
@@ -113,19 +128,18 @@ export default function CommunautePage() {
             <>
               {posts.map((item, index) => (
                 <div key={item.data.id || index}>
-                  {item.type === "talent"    && <TalentPostCard post={item.data} />}
-                  {item.type === "challenge" && <ChallengeCard challenge={item.data} />}
-                  {item.type === "poll"      && <PollCard poll={item.data} />}
-                  {item.type === "art"       && <ArtPostCard post={item.data} />}
+                  {item.type === "talent" && <TalentPostCard post={item.data} />}
+                  {item.type === "art"    && <ArtPostCard post={item.data} />}
+                  {item.type === "news"   && <TalentPostCard post={item.data} />}
                   {index < posts.length - 1 && (
                     <div className="h-px bg-white/5 w-full mt-6" />
                   )}
                 </div>
               ))}
-              <VoirPlusPagination 
-                onLoadMore={loadMore} 
-                hasMore={hasMore} 
-                isLoading={loadingMore} 
+              <VoirPlusPagination
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                isLoading={loadingMore}
               />
             </>
           )}
@@ -160,14 +174,14 @@ export default function CommunautePage() {
             </aside>
 
             <main className="flex flex-col gap-6">
-              {talentAndArt.length === 0 && challenges.length === 0 && polls.length === 0 ? (
-                <EmptyState 
-                  message="Rien de nouveau ici" 
+              {posts.length === 0 ? (
+                <EmptyState
+                  message="Rien de nouveau ici"
                   description="Revenez plus tard pour voir les nouveaux talents du Kivu."
                 />
               ) : (
                 <>
-                  {talentAndArt.map((item, index) => (
+                  {posts.map((item, index) => (
                     <div
                       key={item.data.id || index}
                       className="rounded-2xl overflow-hidden border border-white/5"
@@ -176,25 +190,26 @@ export default function CommunautePage() {
                       <div className="p-5">
                         {item.type === "talent" && <TalentPostCard post={item.data} />}
                         {item.type === "art"    && <ArtPostCard post={item.data} />}
+                        {item.type === "news"   && <TalentPostCard post={item.data} />}
                       </div>
                     </div>
                   ))}
-                  
-                  <VoirPlusPagination 
-                    onLoadMore={loadMore} 
-                    hasMore={hasMore} 
-                    isLoading={loadingMore} 
+
+                  <VoirPlusPagination
+                    onLoadMore={loadMore}
+                    hasMore={hasMore}
+                    isLoading={loadingMore}
                   />
                 </>
               )}
             </main>
 
             <aside className="sticky top-24 flex flex-col gap-5">
-              {challenges.map((item, i) => (
-                <ChallengeCard key={item.data.id || i} challenge={item.data} />
+              {challenges.map((challenge) => (
+                <ChallengeCard key={challenge.id} challenge={challenge} />
               ))}
-              {polls.map((item, i) => (
-                <PollCard key={item.data.id || i} poll={item.data} />
+              {polls.map((poll) => (
+                <PollCard key={poll.id} poll={poll} />
               ))}
               <TrendingWidget />
             </aside>

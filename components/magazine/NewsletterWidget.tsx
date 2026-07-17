@@ -1,4 +1,27 @@
+"use client";
+
+import { useState } from "react";
+import { subscribeToNewsletter } from "@/lib/services/newsletter";
+
 export default function NewsletterWidget() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async () => {
+    if (!email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await subscribeToNewsletter(email.trim());
+      setMessage(res.detail || "Merci de votre inscription !");
+      setStatus("done");
+      setEmail("");
+    } catch (err: any) {
+      setMessage(err.message || "Échec de l'inscription.");
+      setStatus("error");
+    }
+  };
+
   return (
     <div
       className="rounded-2xl p-5 relative overflow-hidden"
@@ -9,17 +32,30 @@ export default function NewsletterWidget() {
       <p className="text-gray-400 text-xs mb-4 leading-relaxed">
         Newsletter hebdomadaire — culture, musique & actualités du Kivu.
       </p>
-      <div className="flex flex-col gap-2">
-        <input
-          className="bg-[#12100F] border border-white/10 rounded-xl px-4 py-3 text-white text-sm w-full focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-gray-600 transition-all"
-          placeholder="votre@email.com"
-          type="email"
-        />
-        <button className="bg-primary hover:bg-[#B8240C] text-white rounded-xl py-3 text-sm font-bold transition-all flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined text-lg">send</span>
-          S'abonner
-        </button>
-      </div>
+      {status === "done" ? (
+        <p className="text-primary text-sm font-bold py-3">{message}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            disabled={status === "loading"}
+            className="bg-[#12100F] border border-white/10 rounded-xl px-4 py-3 text-white text-sm w-full focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-gray-600 transition-all disabled:opacity-50"
+            placeholder="votre@email.com"
+            type="email"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={status === "loading"}
+            className="bg-primary hover:bg-[#B8240C] text-white rounded-xl py-3 text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-lg">send</span>
+            {status === "loading" ? "Envoi..." : "S'abonner"}
+          </button>
+          {status === "error" && <p className="text-primary text-xs font-bold">{message}</p>}
+        </div>
+      )}
     </div>
   );
 }

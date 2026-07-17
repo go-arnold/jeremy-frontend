@@ -15,6 +15,7 @@ export interface Author {
 
 export interface HeroArticle {
   id: string;
+  slug?: string;
   tag: string; // ex: "À la une"
   readTime: number; // en minutes
   title: string;
@@ -28,7 +29,10 @@ export interface HeroArticle {
 
 export interface NewsArticle {
   id: string;
-  category: Category;
+  slug?: string;
+  /** Real API categories are free-form (`CategorySerializer.name`), not this fixed mock enum —
+   * loosened rather than mapping every possible admin-created category name onto it. */
+  category: Category | string;
   title: string;
   subtitle?: string;
   imageUrl?: string;

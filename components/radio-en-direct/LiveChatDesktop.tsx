@@ -1,6 +1,51 @@
-import type { ChatMessage } from "@/types/radio";
+"use client";
 
-export default function LiveChatDesktop({ messages }: { messages: ChatMessage[] }) {
+import { useEffect, useRef, useState } from "react";
+import type { ChatMessage } from "@/types/radio";
+import { useAuth } from "@/providers/AuthProvider";
+import { fetchRadioChat, postRadioChatMessage } from "@/lib/services/radio";
+
+const POLL_INTERVAL_MS = 8000;
+
+export default function LiveChatDesktop({ messages: initialMessages }: { messages: ChatMessage[] }) {
+  const { isAuthenticated } = useAuth();
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const knownIds = useRef(new Set(initialMessages.map((m) => m.id)));
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const latest = await fetchRadioChat();
+        const fresh = latest.filter((m) => !knownIds.current.has(m.id));
+        if (fresh.length > 0) {
+          fresh.forEach((m) => knownIds.current.add(m.id));
+          setMessages((prev) => [...prev, ...fresh]);
+        }
+      } catch {
+        // ignore transient poll failures
+      }
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSend = async () => {
+    const text = message.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setMessage("");
+    try {
+      const sent = await postRadioChatMessage(text);
+      knownIds.current.add(sent.id);
+      setMessages((prev) => [...prev, sent]);
+    } catch {
+      // message failed to send — silently drop, input already cleared
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div
       className="rounded-2xl p-5 flex flex-col gap-4"
@@ -15,7 +60,6 @@ export default function LiveChatDesktop({ messages }: { messages: ChatMessage[] 
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
           </span>
         </h3>
-        <span className="text-[#8A8178] text-xs">245 actifs</span>
       </div>
 
       {/* Messages */}
@@ -40,12 +84,22 @@ export default function LiveChatDesktop({ messages }: { messages: ChatMessage[] 
       {/* Input */}
       <div className="relative">
         <input
-          className="w-full h-10 pl-4 pr-10 rounded-xl text-sm text-white placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#E63012] transition-all"
-          placeholder="Rejoindre la conversation..."
+          className="w-full h-10 pl-4 pr-10 rounded-xl text-sm text-white placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#E63012] transition-all disabled:opacity-50"
+          placeholder={isAuthenticated ? "Rejoindre la conversation..." : "Connectez-vous pour écrire..."}
           type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSend();
+          }}
+          disabled={!isAuthenticated || sending}
           style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
         />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#E63012] hover:text-[#F0EDE8] transition-colors">
+        <button
+          onClick={handleSend}
+          disabled={!isAuthenticated || !message.trim() || sending}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#E63012] hover:text-[#F0EDE8] transition-colors disabled:opacity-40"
+        >
           <span className="material-symbols-outlined text-lg">send</span>
         </button>
       </div>

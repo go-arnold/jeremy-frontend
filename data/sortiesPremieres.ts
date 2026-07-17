@@ -1,7 +1,6 @@
 import type {
   FormatFilter,
   FeaturedRelease,
-  CalendarMonth,
   UpcomingRelease,
 } from "@/types/sortiesPremieres";
 
@@ -23,28 +22,14 @@ export const featuredRelease: FeaturedRelease = {
   isPremiere: true,
 };
 
-export const calendarData: CalendarMonth = {
-  label: "Mars 2026",
-  days: [
-    // Week 1 — Mars starts on Wednesday (col 4)
-    { day: 1, colStart: 4, isPast: true },
-    { day: 2, isPast: true },
-    { day: 3, isPast: true },
-    { day: 4, isPast: true },
-    // Today
-    { day: 5, isToday: true },
-    { day: 6 },
-    { day: 7 },
-    // Week 2
-    { day: 8 },
-    { day: 9 },
-    { day: 10 },
-    { day: 11 },
-    { day: 12, hasEvent: true },
-    { day: 13 },
-    { day: 14 },
-  ],
+// Fallback for `ReleaseCalendar` when `/releases/calendar/` is unreachable — real usage builds
+// the month grid client-side from these raw ISO dates via `buildCalendarMonth()`.
+const inDays = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
 };
+export const mockReleaseDates: string[] = [inDays(5), inDays(12)];
 
 export const upcomingReleases: UpcomingRelease[] = [
   {

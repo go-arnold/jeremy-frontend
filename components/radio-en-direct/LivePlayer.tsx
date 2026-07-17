@@ -1,18 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import type { LiveShow } from "@/types/radio";
 import LiveChat from "./LiveChat";
+import { useAudioLiveStream } from "@/hooks/useAudioLiveStream";
+import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+import { shareContent } from "@/lib/share";
 
 interface Props {
   show: LiveShow;
 }
 
 export default function LivePlayer({ show }: Props) {
-  const [isPlaying, setIsPlaying] = useState(show.isPlaying);
+  const { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry } = useAudioLiveStream(
+    show.hlsUrl,
+    show.isPlaying
+  );
+  useConsumptionHeartbeat(isPlaying, "radio", show.numericId, show.title, show.imageUrl);
+
+  const handleShare = () => {
+    shareContent({ title: show.title, url: "/radio-en-direct" }).catch(() => {});
+  };
 
   return (
     <section className="px-4 mb-2">
+      <audio ref={audioRef} />
 
       <div className= "text-[#ffffff] font-black text-xl uppercase py-4 tracking-wider">
         <h1> RADIO EN DIRECT</h1>
@@ -22,14 +33,14 @@ export default function LivePlayer({ show }: Props) {
       <div
         className="relative w-full rounded-2xl overflow-hidden"
         style={{ aspectRatio: "16/9" }}
-      > 
-      
+      >
+
         {/* Image fond */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           data-alt={show.imageAlt}
           style={{ backgroundImage: `url('${show.imageUrl}')` }}
-        /> 
+        />
 
         {/* Gradients : haut léger + bas fort */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/90" />
@@ -52,7 +63,7 @@ export default function LivePlayer({ show }: Props) {
             </p>
           </div>
 
-         {/* } <div
+          <div
             className="flex items-center gap-1 px-2 py-1 rounded-full"
             style={{ background: "#00000073" }}
           >
@@ -63,12 +74,13 @@ export default function LivePlayer({ show }: Props) {
               group
             </span>
             <p className="text-white/80 text-[10px] font-bold">{show.listenerCount}</p>
-          </div> */}
+          </div>
         </div>
 
         {/* ── Actions haut droite ── */}
         <div className="absolute top-3 right-3 z-10 flex gap-1.5">
           <button
+            onClick={handleShare}
             className="size-8 rounded-full flex items-center justify-center"
             style={{ background: "rgba(0,0,0,0.4)" }}
           >
@@ -76,17 +88,9 @@ export default function LivePlayer({ show }: Props) {
               share
             </span>
           </button>
-          <button
-            className="size-8 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.4)" }}
-          >
-            <span className="material-symbols-outlined text-white" style={{ fontSize: "18px" }}>
-              bookmark_border
-            </span>
-          </button>
         </div>
 
-        {/* ── Waveform animée — bas centre ── */}
+        {/* ── Waveform animée — bas centre (décoratif, ne prétend pas représenter le flux réel) ── */}
         <div className="absolute bottom-[50px] left-0 right-0 flex justify-center items-end gap-[3px] h-7 pointer-events-none">
           {[0.85, 1.1, 0.65, 1.3, 0.9, 1.4, 0.7, 1.05, 0.8, 1.2, 0.6, 1.1, 0.9].map((dur, i) => (
             <div
@@ -97,6 +101,7 @@ export default function LivePlayer({ show }: Props) {
                 animationDuration: `${dur}s`,
                 animationDelay: `${i * 0.07}s`,
                 height: `${10 + Math.sin(i * 0.9) * 8}px`,
+                animationPlayState: isPlaying ? "running" : "paused",
               }}
             />
           ))}
@@ -127,54 +132,30 @@ export default function LivePlayer({ show }: Props) {
           marginTop: "-1px",
         }}
       >
-        {/* Barre de progression */}
-        <div className="mb-4">
-          <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full relative"
-              style={{ width: "75%" }}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 size-3 bg-white rounded-full shadow-lg" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-white text-[10px] font-bold tracking-widest uppercase">
-              Flux en direct
-            </p>
-            {/* Waveform mini */}
-            <div className="flex gap-[2px] items-end h-4">
-              <div className="w-1 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-              <div className="w-1 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-              <div className="w-1 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
-              <div className="w-1 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
-            </div>
-          </div>
+        {/* Statut du flux (pas de barre de progression — un direct n'a pas de position/durée) */}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-white text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+            {hasError ? (
+              <span className="text-primary">Flux indisponible</span>
+            ) : isLoading ? (
+              "Connexion..."
+            ) : (
+              "Flux en direct"
+            )}
+          </p>
+          {hasError && (
+            <button onClick={retry} className="text-primary text-[10px] font-bold underline">
+              Réessayer
+            </button>
+          )}
         </div>
 
-        {/* Contrôles principaux */}
-        <div className="flex items-center justify-between mb-4">
-          <button className="text-white/40 hover:text-white transition-colors active:scale-90">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "28px", fontVariationSettings: "'FILL' 0" }}
-            >
-              replay_10
-            </span>
-          </button>
-
-          <button className="text-white/60 hover:text-white transition-colors active:scale-90">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "30px", fontVariationSettings: "'FILL' 1" }}
-            >
-              skip_previous
-            </span>
-          </button>
-
-          {/* Bouton play principal */}
+        {/* Contrôle principal */}
+        <div className="flex items-center justify-center mb-4">
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="flex shrink-0 items-center justify-center rounded-full size-16 bg-primary text-white shadow-xl transform active:scale-95 transition-transform"
+            onClick={togglePlay}
+            disabled={isLoading || hasError || !show.hlsUrl}
+            className="flex shrink-0 items-center justify-center rounded-full size-16 bg-primary text-white shadow-xl transform active:scale-95 transition-transform disabled:opacity-50"
             style={{
               boxShadow: isPlaying
                 ? "0 0 0 0 rgba(230,48,18,0.5), 0 4px 20px rgba(230,48,18,0.4)"
@@ -182,53 +163,40 @@ export default function LivePlayer({ show }: Props) {
               animation: isPlaying ? "pulse-ring 2s ease-out infinite" : "none",
             }}
           >
-            <span
-              className="material-symbols-outlined !text-4xl"
-              style={{
-                fontVariationSettings: "'FILL' 1",
-                marginLeft: isPlaying ? "0" : "2px",
-              }}
-            >
-              {isPlaying ? "pause" : "play_arrow"}
-            </span>
-          </button>
-
-          <button className="text-white/60 hover:text-white transition-colors active:scale-90">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "30px", fontVariationSettings: "'FILL' 1" }}
-            >
-              skip_next
-            </span>
-          </button>
-
-          <button className="text-white/40 hover:text-white transition-colors active:scale-90">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "28px", fontVariationSettings: "'FILL' 0" }}
-            >
-              forward_30
-            </span>
+            {isLoading ? (
+              <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <span
+                className="material-symbols-outlined !text-4xl"
+                style={{
+                  fontVariationSettings: "'FILL' 1",
+                  marginLeft: isPlaying ? "0" : "2px",
+                }}
+              >
+                {isPlaying ? "pause" : "play_arrow"}
+              </span>
+            )}
           </button>
         </div>
 
-        {/* Volume + actions secondaires */}
+        {/* Volume */}
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-white/35" style={{ fontSize: "17px" }}>
             volume_down
           </span>
-          <div className="flex-1 relative h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full w-2/3 rounded-full bg-white/45" />
-          </div>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            defaultValue="1"
+            onChange={(e) => setVolume(parseFloat(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-primary"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+          />
           <span className="material-symbols-outlined text-white/35" style={{ fontSize: "17px" }}>
             volume_up
           </span>
-          <button className="ml-1 size-8 rounded-xl flex items-center justify-center text-white/35 hover:text-white hover:bg-white/5 transition-all">
-            <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>hd</span>
-          </button>
-          <button className="size-8 rounded-xl flex items-center justify-center text-white/35 hover:text-white hover:bg-white/5 transition-all">
-            <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>bedtime</span>
-          </button>
         </div>
       </div>
 

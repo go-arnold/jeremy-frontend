@@ -79,6 +79,9 @@ export interface RelatedEpisode {
 
 export interface PodcastEpisode {
   id: string;
+  /** Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
+   * endpoint needs the actual `object_id`. */
+  numericId?: number | null;
   slug: string;
   episodeNumber: number;  // 42
   publishedAt: string;    // "14 NOV"
@@ -92,6 +95,12 @@ export interface PodcastEpisode {
   currentTime: string;    // "14:20" — position initiale du player
   progressPercent: number; // 35
   audioUrl: string;
+  transcript?: string;
+  likeCount?: number;
+  commentCount?: number;
+  /** First entry mirrors `guests[0]` for existing single-guest UI; `guests` is the real full
+   * list (the real API field is a free-form JSONField, so entries may be name-only). */
   guest: EpisodeGuest;
+  guests?: EpisodeGuest[];
   relatedEpisodes: RelatedEpisode[];
 }

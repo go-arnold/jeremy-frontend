@@ -1,4 +1,6 @@
-import { heroArticle, newsArticles, youthItems, radioBanner } from "@/data/magazine";
+import { heroArticle as mockedHero, newsArticles as mockedNews, youthItems, radioBanner } from "@/data/magazine";
+import { apiFetch, PaginatedResponse } from "@/lib/api-client";
+import { mapApiArticleToMagazineHero, mapApiArticleToNewsArticle } from "@/lib/mappers";
 import HeroSection from "@/components/magazine/HeroSection";
 import NewsSection from "@/components/magazine/NewsSection";
 import YouthSection from "@/components/magazine/YouthSection";
@@ -10,8 +12,36 @@ import YouthSectionDesktop from "@/components/magazine/YouthSectionDesktop";
 import RadioSidebarWidget from "@/components/magazine/RadioSidebarWidget";
 import NewsletterWidget from "@/components/magazine/NewsletterWidget";
 
+export const dynamic = "force-dynamic";
 
-export default function Page() {
+async function getMagazineArticles() {
+  try {
+    const data = await apiFetch<PaginatedResponse<any>>("/api/v1/articles/?page_size=10");
+    if (data.results.length === 0) return null;
+    // Featured article (if any) leads as the hero; the rest fill the News grid. Falls back to
+    // the first article when nothing is explicitly featured, same convention as Home/Events.
+    const featuredIndex = data.results.findIndex((a) => a.is_featured);
+    const heroSource = data.results[featuredIndex >= 0 ? featuredIndex : 0];
+    const rest = data.results.filter((_, i) => i !== (featuredIndex >= 0 ? featuredIndex : 0));
+    return {
+      hero: mapApiArticleToMagazineHero(heroSource),
+      news: rest.map((a, i) => mapApiArticleToNewsArticle(a, i)),
+    };
+  } catch (error) {
+    console.error("Failed to fetch magazine articles:", error);
+    return null;
+  }
+}
+
+export default async function Page() {
+  const real = await getMagazineArticles();
+  const heroArticle = real?.hero || mockedHero;
+  const newsArticles = real?.news && real.news.length > 0 ? real.news : mockedNews;
+  // `youthItems` mixes articles AND podcast episodes under an editorial "Jeunesse" framing that
+  // has no equivalent category in the backend (real categories: Culture, Société, Mode,
+  // Musique, Arts Visuels, Littérature, Danse) — left as curated static content rather than
+  // inventing a fake category mapping, same call as Home's `contentCards` section.
+
   return (
     <div>
       {/* ══════════════════════════════════════
@@ -25,22 +55,7 @@ export default function Page() {
         <section className="px-5 pb-8">
           <div className="rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primary rounded-full blur-3xl opacity-20" />
-            <h3 className="font-serif text-xl text-white mb-2">Restez Connecté</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Abonnez-vous à notre newsletter hebdomadaire.{" "}
-              <br />
-              <em className="text-gray-500">Subscribe to our weekly newsletter.</em>
-            </p>
-            <div className="flex gap-2">
-              <input
-                className="bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white text-sm w-full focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder:text-gray-600"
-                placeholder="Email address"
-                type="email"
-              />
-              <button className="bg-primary text-white rounded-lg px-4 flex items-center justify-center">
-                <span className="material-symbols-outlined">send</span>
-              </button>
-            </div>
+            <NewsletterWidget />
           </div>
         </section>
 
@@ -90,5 +105,3 @@ export default function Page() {
     </div>
   );
 }
-
-

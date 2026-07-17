@@ -50,3 +50,40 @@ export type Badge = {
   glowColor: string;    // inline box-shadow color string e.g. "rgba(250,204,21,0.2)"
   unlocked: boolean;
 };
+
+// ── PATCH /auth/me/ ───────────────────────────────────────────────────────────
+export interface ProfileUpdatePayload {
+  username?: string;
+  handle?: string;
+  bio?: string;
+  /** A Cloudinary `secure_url` already uploaded via the signed upload-signature flow — this
+   * endpoint does not accept a raw file. */
+  avatar?: string;
+  cover_image?: string;
+}
+
+// ── GET /users/{id}/activity/ ─────────────────────────────────────────────────
+export interface ApiActivityTarget {
+  kind: string;
+  id: number | null;
+  slug: string | null;
+  title: string;
+  cover_url: string;
+}
+
+export interface ApiActivityEntry {
+  action: "like" | "comment";
+  created_at: string;
+  excerpt?: string;
+  target: ApiActivityTarget;
+}
+
+export interface ActivityEntry {
+  id: string;
+  action: "like" | "comment";
+  createdAt: string;
+  excerpt?: string;
+  targetTitle: string;
+  targetCoverImage: string;
+  targetHref: string;
+}

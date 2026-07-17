@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ArtisteDetail } from "@/types/artistes";
 import ArtisteDetailCTA from "./ArtisteDetailCTA";
+import FavoriteArtistButton from "./FavoriteArtistButton";
+import ShareArtistButton from "./ShareArtistButton";
 
 interface Props {
   artiste: ArtisteDetail;
@@ -41,9 +43,8 @@ export default function ArtisteDetailHero({ artiste }: Props) {
           <span className="hidden lg:block text-sm font-bold">Artistes</span>
         </Link>
         <div className="flex items-center gap-2">
-          <button className="flex items-center justify-center size-10 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-white/10 transition-colors">
-            <span className="material-symbols-outlined text-xl">share</span>
-          </button>
+          <FavoriteArtistButton artistId={artiste.artistId} artistSlug={artiste.id} />
+          <ShareArtistButton name={artiste.name} slug={artiste.id} />
         </div>
       </div>
 

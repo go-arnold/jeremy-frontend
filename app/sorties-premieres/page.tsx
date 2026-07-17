@@ -1,18 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   formatFilters as mockedFilters,
   featuredRelease as mockedFeatured,
-  calendarData as mockedCalendar,
+  mockReleaseDates,
   upcomingReleases as mockedUpcoming,
 } from "@/data/sortiesPremieres";
 import FormatFilters       from "@/components/sortiesPremieres/FormatFilters";
 import FeaturedReleaseHero from "@/components/sortiesPremieres/FeaturedReleaseHero";
 import ReleaseCalendar     from "@/components/sortiesPremieres/ReleaseCalendar";
 import UpcomingReleaseCard from "@/components/sortiesPremieres/UpcomingReleaseCard";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import { mapApiReleaseToFeaturedRelease } from "@/lib/mappers";
+import { fetchFeaturedRelease, fetchReleaseCalendar } from "@/lib/services/releases";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 import type {
@@ -23,6 +25,8 @@ import type {
 
 export default function SortiesPremieresPage() {
   const [releases, setReleases] = useState<any[]>([]);
+  const [featured, setFeatured] = useState<FeaturedRelease | null>(null);
+  const [calendarDates, setCalendarDates] = useState<string[]>(mockReleaseDates);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -38,10 +42,21 @@ export default function SortiesPremieresPage() {
       } catch (error) {
         console.error("Failed to fetch releases initial data:", error);
         setReleases(mockedUpcoming as any);
-      } finally {
-        setLoading(false);
-        setInitialDataLoaded(true);
       }
+
+      const featuredResult = await fetchFeaturedRelease();
+      if (featuredResult) setFeatured(featuredResult as any);
+
+      try {
+        const calendarReleases = await fetchReleaseCalendar();
+        const dates = calendarReleases.map((r: any) => r?.rawDate).filter(Boolean);
+        if (dates.length > 0) setCalendarDates(dates);
+      } catch (error) {
+        console.error("Failed to fetch release calendar:", error);
+      }
+
+      setLoading(false);
+      setInitialDataLoaded(true);
     }
     init();
   }, []);
@@ -72,9 +87,8 @@ export default function SortiesPremieresPage() {
     );
   }
 
-  const featuredRelease = releases.find(r => r.isPremiere) || releases[0] || mockedFeatured;
+  const featuredRelease = featured || releases.find(r => r.isPremiere) || releases[0] || mockedFeatured;
   const upcomingReleases = releases;
-  const calendarData = mockedCalendar;
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
@@ -99,7 +113,7 @@ export default function SortiesPremieresPage() {
         ) : (
           <>
             <FeaturedReleaseHero release={featuredRelease as any} />
-            <ReleaseCalendar calendar={calendarData} />
+            <ReleaseCalendar releaseDates={calendarDates} />
             <div className="space-y-8">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">event_upcoming</span>
@@ -149,7 +163,7 @@ export default function SortiesPremieresPage() {
                   <FeaturedReleaseHeroDesktop release={featuredRelease as any} />
                 </div>
                 <div className="flex flex-col gap-8">
-                  <ReleaseCalendar calendar={calendarData} />
+                  <ReleaseCalendar releaseDates={calendarDates} />
                   <UpcomingReleasesDesktop releases={upcomingReleases as any} />
                 </div>
               </div>
@@ -236,10 +250,13 @@ function FeaturedReleaseHeroDesktop({ release }: { release: FeaturedRelease }) {
           borderTop: "none",
         }}
       >
-        <button className="w-full bg-primary hover:bg-[#B8240C] text-white font-black py-3.5 rounded-xl text-sm uppercase tracking-wider transition-all hover:scale-[1.02] flex items-center justify-center gap-2">
+        <Link
+          href={release.href || "/sorties-premieres"}
+          className="w-full bg-primary hover:bg-[#B8240C] text-white font-black py-3.5 rounded-xl text-sm uppercase tracking-wider transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+        >
           <span className="material-symbols-outlined text-lg">open_in_new</span>
           Voir la sortie
-        </button>
+        </Link>
         <p className="text-center text-[#8A8178] text-xs mt-3">
           Sortie le {release.releaseDate}
         </p>
@@ -292,10 +309,13 @@ function UpcomingReleasesDesktop({ releases }: { releases: UpcomingRelease[] }) 
                   <span className="material-symbols-outlined text-xs">{release.releaseIcon}</span>
                   <span>{release.releaseInfo}</span>
                 </div>
-                <button className="text-primary text-xs font-bold flex items-center gap-1 hover:text-[#F0EDE8] transition-colors">
+                <Link
+                  href={(release as any).href || "/sorties-premieres"}
+                  className="text-primary text-xs font-bold flex items-center gap-1 hover:text-[#F0EDE8] transition-colors"
+                >
                   Détails
                   <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                </button>
+                </Link>
               </div>
             </div>
           </div>

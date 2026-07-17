@@ -7,11 +7,22 @@ export type FormatFilter = {
 
 export type FeaturedRelease = {
   id: string;
+  slug?: string;
+  href?: string;
   month: string;           // e.g. "MARS 2026"
   title: string;
   releaseDate: string;     // e.g. "Sortie le 15 mars • Toutes plateformes"
+  /** Raw ISO date (`release_date`), needed for real calendar-grid placement — `releaseDate`
+   * above is already human-formatted for display and can't be parsed back reliably. */
+  rawDate?: string;
   coverImage: string;
   isPremiere: boolean;
+  artistName?: string;
+  likeCount?: number;
+  commentCount?: number;
+  streamingLinks?: Record<string, string>;
+  previewUrl?: string | null;
+  description?: string;
 };
 
 export type CalendarDay = {
@@ -29,6 +40,8 @@ export type CalendarMonth = {
 
 export type UpcomingRelease = {
   id: string;
+  slug?: string;
+  href?: string;
   day: number;
   month: string;           // e.g. "Oct"
   format: string;          // e.g. "Album • Musique"
@@ -37,4 +50,7 @@ export type UpcomingRelease = {
   releaseInfo: string;     // e.g. "Sortie : 12 mars"
   releaseIcon: string;     // material symbol
   coverImage: string;
+  rawDate?: string;
+  likeCount?: number;
+  commentCount?: number;
 };

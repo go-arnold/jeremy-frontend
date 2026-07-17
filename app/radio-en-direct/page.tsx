@@ -5,8 +5,9 @@ import ProgramGridDesktop from "@/components/radio-en-direct/ProgramGridDesktop"
 import LiveChatDesktop from "@/components/radio-en-direct/LiveChatDesktop";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
 import { membershipBanner as mockedBanner, programSlots as mockedSlots, liveShow as mockedShow } from "@/data/radio";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import { mapApiRadioToRadioProgram } from "@/lib/mappers";
+import { fetchRadioChat } from "@/lib/services/radio";
 import EmptyState from "@/components/ui/EmptyState";
 
 async function getCurrentRadio() {
@@ -31,16 +32,7 @@ async function getRadioPrograms() {
 
 async function getRadioChat() {
   try {
-    const data = await apiFetch<PaginatedResponse<any>>("/api/v1/radio/chat/");
-    const results = Array.isArray(data) ? data : data.results || [];
-    // Map API chat messages to the radio ChatMessage shape
-    return results.map((msg: any) => ({
-      id: String(msg.id || Math.random()),
-      username: msg.username || msg.user?.username || "Anonyme",
-      avatarUrl: msg.avatar_url || msg.user?.avatar_url || "",
-      text: msg.message || msg.content || "",
-      timeLabel: msg.created_at_human || "Récemment",
-    }));
+    return await fetchRadioChat();
   } catch {
     return [];
   }

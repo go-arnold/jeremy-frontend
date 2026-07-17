@@ -167,12 +167,14 @@ export default function TalentPostCard({ post }: { post: PostData }) {
       {post.title && <p className="text-white font-semibold text-sm">{post.title}</p>}
 
       {/* Caption */}
-      <p className="text-gray-200 text-sm leading-relaxed">
-        {post.caption}{" "}
-        {post.tags?.map((tag) => (
-          <span key={tag} className="text-primary">{tag} </span>
-        ))}
-      </p>
+      {(post.caption || post.tags?.length > 0) && (
+        <p className="text-gray-200 text-sm leading-relaxed">
+          {post.caption}{" "}
+          {post.tags?.map((tag) => (
+            <span key={tag} className="text-primary">{tag} </span>
+          ))}
+        </p>
+      )}
 
       {/* Actions */}
       <EngagementBar

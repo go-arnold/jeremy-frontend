@@ -70,3 +70,9 @@ export interface EventDetail {
   venue: EventVenue;
   similarEvents: string[];
 }
+
+// ── POST /events/{slug}/register/ ────────────────────────────────────────────
+export interface EventRegistrationResponse {
+  detail: string;
+  code?: "full" | "already_registered";
+}

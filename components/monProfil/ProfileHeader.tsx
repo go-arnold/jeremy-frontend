@@ -1,7 +1,13 @@
 import type { UserProfile } from "@/types/monProfil";
 import Avatar from "@/components/ui/Avatar";
 
-export default function ProfileHeader({ profile }: { profile: UserProfile }) {
+interface Props {
+  profile: UserProfile;
+  onEdit: () => void;
+  onShare: () => void;
+}
+
+export default function ProfileHeader({ profile, onEdit, onShare }: Props) {
   return (
     <section className="flex flex-col items-center gap-4">
       {/* Avatar */}
@@ -30,11 +36,17 @@ export default function ProfileHeader({ profile }: { profile: UserProfile }) {
 
       {/* Actions */}
       <div className="flex gap-3 w-full max-w-xs mt-2">
-        <button className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white text-sm font-bold rounded-xl transition-colors shadow-glow flex items-center justify-center gap-2">
+        <button
+          onClick={onEdit}
+          className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white text-sm font-bold rounded-xl transition-colors shadow-glow flex items-center justify-center gap-2"
+        >
           <span className="material-symbols-outlined text-[18px]">edit</span>
           <span>Éditer</span>
         </button>
-        <button className="h-11 w-11 glass-card rounded-xl flex items-center justify-center text-white hover:bg-white/5 transition-colors">
+        <button
+          onClick={onShare}
+          className="h-11 w-11 glass-card rounded-xl flex items-center justify-center text-white hover:bg-white/5 transition-colors"
+        >
           <span className="material-symbols-outlined text-[20px]">share</span>
         </button>
       </div>

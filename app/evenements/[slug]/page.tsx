@@ -12,6 +12,7 @@ import EventVenue    from "@/components/evenements/EventVenue";
 import SimilarEvents from "@/components/evenements/SimilarEvents";
 import BookingButton from "@/components/evenements/BookingButton";
 import BookingWidgetDesktop from "@/components/evenements/BookingWidgetDesktop";
+import ShareEventWidget from "@/components/evenements/ShareEventWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function EvenementDetailPage({ params }: Props) {
         <EventSchedule items={event.schedule} />
         <EventVenue venue={event.venue} />
         <SimilarEvents events={similar} />
-        <BookingButton price={event.price} eventTitle={event.title} />
+        <BookingButton slug={event.slug} price={event.price} />
       </main>
 
       {/* ══════════════════════════════════════
@@ -99,8 +100,8 @@ export default async function EvenementDetailPage({ params }: Props) {
 
               {/* Booking CTA */}
               <BookingWidgetDesktop
+                slug={event.slug}
                 price={event.price}
-                eventTitle={event.title}
                 date={event.date}
                 time={event.time}
               />
@@ -109,7 +110,7 @@ export default async function EvenementDetailPage({ params }: Props) {
               <EventKeyInfoDesktop event={event} />
 
               {/* Partager */}
-              <ShareEventWidget title={event.title} />
+              <ShareEventWidget title={event.title} slug={event.slug} />
             </aside>
           </div>
         </div>
@@ -362,31 +363,3 @@ function EventKeyInfoDesktop({ event }: { event: EventDetail }) {
   );
 }
 
-// ── Share widget sidebar ────────────────────────────
-function ShareEventWidget({ title }: { title: string }) {
-  return (
-    <div
-      className="rounded-2xl p-4"
-      style={{ background: "rgba(18,34,60,0.4)", border: "1px solid rgba(255,255,255,0.05)" }}
-    >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-3">
-        Partager
-      </p>
-      <div className="flex gap-2">
-        {[
-          { icon: "link",              label: "Copier" },
-          { icon: "share",             label: "Partager" },
-          { icon: "bookmark_border",   label: "Sauver" },
-        ].map((a) => (
-          <button
-            key={a.icon}
-            className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border border-white/8 text-[#8A8178] hover:text-[#F0EDE8] hover:border-white/15 transition-all"
-          >
-            <span className="material-symbols-outlined text-lg">{a.icon}</span>
-            <span className="text-[9px] font-bold">{a.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}

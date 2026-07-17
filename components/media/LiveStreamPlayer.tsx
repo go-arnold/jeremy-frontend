@@ -11,6 +11,8 @@ interface LiveStreamPlayerProps {
   thumbnail?: string;
   autoplay?: boolean;
   onFullscreen?: (isFullscreen: boolean) => void;
+  onPlay?: () => void;
+  onPause?: () => void;
 }
 
 export default function LiveStreamPlayer({
@@ -22,6 +24,8 @@ export default function LiveStreamPlayer({
   thumbnail,
   autoplay = true,
   onFullscreen,
+  onPlay,
+  onPause,
 }: LiveStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -228,8 +232,8 @@ export default function LiveStreamPlayer({
           poster={thumbnail}
           className="w-full h-full object-cover"
           playsInline
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPlay={() => { setIsPlaying(true); onPlay?.(); }}
+          onPause={() => { setIsPlaying(false); onPause?.(); }}
           onWaiting={() => setIsLoading(true)}
           onCanPlay={() => setIsLoading(false)}
           onError={() => {
