@@ -13,6 +13,10 @@ interface LiveStreamPlayerProps {
   onFullscreen?: (isFullscreen: boolean) => void;
   onPlay?: () => void;
   onPause?: () => void;
+  /** Set when the caller already renders its own title block below the player (e.g. WebTV/
+   * Émissions detail pages) — avoids showing the same title twice. The LIVE indicator still
+   * renders, since the caller's own block doesn't show one. */
+  hideTitleBar?: boolean;
 }
 
 export default function LiveStreamPlayer({
@@ -26,6 +30,7 @@ export default function LiveStreamPlayer({
   onFullscreen,
   onPlay,
   onPause,
+  hideTitleBar = false,
 }: LiveStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -370,7 +375,7 @@ export default function LiveStreamPlayer({
 
       {/* Title bar */}
       <div className="px-4 py-3 bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-between">
-        <h3 className="text-white font-bold text-base truncate">{title}</h3>
+        {!hideTitleBar && <h3 className="text-white font-bold text-base truncate">{title}</h3>}
         {status === 'live' && (
           <span className="flex items-center gap-1.5 text-xs text-red-400 font-bold shrink-0 ml-3">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />

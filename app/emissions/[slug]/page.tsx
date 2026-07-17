@@ -76,13 +76,14 @@ export default async function EmissionDetailPage({ params }: Props) {
             viewerCount={emission.viewerCount}
             thumbnail={emission.coverImage}
             autoplay
+            hideTitleBar
           />
         ) : (
           <VideoPlayer
             src={emission.streamUrl}
             title={emission.title}
-            description={emission.description}
             thumbnail={emission.coverImage}
+            hideTitleBar
           />
         )}
 
@@ -92,7 +93,9 @@ export default async function EmissionDetailPage({ params }: Props) {
             <p className="text-[#8A8178] text-base">{emission.hostNames.join(", ")}</p>
           )}
           {emission.description && (
-            <p className="text-[#F0EDE8]/80 text-base leading-relaxed">{emission.description}</p>
+            <p className="text-[#F0EDE8]/80 text-base leading-relaxed line-clamp-3 lg:line-clamp-none">
+              {emission.description}
+            </p>
           )}
           <div className="flex items-center gap-4 text-[#8A8178] text-sm">
             {emission.durationMinutes > 0 && (

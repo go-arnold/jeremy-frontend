@@ -14,6 +14,8 @@ import { fetchChallenges, fetchPolls } from "@/lib/services/community";
 import type { ApiChallenge, ApiPoll } from "@/types/communaute";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
+import CircularProgress from "@/components/ui/CircularProgress";
+import { uploadToCloudinaryWithProgress } from "@/lib/cloudinaryUpload";
 
 const FILTER_TABS: FilterTab[] = [
   { id: "tous", label: "Tous" },
@@ -109,7 +111,7 @@ export default function CommunautePage() {
 
       {/* MOBILE */}
       <main className="lg:hidden flex-1 overflow-y-auto pb-24 no-scrollbar">
-        <SubmitTalentCard />
+        <SubmitTalentCard onSubmitted={() => fetchPosts(activeFilter, 1, false)} />
         <div className="flex flex-col gap-6 px-4">
           <FilterTabs tabs={FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
           {challenges.map((challenge) => (
@@ -169,7 +171,7 @@ export default function CommunautePage() {
 
           <div className="grid grid-cols-[280px_1fr_300px] gap-8 items-start">
             <aside className="sticky top-24 flex flex-col gap-5">
-              <SubmitTalentDesktop />
+              <SubmitTalentDesktop onSubmitted={() => fetchPosts(activeFilter, 1, false)} />
               <CommunityStatsWidget />
             </aside>
 
@@ -226,10 +228,12 @@ export default function CommunautePage() {
 ════════════════════════════════════════════════════ */
 
 // ── Submit Talent desktop (sidebar gauche) ──────────
-function SubmitTalentDesktop() {
+function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [selected, setSelected] = useState<{ file: File; category: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error" | "info">("info");
 
@@ -250,29 +254,6 @@ function SubmitTalentDesktop() {
     return "image";
   };
 
-  const uploadToCloudinary = async (file: File, context: string): Promise<string> => {
-    const sigRes = await fetch('/api/media/upload-signature', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ context }),
-    });
-    if (!sigRes.ok) {
-      const err = await sigRes.json().catch(() => ({}));
-      throw new Error(err.detail || 'Impossible d\'obtenir la signature');
-    }
-    const sig = await sigRes.json();
-    const form = new FormData();
-    form.append("file", file);
-    form.append("api_key", sig.api_key);
-    form.append("timestamp", String(sig.timestamp));
-    form.append("signature", sig.signature);
-    form.append("folder", sig.folder);
-    const uploadRes = await fetch(sig.upload_url, { method: "POST", body: form });
-    const uploaded = await uploadRes.json();
-    if (!uploadRes.ok) throw new Error(uploaded.error?.message || 'Échec upload');
-    return uploaded.secure_url;
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, category: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -283,20 +264,24 @@ function SubmitTalentDesktop() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) { setStatusMsg("Entrez un titre."); setStatusType("error"); return; }
+    if (!title.trim() || !description.trim() || !selected) {
+      setStatusMsg("Titre, description et média (photo, audio ou vidéo) sont tous obligatoires.");
+      setStatusType("error");
+      return;
+    }
     setUploading(true);
-    setStatusMsg("Envoi...");
-    setStatusType("info");
+    setUploadProgress(0);
+    setStatusMsg("");
     try {
-      let mediaUrl = "";
-      let mediaType = "";
-      if (selected) {
-        const context = getContext(selected.category);
-        mediaType = getMediaType(selected.category);
-        mediaUrl = await uploadToCloudinary(selected.file, context);
-      }
-      const payload: any = { title: title.trim() };
-      if (mediaUrl && mediaType) payload.media = [{ type: mediaType, url: mediaUrl }];
+      const context = getContext(selected.category);
+      const mediaType = getMediaType(selected.category);
+      const mediaUrl = await uploadToCloudinaryWithProgress(selected.file, context, setUploadProgress);
+
+      const payload = {
+        title: title.trim(),
+        content: description.trim(),
+        media: [{ type: mediaType, url: mediaUrl }],
+      };
       await apiFetch("/api/v1/community/posts/submit_talent/", {
         method: "POST",
         body: JSON.stringify(payload)
@@ -304,13 +289,16 @@ function SubmitTalentDesktop() {
       setStatusMsg("🎉 Soumis !");
       setStatusType("success");
       setTitle("");
+      setDescription("");
       setSelected(null);
+      onSubmitted?.();
     } catch (err: any) {
       console.error(err);
       setStatusMsg(err.message || "Erreur d'envoi.");
       setStatusType("error");
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -339,58 +327,74 @@ function SubmitTalentDesktop() {
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          <input 
-            type="file" 
-            ref={photoInputRef} 
-            className="hidden" 
-            accept="image/*,video/*" 
+          <textarea
+            className="w-full bg-black/40 border border-white/10 rounded-xl h-20 px-3 py-2 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm resize-none"
+            placeholder="Décris ton talent"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <input
+            type="file"
+            ref={photoInputRef}
+            className="hidden"
+            accept="image/*,video/*"
             onChange={(e) => handleFileChange(e, "image")}
           />
-          <input 
-            type="file" 
-            ref={videoInputRef} 
-            className="hidden" 
-            accept="video/*" 
+          <input
+            type="file"
+            ref={videoInputRef}
+            className="hidden"
+            accept="video/*"
             onChange={(e) => handleFileChange(e, "video")}
           />
-          <input 
-            type="file" 
-            ref={micInputRef} 
-            className="hidden" 
-            accept="audio/*" 
+          <input
+            type="file"
+            ref={micInputRef}
+            className="hidden"
+            accept="audio/*"
             onChange={(e) => handleFileChange(e, "audio")}
           />
 
           <div className="flex gap-2">
-            <button 
+            <button
               type="button"
               onClick={() => photoInputRef.current?.click()}
-              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
+              disabled={uploading}
+              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">add_a_photo</span>
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => videoInputRef.current?.click()}
-              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
+              disabled={uploading}
+              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">videocam</span>
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => micInputRef.current?.click()}
-              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
+              disabled={uploading}
+              className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">mic</span>
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleSubmit}
               disabled={uploading}
-              className="flex-1 h-10 rounded-xl bg-primary hover:bg-[#B8240C] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 h-10 rounded-xl bg-primary hover:bg-[#B8240C] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
             >
-              <span>{uploading ? "Envoi..." : "Envoyer"}</span>
-              <span className="material-symbols-outlined text-sm">send</span>
+              {uploading ? (
+                <CircularProgress percent={uploadProgress} size={22} strokeWidth={2.5} className="text-white" />
+              ) : (
+                <>
+                  <span>Envoyer</span>
+                  <span className="material-symbols-outlined text-sm">send</span>
+                </>
+              )}
             </button>
           </div>
           {statusMsg && (

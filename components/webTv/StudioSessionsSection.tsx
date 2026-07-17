@@ -13,7 +13,7 @@ export default function StudioSessionsSection({ sessions }: Props) {
           Studio Sessions
         </h2>
         <a className="text-primary text-sm font-bold" href="/studio-sessions">
-          View All
+          Voir tout
         </a>
       </div>
 
@@ -36,8 +36,8 @@ export default function StudioSessionsSection({ sessions }: Props) {
                 style={{ backgroundImage: `url('${session.imageUrl}')` }}
               />
 
-              {/* Hover play */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Play — toujours visible (pas seulement au survol, inutile sur mobile) */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
                 <span
                   className="material-symbols-outlined text-white drop-shadow-lg"
                   style={{ fontSize: "40px" }}

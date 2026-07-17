@@ -14,9 +14,14 @@ const ASPECT_CLASS: Record<FreestyleAspect, string> = {
 export default function FreestylesSection({ videos }: Props) {
   return (
     <section className="px-4 flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-accent-pink">mic_external_on</span>
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Freestyles</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-accent-pink">mic_external_on</span>
+          <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Freestyles</h2>
+        </div>
+        <a className="text-primary text-sm font-bold" href="/freestyles">
+          Voir tout
+        </a>
       </div>
 
       <div className="columns-2 gap-4 space-y-4">
@@ -46,14 +51,12 @@ export default function FreestylesSection({ videos }: Props) {
               <p className="text-gray-400 text-[10px]">{video.author}</p>
             </div>
 
-            {/* Hover play button */}
-            {video.showPlayButton && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="size-10 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur">
-                  <span className="material-symbols-outlined text-xl">play_arrow</span>
-                </div>
+            {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="size-10 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur">
+                <span className="material-symbols-outlined text-xl">play_arrow</span>
               </div>
-            )}
+            </div>
           </Link>
         ))}
       </div>

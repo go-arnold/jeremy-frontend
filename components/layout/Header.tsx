@@ -18,7 +18,7 @@ export default function Header() {
   const [desktopQuery, setDesktopQuery] = useState("");
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const { isAuthenticated, user, loading: authLoading, logout } = useAuth();
 
   const goToSearch = (query: string) => {
     if (!query.trim()) return;
@@ -186,13 +186,24 @@ export default function Header() {
           {authLoading ? (
             <div className="w-9 h-9 rounded-xl bg-white/5 animate-pulse" />
           ) : isAuthenticated ? (
-            <Link
-              href="/mon-profil"
-              className="flex items-center gap-2 w-9 h-9 lg:w-auto lg:px-3 justify-center rounded-xl text-[#F0EDE8]/70 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <span className="material-symbols-outlined text-xl">account_circle</span>
-              <span className="hidden lg:block text-sm font-bold truncate max-w-[100px]">{user?.username || 'Profil'}</span>
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/mon-profil"
+                className="flex items-center gap-2 w-9 h-9 lg:w-auto lg:px-3 justify-center rounded-xl text-[#F0EDE8]/70 hover:text-white hover:bg-white/5 transition-all"
+              >
+                <span className="material-symbols-outlined text-xl">account_circle</span>
+                <span className="hidden lg:block text-sm font-bold truncate max-w-[100px]">{user?.username || 'Profil'}</span>
+              </Link>
+              {/* Icône distincte (rouge, "logout") de "Mon Profil" — état d'authentification
+                  clairement lisible sans devoir ouvrir le profil pour se déconnecter. */}
+              <button
+                onClick={logout}
+                title="Se déconnecter"
+                className="flex items-center justify-center w-9 h-9 rounded-xl text-[#E63012]/70 hover:text-[#E63012] hover:bg-[#E63012]/10 transition-all"
+              >
+                <span className="material-symbols-outlined text-xl">logout</span>
+              </button>
+            </div>
           ) : (
             <Link
               href="/auth/login"

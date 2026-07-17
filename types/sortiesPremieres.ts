@@ -1,4 +1,6 @@
-export type ReleaseFormat = "all" | "musique" | "clip" | "documentaire" | "expo";
+// Matches real backend values (MusicRelease.FORMAT_CHOICES) exactly, since `?format=` is passed
+// straight through as a query param — "all" is a synthetic client-only value (no filter applied).
+export type ReleaseFormat = "all" | "album" | "single" | "clip" | "documentaire" | "expo";
 
 export type FormatFilter = {
   id: ReleaseFormat;

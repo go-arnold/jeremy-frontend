@@ -21,12 +21,20 @@ import type {
   FeaturedRelease,
   UpcomingRelease,
   FormatFilter,
+  ReleaseFormat,
 } from "@/types/sortiesPremieres";
+
+function buildReleasesUrl(format: ReleaseFormat, page: number) {
+  const params = new URLSearchParams({ page: String(page), page_size: "15" });
+  if (format !== "all") params.set("format", format);
+  return `/api/v1/releases/?${params.toString()}`;
+}
 
 export default function SortiesPremieresPage() {
   const [releases, setReleases] = useState<any[]>([]);
   const [featured, setFeatured] = useState<FeaturedRelease | null>(null);
   const [calendarDates, setCalendarDates] = useState<string[]>(mockReleaseDates);
+  const [activeFormat, setActiveFormat] = useState<ReleaseFormat>("all");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -35,7 +43,7 @@ export default function SortiesPremieresPage() {
   useEffect(() => {
     async function init() {
       try {
-        const data = await apiFetch<any>("/api/v1/releases/?page_size=15");
+        const data = await apiFetch<any>(buildReleasesUrl("all", 1));
         const results = data.results || (Array.isArray(data) ? data : []);
         setReleases(results.map(mapApiReleaseToFeaturedRelease));
         setHasMore(!!data.next);
@@ -61,10 +69,28 @@ export default function SortiesPremieresPage() {
     init();
   }, []);
 
+  const handleFormatChange = async (format: ReleaseFormat) => {
+    if (format === activeFormat) return;
+    setActiveFormat(format);
+    setLoading(true);
+    setInitialDataLoaded(false);
+    try {
+      const data = await apiFetch<any>(buildReleasesUrl(format, 1));
+      const results = data.results || (Array.isArray(data) ? data : []);
+      setReleases(results.map(mapApiReleaseToFeaturedRelease));
+      setHasMore(!!data.next);
+    } catch (error) {
+      console.error("Failed to filter releases by format:", error);
+    } finally {
+      setLoading(false);
+      setInitialDataLoaded(true);
+    }
+  };
+
   const loadMore = async (page: number) => {
     setLoadingLoadingMore(true);
     try {
-      const data = await apiFetch<any>(`/api/v1/releases/?page=${page}&page_size=15`);
+      const data = await apiFetch<any>(buildReleasesUrl(activeFormat, page));
       const results = data.results || (Array.isArray(data) ? data : []);
       const newReleases = results.map(mapApiReleaseToFeaturedRelease);
       setReleases(prev => [...prev, ...newReleases]);
@@ -103,7 +129,7 @@ export default function SortiesPremieresPage() {
             Les nouveautés musicales, clips et documentaires du Kivu
           </p>
         </div>
-        <FormatFilters filters={mockedFilters} />
+        <FormatFilters filters={mockedFilters} active={activeFormat} onChange={handleFormatChange} />
         {showEmptyState ? (
           <EmptyState 
             message="Aucune sortie prévue" 
@@ -148,7 +174,7 @@ export default function SortiesPremieresPage() {
                 Les nouveautés musicales, clips et documentaires du Kivu
               </p>
             </div>
-            <FormatFiltersDesktop filters={mockedFilters} />
+            <FormatFiltersDesktop filters={mockedFilters} active={activeFormat} onChange={handleFormatChange} />
           </div>
 
           {showEmptyState ? (
@@ -185,14 +211,23 @@ export default function SortiesPremieresPage() {
    VARIANTES DESKTOP
 ════════════════════════════════════════════════════ */
 
-function FormatFiltersDesktop({ filters }: { filters: FormatFilter[] }) {
+function FormatFiltersDesktop({
+  filters,
+  active,
+  onChange,
+}: {
+  filters: FormatFilter[];
+  active: ReleaseFormat;
+  onChange: (format: ReleaseFormat) => void;
+}) {
   return (
     <div className="flex items-center gap-2">
-      {filters.map((f, i) => (
+      {filters.map((f) => (
         <button
           key={f.id}
+          onClick={() => onChange(f.id)}
           className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            i === 0
+            f.id === active
               ? "bg-primary text-white shadow-lg shadow-primary/20"
               : "bg-white/5 border border-white/10 text-[#8A8178] hover:text-[#F0EDE8] hover:bg-white/10"
           }`}

@@ -8,9 +8,14 @@ interface Props {
 export default function ConcertsSection({ concerts }: Props) {
   return (
     <section className="flex flex-col gap-4 px-4 pb-4">
-      <div className="flex items-center gap-2 pt-2">
-        <span className="material-symbols-outlined text-primary">music_note</span>
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Concerts</h2>
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">music_note</span>
+          <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Concerts</h2>
+        </div>
+        <a className="text-primary text-sm font-bold" href="/concerts">
+          Voir tout
+        </a>
       </div>
 
       <div className="flex flex-col gap-4">
