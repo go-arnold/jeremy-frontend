@@ -9,6 +9,9 @@ import EpisodeHero     from "@/components/podcasts/EpisodeHero";
 import EpisodePlayer   from "@/components/podcasts/EpisodePlayer";
 import EpisodeTabs     from "@/components/podcasts/EpisodeTabs";
 import RelatedEpisodes from "@/components/podcasts/RelatedEpisodes";
+import GuestFollowButton from "@/components/podcasts/GuestFollowButton";
+import EngagementBar from "@/components/ui/EngagementBar";
+import SharePodcastWidget from "@/components/podcasts/SharePodcastWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +65,14 @@ export default async function PodcastEpisodePage({ params }: Props) {
         <EpisodeHero episode={episode} />
         <div className="relative z-10 px-5 -mt-2">
           <EpisodePlayer episode={episode} />
+          <div className="my-4 pb-4 border-b border-white/5">
+            <EngagementBar
+              resourceType="podcasts/episodes"
+              id={episode.slug}
+              initialLikeCount={episode.likeCount}
+              initialCommentCount={episode.commentCount}
+            />
+          </div>
           <EpisodeTabs episode={episode} />
           <RelatedEpisodes episodes={episode.relatedEpisodes} />
         </div>
@@ -100,7 +111,7 @@ export default async function PodcastEpisodePage({ params }: Props) {
             {/* Col 3 : Sidebar sticky */}
             <aside className="sticky top-24 flex flex-col gap-5">
               <GuestCardDesktop episode={episode} />
-              <SharePodcastWidget title={episode.title} />
+              <SharePodcastWidget title={episode.title} slug={episode.slug} />
             </aside>
           </div>
 
@@ -212,18 +223,19 @@ function EpisodePlayerDesktop({ episode }: { episode: PodcastEpisode }) {
           <p className="text-[#F0EDE8] font-bold text-sm line-clamp-1">{episode.title}</p>
           <p className="text-[#8A8178] text-xs">{episode.duration} • ÉP {episode.episodeNumber}</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-white/10 text-[#8A8178] hover:text-[#F0EDE8] hover:bg-white/5 transition-all">
-            <span className="material-symbols-outlined text-lg">bookmark_border</span>
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-white/10 text-[#8A8178] hover:text-[#F0EDE8] hover:bg-white/5 transition-all">
-            <span className="material-symbols-outlined text-lg">share</span>
-          </button>
-        </div>
       </div>
 
       {/* Player réel avec waveform fonctionnel */}
       <EpisodePlayer episode={episode} />
+
+      <div className="mt-4 pt-4 border-t border-white/5">
+        <EngagementBar
+          resourceType="podcasts/episodes"
+          id={episode.slug}
+          initialLikeCount={episode.likeCount}
+          initialCommentCount={episode.commentCount}
+        />
+      </div>
     </div>
   );
 }
@@ -254,9 +266,7 @@ function GuestCardDesktop({ episode }: { episode: PodcastEpisode }) {
                 {episode.guest.title}
               </p>
             </div>
-            <button className="shrink-0 text-primary text-[10px] font-bold border border-primary/25 px-2 py-1 rounded-full hover:bg-primary/10 transition">
-              Suivre
-            </button>
+            <GuestFollowButton guestName={episode.guest.name} />
           </div>
           <p className="text-[#8A8178] text-xs mt-2 leading-relaxed line-clamp-3">
             {episode.guest.bio}
@@ -282,35 +292,6 @@ function GuestCardDesktop({ episode }: { episode: PodcastEpisode }) {
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Share widget ────────────────────────────────────
-function SharePodcastWidget({ title }: { title: string }) {
-  return (
-    <div
-      className="rounded-2xl p-4"
-      style={{ background: "rgba(18,34,60,0.4)", border: "1px solid rgba(255,255,255,0.05)" }}
-    >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-3">
-        Partager
-      </p>
-      <div className="flex gap-2">
-        {[
-          { icon: "link",            label: "Copier" },
-          { icon: "share",           label: "Partager" },
-          { icon: "playlist_add",    label: "Ajouter" },
-        ].map((a) => (
-          <button
-            key={a.icon}
-            className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border border-white/8 text-[#8A8178] hover:text-[#F0EDE8] hover:border-white/15 transition-all"
-          >
-            <span className="material-symbols-outlined text-lg">{a.icon}</span>
-            <span className="text-[9px] font-bold">{a.label}</span>
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

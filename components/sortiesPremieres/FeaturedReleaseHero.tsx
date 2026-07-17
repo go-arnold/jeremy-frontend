@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { FeaturedRelease } from "@/types/sortiesPremieres";
 
 export default function FeaturedReleaseHero({ release }: { release: FeaturedRelease }) {
@@ -35,9 +36,12 @@ export default function FeaturedReleaseHero({ release }: { release: FeaturedRele
           <span className="material-symbols-outlined text-sm">calendar_today</span>
           <span>{release.releaseDate}</span>
         </div>
-        <button className="w-full bg-white text-background-dark font-extrabold py-3.5 rounded-lg text-sm uppercase tracking-wider transition-colors active:bg-primary active:text-white">
+        <Link
+          href={release.href || "/sorties-premieres"}
+          className="block text-center w-full bg-white text-background-dark font-extrabold py-3.5 rounded-lg text-sm uppercase tracking-wider transition-colors active:bg-primary active:text-white"
+        >
           Voir la sortie
-        </button>
+        </Link>
       </div>
     </div>
   );

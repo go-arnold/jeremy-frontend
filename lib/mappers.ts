@@ -1,6 +1,43 @@
 import { Artiste, Genre, ArtisteDetail, Release, VideoItem, GalleryPhoto } from "@/types/artistes";
 import { BlogPost, BlogCard, BlogCategory, ArticleBlock, Comment } from "@/types/blog";
 import {PodcastEpisode} from "@/types/podcasts"
+import type { HeroArticle, NewsArticle } from "@/types/magazine";
+
+/** Several serializers (podcasts, emissions) only return a raw ISO `published_at`/`created_at`,
+ * no `*_human` companion field — this covers those cases with the same relative-time convention
+ * used elsewhere (`Récemment` fallback, day-granularity beyond a week). */
+export function formatRelativeDate(iso: string | null | undefined): string {
+  if (!iso) return "Récemment";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Récemment";
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return "À l'instant";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `Il y a ${days} j`;
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** `guests` on a podcast episode is a genuinely free-form JSONField (no fixed shape enforced
+ * server-side) — accepts either a plain string name or an object with at least a `name`, and
+ * never invents fields (avatar/bio/website/...) the API doesn't actually provide. */
+function parseEpisodeGuests(guests: any): { name: string; title: string; avatar: string; bio: string; website?: string; twitter?: string }[] {
+  if (!Array.isArray(guests)) return [];
+  return guests.map((g: any) => {
+    if (typeof g === "string") return { name: g, title: "", avatar: "", bio: "" };
+    return {
+      name: g?.name || g?.title || "Invité",
+      title: g?.role || g?.title_role || "",
+      avatar: g?.avatar || g?.avatar_url || "",
+      bio: g?.bio || "",
+      website: g?.website,
+      twitter: g?.twitter,
+    };
+  });
+}
 
 export function mapApiArtistToArtiste(apiArtist: any): Artiste {
   //const genreNames = typeof apiArtist.genre_names === 'string' ? apiArtist.genre_names : "";
@@ -23,6 +60,7 @@ export function mapApiArtistToArtiste(apiArtist: any): Artiste {
 export function mapApiArtistDetailToArtisteDetail(apiDetail: any): ArtisteDetail {
   return {
     id: apiDetail.slug || apiDetail.id?.toString(),
+    artistId: apiDetail.id ?? null,
     name: apiDetail.name || "Artiste",
     city: apiDetail.city || "Kivu",
     country: apiDetail.country || "RD Congo",
@@ -64,7 +102,9 @@ export function mapApiBlogToBlogCard(apiArticle: any): BlogCard {
     image: apiArticle.featured_image_url || apiArticle.image_url || "",
     category: (apiArticle.category?.name as BlogCategory) || "Tous",
     readTime: apiArticle.read_time ? `${apiArticle.read_time} min` : "5 min",
-    publishedAt: apiArticle.published_at_human || "Récemment",
+    // No `published_at_human` field exists on Article(List|Detail)Serializer at all — only
+    // raw `published_at`.
+    publishedAt: formatRelativeDate(apiArticle.published_at),
     featured: apiArticle.is_featured || false,
   };
 }
@@ -85,18 +125,21 @@ export function mapApiArticleToBlogPost(apiArticle: any): BlogPost {
     author: {
       name: apiArticle.author?.username || "Rédaction",
       avatar: apiArticle.author?.avatar_url || "",
-      publishedAt: apiArticle.published_at_human || "Récemment"
+      publishedAt: formatRelativeDate(apiArticle.published_at)
     },
     readTime: apiArticle.read_time ? `${apiArticle.read_time} min` : "5 min",
     blocks: blocks,
     tags: apiArticle.tags?.map((t: any) => t.name) || [],
     relatedPosts: [],
+    likeCount: apiArticle.like_count || 0,
+    // Real CommentSerializer fields: {id, author_name, author_avatar, content, like_count,
+    // created_at} — flat, no nested `user`, no `created_at_human`.
     comments: apiArticle.comments?.map((c: any): Comment => ({
       id: c.id?.toString() || Math.random().toString(),
-      author: c.user?.username || "Anonyme",
-      avatar: c.user?.avatar_url || "",
+      author: c.author_name || "Anonyme",
+      avatar: c.author_avatar || "",
       content: c.content,
-      publishedAt: c.created_at_human || "Récemment",
+      publishedAt: formatRelativeDate(c.created_at),
       likes: c.like_count || 0
     })) || []
   };
@@ -155,58 +198,69 @@ export function mapApiEventDetailToEventDetail(apiDetail: any): any {
 }
 
 export function mapApiPodcastToEpisode(apiEpisode: any) {
+  const guests = parseEpisodeGuests(apiEpisode.guests);
   return {
     id: apiEpisode.slug || apiEpisode.id?.toString(),
     slug: apiEpisode.slug,
     title: apiEpisode.title,
     description: apiEpisode.description,
-    image: apiEpisode.image_url || "",
+    // Real EpisodeListSerializer/EpisodeDetailSerializer only ever return `cover_url` —
+    // `image_url` never exists on the response, so every real episode's thumbnail was blank.
+    image: apiEpisode.cover_url || "",
     duration: apiEpisode.duration || "00:00",
-    publishedAt: apiEpisode.published_at_human || "Récemment",
-    category: apiEpisode.series_name || "Podcast",
-    host: apiEpisode.host_name || "Art du Kivu",
-    guest: apiEpisode.guest_name || "",
+    publishedAt: formatRelativeDate(apiEpisode.published_at),
+    category: apiEpisode.series_title || "Podcast",
+    host: apiEpisode.series_title || "Art du Kivu",
+    guest: guests[0]?.name || "",
   };
 }
 
 export function mapApiEpisodeToPodcastEpisode(apiEpisode: any): PodcastEpisode {
+  const guests = parseEpisodeGuests(apiEpisode.guests);
   return {
     id: apiEpisode.slug || apiEpisode.id?.toString(),
+    numericId: apiEpisode.id ?? null,
     slug: apiEpisode.slug,
-    episodeNumber: apiEpisode.number || 1,
-    publishedAt: apiEpisode.published_at_human || "Récemment",
+    episodeNumber: apiEpisode.episode_number || 1,
+    publishedAt: formatRelativeDate(apiEpisode.published_at),
     title: apiEpisode.title,
-    subtitle: apiEpisode.subtitle || "",
-    coverImage: apiEpisode.image_url || "",
-    tags: apiEpisode.tags?.map((t: any) => t.name) || [],
-    badge: apiEpisode.is_exclusive ? "Exclusif" : undefined,
+    // Neither `subtitle` nor `tags` nor `is_exclusive` exist on the real serializer at all —
+    // left blank rather than reading fields that were never actually there.
+    subtitle: apiEpisode.series?.title || "",
+    coverImage: apiEpisode.cover_url || "",
+    tags: [],
+    badge: apiEpisode.is_featured ? "À la une" : undefined,
     description: apiEpisode.description || "",
     duration: apiEpisode.duration || "00:00",
     currentTime: "00:00",
     progressPercent: 0,
-    audioUrl: apiEpisode.audio_url || apiEpisode.audio_file || "",
-    guest: {
-      name: apiEpisode.guest_name || "Invité",
-      title: apiEpisode.guest_title || "",
-      avatar: apiEpisode.guest_avatar || "",
-      bio: apiEpisode.guest_bio || "",
-      website: apiEpisode.guest_website,
-      twitter: apiEpisode.guest_twitter
-    },
-    relatedEpisodes: apiEpisode.related?.map((r: any) => ({
-      id: r.slug || r.id?.toString(),
-      slug: r.slug,
-      episodeNumber: r.number || 1,
-      title: r.title,
-      image: r.image_url || "",
-      duration: r.duration || "00:00"
-    })) || []
+    audioUrl: apiEpisode.audio_url || "",
+    transcript: apiEpisode.transcript || "",
+    likeCount: apiEpisode.like_count || 0,
+    commentCount: apiEpisode.comment_count || 0,
+    guest: guests[0] || { name: "Invité", title: "", avatar: "", bio: "" },
+    guests,
+    // No `related` field exists on EpisodeDetailSerializer at all — correctly always empty
+    // until a "related episodes" backend feature exists (tracked as backlog in the PDF).
+    relatedEpisodes: [],
   };
 }
+
+const WEBTV_CATEGORY_LABELS: Record<string, string> = {
+  freestyles: "Freestyle",
+  studio_sessions: "Studio",
+  docs: "Doc",
+  interviews: "Interview",
+  premiers: "Première",
+  concerts: "Concert",
+};
 
 export function mapApiVideoToWebTVVideo(apiVideo: any) {
   return {
     id: apiVideo.slug || apiVideo.id?.toString(),
+    // Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
+    // endpoint needs the actual `object_id`.
+    numericId: apiVideo.id ?? null,
     slug: apiVideo.slug,
     title: apiVideo.title,
     description: apiVideo.description || "",
@@ -229,6 +283,9 @@ export function mapApiVideoToWebTVVideo(apiVideo: any) {
     // interviews, premiers, concerts) — not `category_name`, which doesn't exist on the
     // serializer at all.
     category: apiVideo.category,
+    // DocsSection/InterviewsSection/ConcertsSection all read `tag` as their card badge label —
+    // the real serializer has no separate "tag" concept, just `category`.
+    tag: WEBTV_CATEGORY_LABELS[apiVideo.category] || apiVideo.category || "",
     isPremier: apiVideo.is_premier,
     isLive: apiVideo.is_live || false,
     likeCount: apiVideo.like_count || 0,
@@ -244,7 +301,13 @@ export function mapApiVideoToWebTVVideo(apiVideo: any) {
 export function mapApiRadioToRadioProgram(apiProgram: any) {
   return {
     id: apiProgram.slug || apiProgram.id?.toString(),
+    // Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
+    // endpoint needs the actual `object_id`. Shared by Radio (RadioProgram) and Live Music
+    // (MusicLiveSession) — both have a real numeric `id`.
+    numericId: apiProgram.id ?? null,
+    slug: apiProgram.slug,
     title: apiProgram.title,
+    description: apiProgram.description || "",
     presenter: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0],
     host: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0],
     startTime: apiProgram.start_time,
@@ -253,11 +316,19 @@ export function mapApiRadioToRadioProgram(apiProgram: any) {
     day: apiProgram.day_name,
     image: apiProgram.cover_url || apiProgram.image_url || "",
     streamUrl: apiProgram.stream_url,
-    hlsUrl: apiProgram.cf_playback_hls_url || null,
-    dashUrl: apiProgram.cf_playback_dash_url || null,
+    // Real RadioProgramSerializer/MusicLiveSessionSerializer only ever return
+    // `playback_hls_url` — the `cf_` prefix was dropped in the Cloudflare→MediaMTX migration
+    // but this mapper (shared by Radio and Live Music) was never updated, so live audio could
+    // never actually play for either surface.
+    hlsUrl: apiProgram.playback_hls_url || null,
+    dashUrl: null,
     isLive: apiProgram.status === 'live',
     listenerCount: apiProgram.listener_count || apiProgram.online_followers || 0,
     status: apiProgram.status === 'live' ? 'now' : (apiProgram.status === 'upcoming' ? 'next' : 'later'),
+    // Only present on MusicLiveSessionSerializer (Live Music) — RadioProgram has no
+    // EngagementActionsMixin/like-comment support server-side, so these default to 0 there.
+    likeCount: apiProgram.like_count || 0,
+    commentCount: apiProgram.comment_count || 0,
     messages: []
   };
 }
@@ -287,15 +358,20 @@ export function mapApiPostToCommunityItem(apiPost: any) {
       isVerified: !!(apiPost.author?.is_verified || apiPost.is_verified)
     },
     content: apiPost.content || "",
-    caption: apiPost.content || apiPost.title || "",
+    // `submit_talent` (apps.community.views.CommunityPostViewSet) copies the submission's title
+    // straight into `content` (that form has no separate caption field) — rendering both a bold
+    // title line and an identical caption line under it would visibly duplicate the same text.
+    caption: apiPost.content && apiPost.content !== apiPost.title ? apiPost.content : "",
     image: imageItem?.url || null,
     coverImage: imageItem?.url || "",
     video: videoItem?.url || null,
     audio: audioItem?.url || null,
     likes: apiPost.like_count || 0,
     comments: apiPost.comment_count || 0,
-    time: apiPost.created_at_human || "Récemment",
-    timeAgo: apiPost.created_at_human || "Récemment",
+    // CommunityPostSerializer only ever returns a raw `created_at`, never a `created_at_human`
+    // companion field — the latter always read undefined and fell straight to the fallback.
+    time: formatRelativeDate(apiPost.created_at),
+    timeAgo: formatRelativeDate(apiPost.created_at),
     title: apiPost.title || "",
     duration: apiPost.duration || "0:00",
     tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t: any) => typeof t === 'string' ? t : (t.name || t.label)) : []
@@ -312,17 +388,66 @@ export function mapApiReleaseToFeaturedRelease(apiRelease: any) {
   const date = apiRelease.release_date ? new Date(apiRelease.release_date) : new Date();
   return {
     id: apiRelease.slug || apiRelease.id?.toString(),
+    slug: apiRelease.slug,
+    href: apiRelease.slug ? `/sorties-premieres/${apiRelease.slug}` : "/sorties-premieres",
     title: apiRelease.title || "Nouvelle sortie",
     coverImage: apiRelease.cover_url || "",
     releaseDate: date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+    rawDate: apiRelease.release_date || "",
     month: date.toLocaleDateString('fr-FR', { month: 'long' }).toUpperCase(),
     day: date.getDate().toString().padStart(2, '0'),
     isPremiere: !!apiRelease.is_premiere,
     format: apiRelease.format?.toUpperCase() || "SINGLE",
     description: apiRelease.description || "",
     releaseInfo: apiRelease.artist_name || "Artiste",
-    releaseIcon: "person"
+    releaseIcon: "person",
+    artistName: apiRelease.artist_name || "",
+    // Only present on ReleaseDetailSerializer responses (retrieve/featured) — list responses
+    // never include these (would be an N+1 per item), so they default to 0 there.
+    likeCount: apiRelease.like_count || 0,
+    commentCount: apiRelease.comment_count || 0,
+    streamingLinks: apiRelease.streaming_links || {},
+    previewUrl: apiRelease.preview_url || null,
   };
+}
+
+import type { CalendarMonth } from "@/types/sortiesPremieres";
+
+/** Builds a full month grid for `ReleaseCalendar` from real release dates (`/releases/calendar/`
+ * only returns a flat list of upcoming releases, not a pre-built grid) — `monthDate` can be any
+ * day within the target month; `releaseDates` are raw ISO `release_date` strings. */
+export function buildCalendarMonth(monthDate: Date, releaseDates: string[]): CalendarMonth {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay(); // 0 = Dimanche .. 6 = Samedi
+
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const monthStart = new Date(year, month, 1).getTime();
+  const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
+  const monthIsPast = monthStart < currentMonthStart;
+
+  const eventDays = new Set(
+    releaseDates
+      .map((d) => new Date(d))
+      .filter((d) => d.getFullYear() === year && d.getMonth() === month)
+      .map((d) => d.getDate())
+  );
+
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const day = i + 1;
+    return {
+      day,
+      colStart: day === 1 ? firstWeekday + 1 : undefined,
+      isToday: isCurrentMonth && today.getDate() === day,
+      isPast: monthIsPast || (isCurrentMonth && day < today.getDate()),
+      hasEvent: eventDays.has(day),
+    };
+  });
+
+  const label = monthDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  return { label: label.charAt(0).toUpperCase() + label.slice(1), days };
 }
 
 // ── Home page mappers ──────────────────────────────────────────────────────
@@ -542,5 +667,92 @@ export function mapApiSavedItemToSavedEntry(apiItem: any) {
     title: apiItem.title || "",
     coverImage: apiItem.cover_url || "",
     href: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[apiItem.kind] || apiItem.kind, apiItem.slug, apiItem.id),
+  };
+}
+
+// `GET /users/{id}/activity/` shares the exact same `_resolve_target()` `kind` vocabulary as
+// `saved/` (both backed by `apps.accounts.profile_services`) — same href mapping applies.
+export function mapApiActivityEntryToActivityEntry(apiEntry: any) {
+  const target = apiEntry.target || {};
+  return {
+    id: `${apiEntry.action}-${target.kind}-${target.id}-${apiEntry.created_at}`,
+    action: apiEntry.action,
+    createdAt: formatRelativeDate(apiEntry.created_at),
+    excerpt: apiEntry.excerpt || undefined,
+    targetTitle: target.title || "",
+    targetCoverImage: target.cover_url || "",
+    targetHref: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[target.kind] || target.kind, target.slug, target.id),
+  };
+}
+
+// Émissions has no frontend integration at all today — this mapper is net-new, built directly
+// from `EmissionListSerializer`/`EmissionDetailSerializer` (backend/apps/emissions/serializers.py).
+export function mapApiEmissionToEmissionCard(apiEmission: any) {
+  return {
+    id: apiEmission.slug || apiEmission.id?.toString(),
+    slug: apiEmission.slug,
+    title: apiEmission.title,
+    coverImage: apiEmission.cover_url || "",
+    status: apiEmission.status,
+    isLive: apiEmission.status === "live",
+    scheduledAt: apiEmission.scheduled_at || null,
+    durationMinutes: apiEmission.duration_minutes || 0,
+    viewerCount: apiEmission.viewer_count || 0,
+    totalViews: apiEmission.total_views || 0,
+    href: apiEmission.slug ? `/emissions/${apiEmission.slug}` : "/emissions",
+  };
+}
+
+export function mapApiEmissionToEmissionDetail(apiEmission: any) {
+  return {
+    ...mapApiEmissionToEmissionCard(apiEmission),
+    description: apiEmission.description || "",
+    streamUrl: apiEmission.stream_url || "",
+    hlsUrl: apiEmission.playback_hls_url || null,
+    hostNames: apiEmission.host_names || [],
+    likeCount: apiEmission.like_count || 0,
+    commentCount: apiEmission.comment_count || 0,
+  };
+}
+
+// The Magazine page was 100% hardcoded (no API call anywhere) — these two map real
+// `/api/v1/articles/` data onto its Hero/News sections. `NewsArticle.variant` (tall-image /
+// square-image / text-only / short-image) has no backend equivalent — it's a pure display
+// heuristic, cycled by position so a real article list still gets the intended masonry variety.
+const NEWS_VARIANTS: NewsArticle["variant"][] = ["tall-image", "square-image", "text-only", "short-image"];
+
+export function mapApiArticleToMagazineHero(apiArticle: any): HeroArticle {
+  return {
+    id: apiArticle.slug || apiArticle.id?.toString(),
+    slug: apiArticle.slug,
+    tag: "À la une",
+    readTime: apiArticle.read_time || 5,
+    title: apiArticle.title,
+    excerpt: apiArticle.excerpt || "",
+    imageUrl: apiArticle.featured_image_url || "",
+    imageAlt: apiArticle.title || "",
+    author: {
+      name: apiArticle.author_name || apiArticle.author?.username || "Rédaction",
+      role: "Art du Kivu",
+      avatarUrl: apiArticle.author?.avatar_url,
+    },
+  };
+}
+
+export function mapApiArticleToNewsArticle(apiArticle: any, index: number): NewsArticle {
+  const imageUrl = apiArticle.featured_image_url || "";
+  const variant = imageUrl ? NEWS_VARIANTS[index % 3] : "text-only";
+  return {
+    id: apiArticle.slug || apiArticle.id?.toString(),
+    slug: apiArticle.slug,
+    category: apiArticle.category?.name || "Culture",
+    title: apiArticle.title,
+    subtitle: apiArticle.excerpt || "",
+    imageUrl,
+    imageAlt: apiArticle.title || "",
+    author: apiArticle.author_name ? { name: apiArticle.author_name } : undefined,
+    date: formatRelativeDate(apiArticle.published_at),
+    quote: variant === "text-only" ? apiArticle.excerpt || "" : undefined,
+    variant,
   };
 }

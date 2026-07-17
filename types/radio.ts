@@ -10,12 +10,16 @@ export interface ChatMessage {
 }
 
 export interface LiveShow {
+  slug?: string;
+  numericId?: number | null;
   title: string;
+  description?: string;
   host: string;
   listenerCount: string; // ex: "1.2k"
   isPlaying: boolean;
   imageUrl: string;
   imageAlt: string;
+  hlsUrl?: string | null;
   messages: ChatMessage[];
 }
 

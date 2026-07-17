@@ -1,10 +1,34 @@
 "use client"
 
+import { useState } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import { registerForEvent } from "@/lib/services/events";
+
 export default function BookingWidgetDesktop({
-  price, eventTitle, date, time,
+  slug, price, date, time,
 }: {
-  price: string; eventTitle: string; date: string; time: string;
+  slug: string; price: string; date: string; time: string;
 }) {
+  const { isAuthenticated } = useAuth();
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  async function handleBooking() {
+    if (!isAuthenticated) {
+      window.location.href = "/auth/login";
+      return;
+    }
+    setStatus("loading");
+    try {
+      const res = await registerForEvent(slug);
+      setMessage(res.detail);
+      setStatus("done");
+    } catch (err: any) {
+      setMessage(err.message || "Échec de l'inscription.");
+      setStatus("error");
+    }
+  }
+
   return (
     <div className="rounded-2xl p-6 relative overflow-hidden"
       style={{
@@ -28,13 +52,21 @@ export default function BookingWidgetDesktop({
             <span>{time}</span>
           </div>
         </div>
-        <button
-          className="w-full bg-primary hover:bg-[#B8240C] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-primary/20 text-base"
-          onClick={() => alert(`Réservation pour : ${eventTitle}\n${price}`)}
-        >
-          <span className="material-symbols-outlined text-lg">confirmation_number</span>
-          Réserver un billet
-        </button>
+        {status === "done" ? (
+          <p className="text-center text-primary font-bold text-sm py-2">{message}</p>
+        ) : (
+          <>
+            <button
+              className="w-full bg-primary hover:bg-[#B8240C] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-primary/20 text-base disabled:opacity-50"
+              onClick={handleBooking}
+              disabled={status === "loading"}
+            >
+              <span className="material-symbols-outlined text-lg">confirmation_number</span>
+              {status === "loading" ? "Inscription..." : "Réserver un billet"}
+            </button>
+            {status === "error" && <p className="text-center text-primary text-xs font-bold">{message}</p>}
+          </>
+        )}
         <p className="text-[10px] text-[#4A443E] text-center">
           Paiement sécurisé • Annulation gratuite
         </p>

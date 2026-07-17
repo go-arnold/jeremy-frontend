@@ -16,6 +16,7 @@ const mainLinks = [
 const secondaryLinks = [
   { href: "/magazine",   icon: "article",         label: "Magazine" },
   { href: "/sorties-premieres", icon: "new_releases",   label: "Sorties" },
+  { href: "/emissions",  icon: "live_tv",         label: "Émissions" },
 ];
 
 const allLinks = [...mainLinks, ...secondaryLinks];

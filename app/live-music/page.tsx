@@ -4,26 +4,14 @@ import ProgramScheduleDesktop from "@/components/liveMusic/ProgramScheduleDeskto
 import LiveChatDesktop from "@/components/liveMusic/LiveChatDesktop";
 import LiveChat from "@/components/liveMusic/LiveChat";
 import ProgramSchedule from "@/components/liveMusic/ProgramSchedule";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiRadioToRadioProgram } from "@/lib/mappers";
+import EngagementBar from "@/components/ui/EngagementBar";
+import { fetchCurrentSession, fetchProgramme, fetchLiveMusicChat } from "@/lib/services/liveMusic";
 import EmptyState from "@/components/ui/EmptyState";
 import { programSlots as mockedSlots, chatMessages as mockedChat } from "@/data/liveMusic";
 
-async function getLiveShow() {
-  try {
-    const data = await apiFetch<any>("/api/v1/live_music/sessions/current/");
-    return mapApiRadioToRadioProgram(data);
-  } catch {
-    // No live session currently — return null to show empty state
-    return null;
-  }
-}
-
 async function getLivePrograms() {
   try {
-    const data = await apiFetch<PaginatedResponse<any>>("/api/v1/live_music/programme/");
-    const results = Array.isArray(data) ? data : data.results || [];
-    return results.map(mapApiRadioToRadioProgram);
+    return await fetchProgramme();
   } catch {
     return [];
   }
@@ -31,24 +19,14 @@ async function getLivePrograms() {
 
 async function getLiveChat(slug: string) {
   try {
-    const data = await apiFetch<PaginatedResponse<any>>(`/api/v1/live_music/sessions/${slug}/chat/`);
-    const results = Array.isArray(data) ? data : data.results || [];
-    // Map API chat messages to the liveMusic ChatMessage shape
-    return results.map((msg: any) => ({
-      id: String(msg.id || Math.random()),
-      username: msg.username || msg.user?.username || "Anonyme",
-      avatar: msg.avatar_url || msg.user?.avatar_url || "",
-      message: msg.message || msg.content || "",
-      tag: "",
-      timeAgo: msg.created_at_human || "Récemment",
-    }));
+    return await fetchLiveMusicChat(slug);
   } catch {
     return [];
   }
 }
 
 export default async function Page() {
-  const liveShow = await getLiveShow();
+  const liveShow = await fetchCurrentSession();
   const programs = await getLivePrograms();
   const programSlots = programs.length > 0 ? programs : mockedSlots;
 
@@ -81,15 +59,21 @@ export default async function Page() {
   }
 
   // Fetch live chat using the session slug/id
-  const chatMessages = await getLiveChat((liveShow as any).id || "");
+  const slug = (liveShow as any).id || "";
+  const chatMessages = await getLiveChat(slug);
   const displayChat = chatMessages.length > 0 ? chatMessages : mockedChat;
 
   const nowPlaying = {
+    slug,
+    numericId: (liveShow as any).numericId ?? null,
     title: (liveShow as any).title,
     djName: (liveShow as any).presenter || (liveShow as any).host || "Art du Kivu",
     coverImage: (liveShow as any).image || "",
     isLive: true,
     listenerCount: (liveShow as any).listenerCount || 0,
+    hlsUrl: (liveShow as any).hlsUrl || null,
+    likeCount: (liveShow as any).likeCount || 0,
+    commentCount: (liveShow as any).commentCount || 0,
   };
 
   return (
@@ -105,11 +89,20 @@ export default async function Page() {
 
           <NowPlayingHero track={nowPlaying as any} />
 
+          <div className="px-6">
+            <EngagementBar
+              resourceType="live_music/sessions"
+              id={slug}
+              initialLikeCount={nowPlaying.likeCount}
+              initialCommentCount={nowPlaying.commentCount}
+            />
+          </div>
+
           <div className="w-full bg-[#12223ce6] rounded-t-[2.5rem] border-t border-white/5 relative z-20 pb-10 shadow-[0_-10px_60px_rgba(0,0,0,0.8)]">
             <div className="w-full flex justify-center pt-4 pb-2">
               <div className="w-12 h-1.5 bg-white/10 rounded-full" />
             </div>
-            <LiveChat messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
+            <LiveChat slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
             <div className="w-full h-px bg-white/5 my-2" />
             <ProgramSchedule slots={programSlots as any} />
             <div className="h-10" />
@@ -149,6 +142,12 @@ export default async function Page() {
               {/* ── Col 1 : Now Playing ── */}
               <div className="sticky top-24 flex flex-col gap-6">
                 <NowPlayingHeroDesktop track={nowPlaying as any} />
+                <EngagementBar
+                  resourceType="live_music/sessions"
+                  id={slug}
+                  initialLikeCount={nowPlaying.likeCount}
+                  initialCommentCount={nowPlaying.commentCount}
+                />
               </div>
 
               {/* ── Col 2 : Programme ── */}
@@ -158,7 +157,7 @@ export default async function Page() {
 
               {/* ── Col 3 : Chat ── */}
               <div className="sticky top-24">
-                <LiveChatDesktop messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
+                <LiveChatDesktop slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
               </div>
             </div>
           </div>

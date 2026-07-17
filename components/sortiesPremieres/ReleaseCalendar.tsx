@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import type { CalendarMonth, CalendarDay } from "@/types/sortiesPremieres";
+import { useMemo, useState } from "react";
+import type { CalendarDay } from "@/types/sortiesPremieres";
+import { buildCalendarMonth } from "@/lib/mappers";
 
 const WEEK_HEADERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -43,8 +44,19 @@ function CalendarDayCell({ day }: { day: CalendarDay }) {
   );
 }
 
-export default function ReleaseCalendar({ calendar }: { calendar: CalendarMonth }) {
-  const [month, setMonth] = useState(calendar.label);
+interface Props {
+  /** Raw ISO `release_date` strings from `/releases/calendar/` — used to mark `hasEvent` days. */
+  releaseDates: string[];
+}
+
+export default function ReleaseCalendar({ releaseDates }: Props) {
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const calendar = useMemo(() => {
+    const base = new Date();
+    const monthDate = new Date(base.getFullYear(), base.getMonth() + monthOffset, 1);
+    return buildCalendarMonth(monthDate, releaseDates);
+  }, [monthOffset, releaseDates]);
 
   return (
     <section className="mb-10 bg-deep-slate p-6 rounded-xl border border-white/5">
@@ -52,13 +64,19 @@ export default function ReleaseCalendar({ calendar }: { calendar: CalendarMonth 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">calendar_month</span>
-          {month}
+          {calendar.label}
         </h2>
         <div className="flex gap-2">
-          <button className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+          <button
+            onClick={() => setMonthOffset((m) => m - 1)}
+            className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
             <span className="material-symbols-outlined text-sm">chevron_left</span>
           </button>
-          <button className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+          <button
+            onClick={() => setMonthOffset((m) => m + 1)}
+            className="size-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
             <span className="material-symbols-outlined text-sm">chevron_right</span>
           </button>
         </div>

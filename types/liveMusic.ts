@@ -1,9 +1,15 @@
 export type NowPlaying = {
+  slug?: string;
+  numericId?: number | null;
   title: string;
+  description?: string;
   djName: string;
   coverImage: string;
   isLive: boolean;
   listenerCount: number;
+  hlsUrl?: string | null;
+  likeCount?: number;
+  commentCount?: number;
 };
 
 export type ChatMessage = {

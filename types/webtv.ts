@@ -1,4 +1,4 @@
-export type VideoCategory = "Freestyles" | "Studio Sessions" | "Docs" | "Interviews" | "All";
+export type VideoCategory = "Freestyles" | "Studio Sessions" | "Docs" | "Interviews" | "Concerts" | "All";
 
 export type FreestyleAspect = "3/4" | "square" | "9/16";
 

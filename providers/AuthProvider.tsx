@@ -8,6 +8,7 @@ interface User {
   username: string;
   email: string;
   avatar_url?: string;
+  cover_image_url?: string;
   handle?: string;
   bio?: string;
   is_online?: boolean;
@@ -24,6 +25,7 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,13 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      login, 
-      register, 
-      logout, 
-      isAuthenticated: !!user 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      isAuthenticated: !!user,
+      refreshUser: fetchMe,
     }}>
       {children}
     </AuthContext.Provider>

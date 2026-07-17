@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { PodcastEpisode } from "@/types/podcasts";
+import { recordEpisodePlay } from "@/lib/services/podcasts";
+import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
 
 /* ────── Helpers ────── */
 function formatTime(sec: number): string {
@@ -82,6 +84,26 @@ export default function EpisodePlayer({ episode }: { episode: PodcastEpisode }) 
       audio.removeEventListener("pause", onPause);
     };
   }, []);
+
+  /* ── Play-count + listening-time tracking ──
+   * Nothing in the app called either of these before — play_count never incremented from
+   * real listening, and gamification badges could never be earned organically. */
+  const episodeKey = episode.slug || episode.id;
+  const hasRecordedPlayRef = useRef(false);
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !episodeKey) return;
+
+    const onFirstPlay = () => {
+      if (hasRecordedPlayRef.current) return;
+      hasRecordedPlayRef.current = true;
+      recordEpisodePlay(episodeKey).catch(() => {});
+    };
+    audio.addEventListener("play", onFirstPlay, { once: true });
+    return () => audio.removeEventListener("play", onFirstPlay);
+  }, [episodeKey]);
+
+  useConsumptionHeartbeat(playing, "podcast", episode.numericId, episode.title, episode.coverImage);
 
   /* ── Controls ── */
   const togglePlay = useCallback(async () => {

@@ -57,4 +57,5 @@ export interface BlogPost {
   tags: string[];           // ["Electro", "Bukavu", "Underground"]
   relatedPosts: string[];   // slugs → résolus via getRelatedPosts()
   comments: Comment[];
+  likeCount?: number;
 }

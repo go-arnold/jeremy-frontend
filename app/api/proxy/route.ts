@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { extractErrorMessage } from '@/lib/api-client';
+import { refreshAccessToken, applyRefreshedTokenCookies } from '@/lib/server/refreshAccessToken';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://art-du-kivu-api.kelor.tech';
 
@@ -62,48 +63,50 @@ async function handleProxy(request: Request) {
   }
 
   const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  let token = cookieStore.get('access_token')?.value;
+  const refreshToken = cookieStore.get('refresh_token')?.value;
+  let refreshed: { access: string; refresh: string | null } | null = null;
+
+  // Body/multipart can only be read off `request` once — capture it up front so a retry after
+  // a token refresh can reuse the exact same payload instead of re-reading an exhausted stream.
+  let body: BodyInit | undefined;
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  const clientOrigin = request.headers.get('origin');
+  const clientReferer = request.headers.get('referer');
+  if (clientOrigin) (headers as Record<string, string>)['Origin'] = clientOrigin;
+  if (clientReferer) (headers as Record<string, string>)['Referer'] = clientReferer;
+
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    const clientContentType = request.headers.get('content-type') || '';
+    if (clientContentType.includes('multipart/form-data')) {
+      (headers as Record<string, string>)['Content-Type'] = clientContentType;
+      body = await request.arrayBuffer();
+    } else {
+      body = await request.text();
+    }
+  }
+
+  const fetchUrl = `${API_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+
+  async function doFetch(authToken: string | undefined) {
+    const reqHeaders = { ...headers } as Record<string, string>;
+    if (authToken) reqHeaders['Authorization'] = `Bearer ${authToken}`;
+    return fetch(fetchUrl, { method: request.method, headers: reqHeaders, body, cache: 'no-store' });
+  }
 
   try {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
+    let response = await doFetch(token);
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Forward important headers from the client that might be needed by the backend
-    // to generate correct URLs in emails (like Referer or Origin)
-    const clientOrigin = request.headers.get('origin');
-    const clientReferer = request.headers.get('referer');
-    if (clientOrigin) headers['Origin'] = clientOrigin;
-    if (clientReferer) headers['Referer'] = clientReferer;
-
-    const options: RequestInit = {
-      method: request.method,
-      headers,
-    };
-
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      const clientContentType = request.headers.get('content-type') || '';
-      if (clientContentType.includes('multipart/form-data')) {
-        // For multipart, override Content-Type with the original (includes boundary) 
-        // and forward raw body as ArrayBuffer
-        (headers as Record<string, string>)['Content-Type'] = clientContentType;
-        options.body = await request.arrayBuffer();
-      } else {
-        options.body = await request.text();
+    // Access token expired — try the refresh_token once before giving up. Without this, every
+    // session silently died once the access token expired, regardless of the 7-day refresh token.
+    if (response.status === 401 && refreshToken) {
+      refreshed = await refreshAccessToken(refreshToken);
+      if (refreshed) {
+        token = refreshed.access;
+        response = await doFetch(token);
       }
     }
 
-    const fetchUrl = `${API_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    
-    const response = await fetch(fetchUrl, {
-      ...options,
-      cache: 'no-store'
-    });
-    
     const contentType = response.headers.get('content-type');
     let data;
     if (contentType && contentType.includes('application/json')) {
@@ -118,7 +121,9 @@ async function handleProxy(request: Request) {
         console.warn(`Proxy API Error (${response.status}) for ${endpoint}:`, data);
       }
       const cleanMessage = extractErrorMessage(data);
-      return NextResponse.json({ message: cleanMessage, ...data }, { status: response.status });
+      const errorRes = NextResponse.json({ message: cleanMessage, ...data }, { status: response.status });
+      if (refreshed) applyRefreshedTokenCookies(errorRes, refreshed);
+      return errorRes;
     }
 
     // Stocker dans la cache
@@ -141,17 +146,19 @@ async function handleProxy(request: Request) {
       }
     }
 
-    return NextResponse.json(data, {
+    const res = NextResponse.json(data, {
       status: response.status,
       headers: {
         'X-Cache': cacheTTL ? 'MISS' : 'SKIP',
         'Cache-Control': cacheTTL ? 'public, max-age=60, must-revalidate' : 'no-store',
       },
     });
+    if (refreshed) applyRefreshedTokenCookies(res, refreshed);
+    return res;
   } catch (error: any) {
     console.error('Proxy Fatal Error:', error);
     return NextResponse.json(
-      { message: 'Le serveur est injoignable. Veuillez réessayer dans quelques instants.' }, 
+      { message: 'Le serveur est injoignable. Veuillez réessayer dans quelques instants.' },
       { status: 503 }
     );
   }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { UpcomingRelease } from "@/types/sortiesPremieres";
 
 export default function UpcomingReleaseCard({ release }: { release: UpcomingRelease }) {
@@ -30,10 +31,10 @@ export default function UpcomingReleaseCard({ release }: { release: UpcomingRele
             <span className="material-symbols-outlined text-sm">{release.releaseIcon}</span>
             <span>{release.releaseInfo}</span>
           </div>
-          <button className="text-primary text-sm font-bold flex items-center gap-1">
+          <Link href={release.href || "/sorties-premieres"} className="text-primary text-sm font-bold flex items-center gap-1">
             Détails{" "}
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </button>
+          </Link>
         </div>
       </div>
     </div>

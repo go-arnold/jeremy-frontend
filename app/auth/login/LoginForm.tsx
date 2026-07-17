@@ -34,8 +34,9 @@ export default function LoginForm() {
     }
   }, [isAuthenticated, authLoading, router]);
 
+  // (PDF) Google login should land on the home page, not the profile page.
   const { googleLoading, triggerGoogleLogin } = useGoogleAuth(
-    () => router.push('/mon-profil'),
+    () => router.push('/'),
     (message) => setError(message)
   );
 

@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  filterTabs as mockedFilterTabs, 
-  premierVideo as mockedPremier, 
-  studioSessions as mockedStudio, 
-  freestyleVideos as mockedFreestyles, 
-  docVideos as mockedDocs 
+import {
+  filterTabs as mockedFilterTabs,
+  premierVideo as mockedPremier,
+  studioSessions as mockedStudio,
+  freestyleVideos as mockedFreestyles,
+  docVideos as mockedDocs,
+  interviewVideos as mockedInterviews,
+  concertVideos as mockedConcerts,
 } from "@/data/webtv";
 import FilterBar from "@/components/webTv/FilterBar";
 import PremierSection from "@/components/webTv/PremierSection";
@@ -17,6 +19,10 @@ import FreestylesSection from "@/components/webTv/FreestylesSection";
 import FreestylesSectionDesktop from "@/components/webTv/FreestylesSectionDesktop";
 import DocsSection from "@/components/webTv/DocsSection";
 import DocsSectionDesktop from "@/components/webTv/DocsSectionDesktop";
+import InterviewsSection from "@/components/webTv/InterviewsSection";
+import InterviewsSectionDesktop from "@/components/webTv/InterviewsSectionDesktop";
+import ConcertsSection from "@/components/webTv/ConcertsSection";
+import ConcertsSectionDesktop from "@/components/webTv/ConcertsSectionDesktop";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiVideoToWebTVVideo } from "@/lib/mappers";
 import EmptyState from "@/components/ui/EmptyState";
@@ -95,6 +101,8 @@ export default function WebTVPage() {
   const studioSessions = videos.filter(v => v.category === "studio_sessions");
   const freestyleVideos = videos.filter(v => v.category === "freestyles");
   const docVideos = videos.filter(v => v.category === "docs");
+  const interviewVideos = videos.filter(v => v.category === "interviews");
+  const concertVideos = videos.filter(v => v.category === "concerts");
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
@@ -118,10 +126,12 @@ export default function WebTVPage() {
             <div id="studio-sessions"><StudioSessionsSection sessions={studioSessions.length > 0 ? studioSessions as any : mockedStudio} /></div>
             <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
             <div id="docs"><DocsSection docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
-            <VoirPlusPagination 
-              onLoadMore={loadMore} 
-              hasMore={hasMore} 
-              isLoading={loadingMore} 
+            <div id="interviews"><InterviewsSection interviews={interviewVideos.length > 0 ? interviewVideos as any : mockedInterviews} /></div>
+            <div id="concerts"><ConcertsSection concerts={concertVideos.length > 0 ? concertVideos as any : mockedConcerts} /></div>
+            <VoirPlusPagination
+              onLoadMore={loadMore}
+              hasMore={hasMore}
+              isLoading={loadingMore}
             />
           </main>
 
@@ -133,10 +143,12 @@ export default function WebTVPage() {
             </div>
             <div id="freestyles"><FreestylesSectionDesktop videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
             <div id="docs"><DocsSectionDesktop docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
-            <VoirPlusPagination 
-              onLoadMore={loadMore} 
-              hasMore={hasMore} 
-              isLoading={loadingMore} 
+            <div id="interviews"><InterviewsSectionDesktop interviews={interviewVideos.length > 0 ? interviewVideos as any : mockedInterviews} /></div>
+            <div id="concerts"><ConcertsSectionDesktop concerts={concertVideos.length > 0 ? concertVideos as any : mockedConcerts} /></div>
+            <VoirPlusPagination
+              onLoadMore={loadMore}
+              hasMore={hasMore}
+              isLoading={loadingMore}
             />
           </main>
         </>

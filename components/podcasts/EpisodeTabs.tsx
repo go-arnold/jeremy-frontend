@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { PodcastEpisode } from "@/types/podcasts";
+import GuestFollowButton from "./GuestFollowButton";
 
 type Tab = "Infos" | "Invité" | "Transcription";
 
@@ -62,9 +63,10 @@ export default function EpisodeTabs({ episode }: { episode: PodcastEpisode }) {
                     {episode.guest.title}
                   </p>
                 </div>
-                <button className="text-primary text-xs font-bold border border-primary/30 px-3 py-1 rounded-full hover:bg-primary/10 transition">
-                  Suivre
-                </button>
+                <GuestFollowButton
+                  guestName={episode.guest.name}
+                  className="text-primary text-xs font-bold border border-primary/30 px-3 py-1 rounded-full hover:bg-primary/10 transition disabled:opacity-50"
+                />
               </div>
               <p className="text-gray-400 text-xs mt-2 leading-relaxed line-clamp-2">
                 {episode.guest.bio}
@@ -88,10 +90,20 @@ export default function EpisodeTabs({ episode }: { episode: PodcastEpisode }) {
         </div>
       )}
 
-      {/* Transcription (placeholder) */}
+      {/* Transcription */}
       {active === "Transcription" && (
-        <div className="mb-8 text-gray-500 text-sm italic text-center py-8">
-          Transcription non disponible pour cet épisode.
+        <div className="mb-8">
+          {episode.transcript ? (
+            episode.transcript.split("\n\n").map((para, i) => (
+              <p key={i} className="text-gray-300 text-[15px] leading-relaxed font-light mt-3 first:mt-0">
+                {para}
+              </p>
+            ))
+          ) : (
+            <div className="text-gray-500 text-sm italic text-center py-8">
+              Transcription non disponible pour cet épisode.
+            </div>
+          )}
         </div>
       )}
     </>

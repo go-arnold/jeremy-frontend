@@ -1,9 +1,25 @@
-import type { LiveShow } from "@/types/radio";
+"use client";
 
- export default function LivePlayerDesktop({ show }: { show: LiveShow }) {
+import type { LiveShow } from "@/types/radio";
+import { useAudioLiveStream } from "@/hooks/useAudioLiveStream";
+import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+import { shareContent } from "@/lib/share";
+
+export default function LivePlayerDesktop({ show }: { show: LiveShow }) {
+  const { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry } = useAudioLiveStream(
+    show.hlsUrl,
+    show.isPlaying
+  );
+  useConsumptionHeartbeat(isPlaying, "radio", show.numericId, show.title, show.imageUrl);
+
+  const handleShare = () => {
+    shareContent({ title: show.title, url: "/radio-en-direct" }).catch(() => {});
+  };
+
   return (
     <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl group"
       style={{ minHeight: "600px" }}>
+      <audio ref={audioRef} />
 
       {/* Background */}
       <div
@@ -40,19 +56,40 @@ import type { LiveShow } from "@/types/radio";
         {/* Contrôles player */}
         <div className="flex items-center gap-6">
           {/* Bouton play */}
-          <button className="flex shrink-0 items-center justify-center rounded-full w-20 h-20 bg-[#E63012] text-white shadow-xl shadow-[#E63012]/30 hover:scale-105 active:scale-95 transition-transform">
-            <span
-              className="material-symbols-outlined !text-5xl"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              {show.isPlaying ? "pause" : "play_arrow"}
-            </span>
+          <button
+            onClick={togglePlay}
+            disabled={isLoading || hasError || !show.hlsUrl}
+            className="flex shrink-0 items-center justify-center rounded-full w-20 h-20 bg-[#E63012] text-white shadow-xl shadow-[#E63012]/30 hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="w-7 h-7 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <span
+                className="material-symbols-outlined !text-5xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                {isPlaying ? "pause" : "play_arrow"}
+              </span>
+            )}
           </button>
 
-          {/* Barre de progression + waveform */}
+          {/* Statut + waveform */}
           <div className="flex-1 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-white text-xs font-bold tracking-widest uppercase">Flux en direct</p>
+              <p className="text-white text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+                {hasError ? (
+                  <>
+                    <span className="text-[#E63012]">Flux indisponible</span>
+                    <button onClick={retry} className="text-white/70 underline normal-case font-semibold">
+                      Réessayer
+                    </button>
+                  </>
+                ) : isLoading ? (
+                  "Connexion..."
+                ) : (
+                  "Flux en direct"
+                )}
+              </p>
               {/* Waveform animée */}
               <div className="flex gap-1 items-end h-5">
                 {[0.1, 0.2, 0.3, 0.4, 0.5, 0.15, 0.35].map((delay, i) => (
@@ -62,34 +99,36 @@ import type { LiveShow } from "@/types/radio";
                     style={{
                       height: `${[12, 18, 10, 20, 14, 16, 8][i]}px`,
                       animationDelay: `${delay}s`,
+                      animationPlayState: isPlaying ? "running" : "paused",
                     }}
                   />
                 ))}
               </div>
             </div>
-            {/* Progress bar */}
-            <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-[#E63012] w-3/4 rounded-full relative">
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg" />
-              </div>
-            </div>
             {/* Volume */}
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-white/40 text-sm">volume_down</span>
-              <div className="flex-1 h-1 bg-white/20 rounded-full">
-                <div className="h-full bg-white/60 w-2/3 rounded-full" />
-              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                defaultValue="1"
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="flex-1 h-1 rounded-full appearance-none cursor-pointer accent-[#E63012]"
+                style={{ background: "rgba(255,255,255,0.2)" }}
+              />
               <span className="material-symbols-outlined text-white/40 text-sm">volume_up</span>
             </div>
           </div>
 
           {/* Actions secondaires */}
           <div className="flex flex-col gap-3">
-            <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/70 hover:text-white">
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/70 hover:text-white"
+            >
               <span className="material-symbols-outlined text-lg">share</span>
-            </button>
-            <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/70 hover:text-white">
-              <span className="material-symbols-outlined text-lg">bookmark</span>
             </button>
           </div>
         </div>
