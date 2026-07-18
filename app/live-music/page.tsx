@@ -1,7 +1,4 @@
 import NowPlayingHero from "@/components/liveMusic/NowPlayingHero";
-import NowPlayingHeroDesktop from "@/components/liveMusic/NowPlayingHeroDesktop";
-import ProgramScheduleDesktop from "@/components/liveMusic/ProgramScheduleDesktop";
-import LiveChatDesktop from "@/components/liveMusic/LiveChatDesktop";
 import LiveChat from "@/components/liveMusic/LiveChat";
 import ProgramSchedule from "@/components/liveMusic/ProgramSchedule";
 import EngagementBar from "@/components/ui/EngagementBar";
@@ -45,11 +42,11 @@ export default async function Page() {
             <>
               {/* Mobile */}
               <div className="lg:hidden w-full px-4 mt-4 pb-10">
-                <ProgramSchedule slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots as any} variant="mobile" />
               </div>
               {/* Desktop */}
               <div className="hidden lg:block w-full max-w-2xl mx-auto mt-4 pb-10">
-                <ProgramScheduleDesktop slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots as any} variant="desktop" />
               </div>
             </>
           )}
@@ -104,7 +101,7 @@ export default async function Page() {
             </div>
             <LiveChat slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
             <div className="w-full h-px bg-white/5 my-2" />
-            <ProgramSchedule slots={programSlots as any} />
+            <ProgramSchedule slots={programSlots as any} variant="mobile" />
             <div className="h-10" />
           </div>
         </div>
@@ -141,7 +138,7 @@ export default async function Page() {
 
               {/* ── Col 1 : Now Playing ── */}
               <div className="sticky top-24 flex flex-col gap-6">
-                <NowPlayingHeroDesktop track={nowPlaying as any} />
+                <NowPlayingHero track={nowPlaying as any} />
                 <EngagementBar
                   resourceType="live_music/sessions"
                   id={slug}
@@ -152,12 +149,12 @@ export default async function Page() {
 
               {/* ── Col 2 : Programme ── */}
               <div>
-                <ProgramScheduleDesktop slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots as any} variant="desktop" />
               </div>
 
               {/* ── Col 3 : Chat ── */}
               <div className="sticky top-24">
-                <LiveChatDesktop slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
+                <LiveChat slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
               </div>
             </div>
           </div>

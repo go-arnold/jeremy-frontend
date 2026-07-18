@@ -1,8 +1,6 @@
 import LivePlayer from "@/components/radio-en-direct/LivePlayer";
 import ProgramGrid from "@/components/radio-en-direct/ProgramGrid";
-import LivePlayerDesktop from "@/components/radio-en-direct/LivePlayerDesktop";
-import ProgramGridDesktop from "@/components/radio-en-direct/ProgramGridDesktop";
-import LiveChatDesktop from "@/components/radio-en-direct/LiveChatDesktop";
+import LiveChat from "@/components/radio-en-direct/LiveChat";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
 import { membershipBanner as mockedBanner, programSlots as mockedSlots, liveShow as mockedShow } from "@/data/radio";
 import { apiFetch } from "@/lib/api-client";
@@ -55,16 +53,9 @@ export default async function RadioEnDirectPage() {
           />
           {/* Still show the programme grid even if no live */}
           {programSlots.length > 0 && (
-            <>
-              {/* Mobile */}
-              <div className="lg:hidden w-full mt-4">
-                <ProgramGrid slots={programSlots as any} />
-              </div>
-              {/* Desktop */}
-              <div className="hidden lg:block w-full mt-4">
-                <ProgramGridDesktop slots={programSlots as any} />
-              </div>
-            </>
+            <div className="w-full mt-4">
+              <ProgramGrid slots={programSlots as any} />
+            </div>
           )}
           <div className="w-full mt-8">
             <MembershipBannerWidget banner={mockedBanner} />
@@ -92,7 +83,7 @@ export default async function RadioEnDirectPage() {
             MOBILE : empilement vertical (inchangé)
         ══════════════════════════════════════════ */}
         <div className="lg:hidden">
-          <LivePlayer show={liveShow as any} />
+          <LivePlayer show={liveShow as any} variant="mobile" />
           <ProgramGrid slots={programSlots as any} />
           <MembershipBannerWidget banner={mockedBanner} />
         </div>
@@ -123,12 +114,12 @@ export default async function RadioEnDirectPage() {
           <div className="grid grid-cols-[1fr_400px] gap-6 items-start">
 
             {/* ── Colonne gauche : LivePlayer ── */}
-            <LivePlayerDesktop show={liveShow as any} />
+            <LivePlayer show={liveShow as any} variant="desktop" />
 
             {/* ── Colonne droite : Programme + Chat ── */}
             <div className="flex flex-col gap-5 sticky top-24">
-              <ProgramGridDesktop slots={programSlots as any} />
-              <LiveChatDesktop messages={displayChat as any} />
+              <ProgramGrid slots={programSlots as any} />
+              <LiveChat messages={displayChat as any} />
             </div>
           </div>
 

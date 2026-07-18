@@ -4,22 +4,51 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FeaturedEvent, EventGridItem, EventCity } from "@/types/evenements";
 import { shareContent } from "@/lib/share";
+import { apiFetch, PaginatedResponse } from "@/lib/api-client";
+import { mapApiEventToEvent } from "@/lib/mappers";
 
 import EventsHeader        from "./EventsHeader";
 import FeaturedEventCard   from "./FeaturedEventCard";
 import UpcomingEventsGrid  from "./UpcomingEventsGrid";
 import WhatsAppNotifBanner from "./WhatsAppNotifBanner";
 import ContentImage from "@/components/ui/ContentImage";
+import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 
 interface Props {
   cities: EventCity[];
-  featured: FeaturedEvent;
-  upcoming: EventGridItem[];
+  // The real mapApiEventToEvent() shape only loosely matches FeaturedEvent/EventGridItem (e.g. no
+  // `dateLabel`/`aspectRatio`) — the original page already bridged this with `as any` at the call
+  // site, preserved here rather than reconciling the deeper shape mismatch.
+  initialEvents: ReturnType<typeof mapApiEventToEvent>[];
+  initialHasMore: boolean;
 }
 
-export default function EventsPageClient({ cities, featured, upcoming }: Props) {
+export default function EventsPageClient({ cities, initialEvents, initialHasMore }: Props) {
   const [activeCity, setActiveCity] = useState<EventCity>("Tous");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [events, setEvents] = useState(initialEvents);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const featured = (events.find((e) => (e as { isFeatured?: boolean }).isFeatured) ||
+    events[0]) as unknown as FeaturedEvent;
+  const upcoming = events.filter((e) => e.id !== featured?.id) as unknown as EventGridItem[];
+
+  const loadMore = async (page: number) => {
+    setLoadingMore(true);
+    try {
+      const data = await apiFetch<PaginatedResponse<Parameters<typeof mapApiEventToEvent>[0]>>(
+        `/api/v1/events/?page=${page}&page_size=15`
+      );
+      setEvents((prev) => [...prev, ...data.results.map(mapApiEventToEvent)]);
+      setHasMore(!!data.next);
+    } catch (error) {
+      console.error("Failed to load more events:", error);
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const filtered = upcoming.filter((e) => {
     const matchesCity = activeCity === "Tous" || e.city === activeCity;
@@ -93,6 +122,10 @@ export default function EventsPageClient({ cities, featured, upcoming }: Props) 
           {/* Ligne 2 : WhatsApp banner pleine largeur */}
           <WhatsAppNotifBannerDesktop />
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-8 pb-16 w-full">
+        <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
       </div>
     </div>
   );
@@ -331,7 +364,7 @@ function WhatsAppNotifBannerDesktop() {
               className="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-black font-bold px-5 py-3 rounded-xl transition-all hover:scale-[1.02] text-sm"
             >
               <span className="material-symbols-outlined text-lg">send</span>
-              S'inscrire
+              S&apos;inscrire
             </button>
           </div>
         )}
