@@ -4,10 +4,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://art-du-kivu-api.kelo
  * Extracts a human-readable string from complex error objects (especially Django REST)
  * to prevent "[object Object]" displays.
  */
-export function extractErrorMessage(data: any): string {
+export function extractErrorMessage(data: unknown): string {
   if (!data) return 'Une erreur inconnue est survenue';
   if (typeof data === 'string') return data;
-  
+
   // If it's an array, try to extract from the first element
   if (Array.isArray(data)) {
     if (data.length === 0) return 'Une erreur inconnue est survenue';
@@ -15,10 +15,12 @@ export function extractErrorMessage(data: any): string {
   }
 
   if (typeof data === 'object' && data !== null) {
+    const record = data as Record<string, unknown>;
+
     // 1. Check priority fields that are usually strings or arrays of strings
     const priority = ['detail', 'message', 'error', 'non_field_errors', 'errorMessage', 'errors'];
     for (const key of priority) {
-      const val = data[key];
+      const val = record[key];
       if (val) {
         if (typeof val === 'string') return val;
         if (Array.isArray(val) && typeof val[0] === 'string') return val[0];
@@ -29,15 +31,15 @@ export function extractErrorMessage(data: any): string {
     }
 
     // 2. Try any other key that has a string value or array of strings (common in field-specific errors)
-    for (const key in data) {
-      const val = data[key];
+    for (const key in record) {
+      const val = record[key];
       if (typeof val === 'string') return `${key}: ${val}`;
       if (Array.isArray(val) && typeof val[0] === 'string') return `${key}: ${val[0]}`;
     }
 
     // 3. Try any other key that has an array or object value
-    for (const key in data) {
-      const val = data[key];
+    for (const key in record) {
+      const val = record[key];
       if (val && (Array.isArray(val) || typeof val === 'object')) {
         const nested = extractErrorMessage(val);
         if (nested && nested !== '[object Object]') return nested;
@@ -46,10 +48,10 @@ export function extractErrorMessage(data: any): string {
 
     // Last resort: stringify the whole thing if it's a small object
     try {
-      const str = JSON.stringify(data);
+      const str = JSON.stringify(record);
       if (str === '{}') return 'Une erreur serveur est survenue';
       return str.length < 150 ? str : 'Erreur serveur détaillée';
-    } catch (e) {
+    } catch {
       return 'Une erreur serveur est survenue';
     }
   }
@@ -58,11 +60,28 @@ export function extractErrorMessage(data: any): string {
 }
 
 // In-memory cache for API requests (server-side)
-const responseCache = new Map<string, { data: any; timestamp: number }>();
+const responseCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 60000; // 1 minute pour la cache serveur
 
+/**
+ * A response can vary per caller identity (Authorization header) even for the same endpoint —
+ * the cache key MUST include it, otherwise one user's cached response leaks to another. Reads
+ * the header from either a `Headers` instance or a plain object, since `JSON.stringify` silently
+ * drops `Headers` instances (no enumerable properties) and would otherwise make the key identical
+ * for every caller.
+ */
 function getCacheKey(endpoint: string, options?: RequestInit): string {
-  return `${endpoint}:${JSON.stringify(options || {})}`;
+  let authIdentity = 'anon';
+  const headers = options?.headers;
+  if (headers instanceof Headers) {
+    authIdentity = headers.get('Authorization') || 'anon';
+  } else if (headers && typeof headers === 'object') {
+    const entry = Object.entries(headers as Record<string, string>).find(
+      ([key]) => key.toLowerCase() === 'authorization'
+    );
+    authIdentity = entry?.[1] || 'anon';
+  }
+  return `${endpoint}:${authIdentity}:${JSON.stringify(options || {})}`;
 }
 
 export async function apiFetch<T>(
@@ -129,10 +148,10 @@ export async function apiFetch<T>(
     }
     
     return data as T;
-  } catch (error: any) {
+  } catch (error) {
     // Ensure we always throw a simple string message
-    const message = error.message || 'Erreur de connexion réseau';
-    throw new Error(typeof message === 'string' ? message : 'Erreur inconnue');
+    const message = error instanceof Error ? error.message : 'Erreur de connexion réseau';
+    throw new Error(message);
   }
 }
 

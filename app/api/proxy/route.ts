@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { extractErrorMessage } from '@/lib/api-client';
@@ -7,6 +8,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://art-du-kivu-api.kelo
 
 // Cache en mémoire pour les requêtes GET
 const requestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+/**
+ * Identifies the caller for cache-key scoping, without storing the raw token in memory.
+ * Responses can vary per Bearer token (e.g. gamification/media-ranking has no user id in the
+ * URL), so the cache key MUST be scoped by identity — otherwise user A's cached response gets
+ * served to user B for the same anonymous-looking endpoint.
+ */
+function identityHash(token: string | undefined): string {
+  if (!token) return 'anon';
+  return createHash('sha256').update(token).digest('hex').slice(0, 16);
+}
 
 /**
  * Détermine le TTL de cache basé sur l'endpoint
@@ -48,9 +60,16 @@ async function handleProxy(request: Request) {
   const method = request.method;
   const cacheTTL = getCacheTTL(endpoint, method);
 
+  const cookieStore = await cookies();
+  let token = cookieStore.get('access_token')?.value;
+  const refreshToken = cookieStore.get('refresh_token')?.value;
+  let refreshed: { access: string; refresh: string | null } | null = null;
+
+  // Cache key MUST be scoped by caller identity — see identityHash() above.
+  const cacheKey = `${method}:${endpoint}:${identityHash(token)}`;
+
   // Vérifier la cache
   if (cacheTTL) {
-    const cacheKey = `${method}:${endpoint}`;
     const cached = requestCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
       return NextResponse.json(cached.data, {
@@ -62,11 +81,6 @@ async function handleProxy(request: Request) {
       });
     }
   }
-
-  const cookieStore = await cookies();
-  let token = cookieStore.get('access_token')?.value;
-  const refreshToken = cookieStore.get('refresh_token')?.value;
-  let refreshed: { access: string; refresh: string | null } | null = null;
 
   // Body/multipart can only be read off `request` once — capture it up front so a retry after
   // a token refresh can reuse the exact same payload instead of re-reading an exhausted stream.
@@ -129,7 +143,6 @@ async function handleProxy(request: Request) {
 
     // Stocker dans la cache
     if (cacheTTL) {
-      const cacheKey = `${method}:${endpoint}`;
       requestCache.set(cacheKey, {
         data,
         timestamp: Date.now(),

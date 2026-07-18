@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ detail: 'no_token' }, { status: 400 });
     }
 
-    const res = NextResponse.json({ user, access: accessToken, refresh: refreshToken });
+    const res = NextResponse.json({ user });
 
     res.cookies.set('access_token', accessToken, {
       httpOnly: true,

@@ -11,7 +11,7 @@ export async function GET() {
   const refreshToken = cookieStore.get('refresh_token')?.value;
   let refreshed: RefreshedTokens | null = null;
 
-  if (!token) {
+  if (!token && !refreshToken) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -22,16 +22,24 @@ export async function GET() {
     });
 
   try {
-    let response = await fetchMe(token);
+    // The access_token cookie (1 day) can outlive its actual JWT expiry, and can also be gone
+    // entirely while the refresh_token (7 days) is still valid — in both cases we must attempt a
+    // refresh instead of failing outright, otherwise the session silently logs itself out days
+    // before the refresh token actually expires.
+    let response = token
+      ? await fetchMe(token)
+      : new Response(null, { status: 401 });
 
-    // Access token expired — this is the call AuthProvider fires on every page load, so
-    // without a refresh attempt here every session silently logged itself out once it expired.
     if (response.status === 401 && refreshToken) {
       refreshed = await refreshAccessToken(refreshToken);
       if (refreshed) {
         token = refreshed.access;
         response = await fetchMe(token);
       }
+    }
+
+    if (response.status === 401 && !refreshed) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const contentType = response.headers.get('content-type');
