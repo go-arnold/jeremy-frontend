@@ -27,6 +27,9 @@ export type ListenHistoryItemBase = {
   accentColor: string; // tailwind bg color e.g. "bg-orange-500/20"
   iconColor: string;   // tailwind text color e.g. "text-orange-500"
   icon: string;        // material symbol name
+  // Only populated from the real `/gamification/media-ranking/` response — absent on the
+  // mocked fallback data, used to aggregate total listening time on the profile stats.
+  totalSeconds?: number;
 };
 
 export type ListenHistoryItemIdle = ListenHistoryItemBase & {

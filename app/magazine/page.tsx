@@ -1,14 +1,11 @@
 import { heroArticle as mockedHero, newsArticles as mockedNews, youthItems, radioBanner } from "@/data/magazine";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiArticleToMagazineHero, mapApiArticleToNewsArticle } from "@/lib/mappers";
+import { mapApiArticleToMagazineHero, mapApiArticleToNewsArticle, type ApiMagazineArticle } from "@/lib/mappers";
 import HeroSection from "@/components/magazine/HeroSection";
 import NewsSection from "@/components/magazine/NewsSection";
 import YouthSection from "@/components/magazine/YouthSection";
 import RadioBannerWidget from "@/components/magazine/RadioBannerWidget";
 import EditorialNoteWidget from "@/components/magazine/EditorialNoteWidget";
-import HeroSectionDesktop from "@/components/magazine/HeroSectionDesktop";
-import NewsSectionDesktop from "@/components/magazine/NewsSectionDesktop";
-import YouthSectionDesktop from "@/components/magazine/YouthSectionDesktop";
 import RadioSidebarWidget from "@/components/magazine/RadioSidebarWidget";
 import NewsletterWidget from "@/components/magazine/NewsletterWidget";
 
@@ -16,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 async function getMagazineArticles() {
   try {
-    const data = await apiFetch<PaginatedResponse<any>>("/api/v1/articles/?page_size=10");
+    const data = await apiFetch<PaginatedResponse<ApiMagazineArticle>>("/api/v1/articles/?page_size=10");
     if (data.results.length === 0) return null;
     // Featured article (if any) leads as the hero; the rest fill the News grid. Falls back to
     // the first article when nothing is explicitly featured, same convention as Home/Events.
@@ -44,11 +41,12 @@ export default async function Page() {
 
   return (
     <div>
+      <HeroSection article={heroArticle} />
+
       {/* ══════════════════════════════════════
           MOBILE — layout original inchangé
       ══════════════════════════════════════ */}
       <main className="lg:hidden pb-24">
-        <HeroSection article={heroArticle} />
         <NewsSection articles={newsArticles} />
         <YouthSection items={youthItems} />
 
@@ -67,9 +65,6 @@ export default async function Page() {
       ══════════════════════════════════════ */}
       <main className="hidden lg:block mt-16 pb-16">
 
-        {/* ── Hero desktop pleine largeur ── */}
-        <HeroSectionDesktop article={heroArticle} />
-
         {/* ── Corps : News (large) + Sidebar (fixe) ── */}
         <div className="max-w-7xl mx-auto px-8 mt-14">
           <div className="grid grid-cols-[1fr_320px] gap-10 items-start">
@@ -78,13 +73,13 @@ export default async function Page() {
             <div className="flex flex-col gap-14">
 
               {/* News grille 3 colonnes */}
-              <NewsSectionDesktop articles={newsArticles} />
+              <NewsSection articles={newsArticles} variant="desktop" />
 
               {/* Séparateur décoratif */}
               <div className="kivu-divider" />
 
               {/* Youth grille */}
-              <YouthSectionDesktop items={youthItems} />
+              <YouthSection items={youthItems} />
             </div>
 
             {/* ── Sidebar sticky ── */}

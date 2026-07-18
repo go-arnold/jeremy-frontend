@@ -9,16 +9,14 @@ import { apiFetch } from '@/lib/api-client';
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const key = searchParams.get('key');
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Vérification de votre compte...');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(key ? 'loading' : 'error');
+  const [message, setMessage] = useState(
+    key ? 'Vérification de votre compte...' : 'Clé de vérification manquante.'
+  );
   const router = useRouter();
 
   useEffect(() => {
-    if (!key) {
-      setStatus('error');
-      setMessage('Clé de vérification manquante.');
-      return;
-    }
+    if (!key) return;
 
     async function verify() {
       try {
@@ -30,9 +28,9 @@ function VerifyEmailContent() {
         setStatus('success');
         setMessage('Votre compte a été vérifié avec succès !');
         setTimeout(() => router.push('/auth/login'), 3000);
-      } catch (error: any) {
+      } catch (error) {
         setStatus('error');
-        setMessage(error.message || 'La vérification a échoué. La clé est peut-être expirée.');
+        setMessage(error instanceof Error ? error.message : 'La vérification a échoué. La clé est peut-être expirée.');
       }
     }
 

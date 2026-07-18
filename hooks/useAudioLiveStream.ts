@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type HlsType from "hls.js";
+
+interface HlsErrorData {
+  fatal: boolean;
+  type: string;
+  details: string;
+}
 
 /**
  * hls.js wiring for a live AUDIO stream, sharing the exact same credentials fix as
@@ -13,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 export function useAudioLiveStream(hlsUrl: string | null | undefined, autoplay = false) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const hlsInstanceRef = useRef<any>(null);
+  const hlsInstanceRef = useRef<HlsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,7 +62,7 @@ export function useAudioLiveStream(hlsUrl: string | null | undefined, autoplay =
           if (autoplay) audio.play().catch(() => setIsPlaying(false));
         });
 
-        hls.on(Hls.Events.ERROR, (_: any, data: any) => {
+        hls.on(Hls.Events.ERROR, (_event, data: HlsErrorData) => {
           if (data.fatal) {
             setHasError(true);
             setIsLoading(false);

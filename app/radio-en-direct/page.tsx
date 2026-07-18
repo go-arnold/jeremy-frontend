@@ -1,18 +1,18 @@
 import LivePlayer from "@/components/radio-en-direct/LivePlayer";
 import ProgramGrid from "@/components/radio-en-direct/ProgramGrid";
-import LivePlayerDesktop from "@/components/radio-en-direct/LivePlayerDesktop";
-import ProgramGridDesktop from "@/components/radio-en-direct/ProgramGridDesktop";
-import LiveChatDesktop from "@/components/radio-en-direct/LiveChatDesktop";
+import LiveChat from "@/components/radio-en-direct/LiveChat";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
 import { membershipBanner as mockedBanner, programSlots as mockedSlots, liveShow as mockedShow } from "@/data/radio";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiRadioToRadioProgram } from "@/lib/mappers";
 import { fetchRadioChat } from "@/lib/services/radio";
 import EmptyState from "@/components/ui/EmptyState";
+import type { ApiRadioOrLiveProgram } from "@/lib/api-types";
+import type { LiveShow } from "@/types/radio";
 
 async function getCurrentRadio() {
   try {
-    const data = await apiFetch<any>("/api/v1/radio/current/");
+    const data = await apiFetch<ApiRadioOrLiveProgram>("/api/v1/radio/current/");
     return mapApiRadioToRadioProgram(data);
   } catch {
     // No live radio — return null to show empty state
@@ -22,12 +22,33 @@ async function getCurrentRadio() {
 
 async function getRadioPrograms() {
   try {
-    const data = await apiFetch<any>("/api/v1/radio/program/");
-    const programs = data.results || data;
+    const data = await apiFetch<PaginatedResponse<ApiRadioOrLiveProgram> | ApiRadioOrLiveProgram[]>(
+      "/api/v1/radio/program/"
+    );
+    const programs = Array.isArray(data) ? data : data.results;
     return Array.isArray(programs) ? programs.map(mapApiRadioToRadioProgram) : [];
   } catch {
     return [];
   }
+}
+
+// LiveShow (LivePlayer's prop type) diverges from the shared radio/live-music mapper shape on a
+// few fields (listenerCount as a formatted string, isPlaying vs isLive, imageUrl vs image) —
+// adapt rather than cast past the mismatch.
+function toLiveShow(program: NonNullable<Awaited<ReturnType<typeof getCurrentRadio>>>): LiveShow {
+  return {
+    slug: program.slug,
+    numericId: program.numericId,
+    title: program.title,
+    description: program.description,
+    host: program.host || "Art du Kivu",
+    listenerCount: String(program.listenerCount ?? 0),
+    isPlaying: program.isLive,
+    imageUrl: program.image || "",
+    imageAlt: program.title,
+    hlsUrl: program.hlsUrl,
+    messages: [],
+  };
 }
 
 async function getRadioChat() {
@@ -55,16 +76,9 @@ export default async function RadioEnDirectPage() {
           />
           {/* Still show the programme grid even if no live */}
           {programSlots.length > 0 && (
-            <>
-              {/* Mobile */}
-              <div className="lg:hidden w-full mt-4">
-                <ProgramGrid slots={programSlots as any} />
-              </div>
-              {/* Desktop */}
-              <div className="hidden lg:block w-full mt-4">
-                <ProgramGridDesktop slots={programSlots as any} />
-              </div>
-            </>
+            <div className="w-full mt-4">
+              <ProgramGrid slots={programSlots} />
+            </div>
           )}
           <div className="w-full mt-8">
             <MembershipBannerWidget banner={mockedBanner} />
@@ -92,8 +106,8 @@ export default async function RadioEnDirectPage() {
             MOBILE : empilement vertical (inchangé)
         ══════════════════════════════════════════ */}
         <div className="lg:hidden">
-          <LivePlayer show={liveShow as any} />
-          <ProgramGrid slots={programSlots as any} />
+          <LivePlayer show={toLiveShow(liveShow)} variant="mobile" />
+          <ProgramGrid slots={programSlots} />
           <MembershipBannerWidget banner={mockedBanner} />
         </div>
 
@@ -115,7 +129,7 @@ export default async function RadioEnDirectPage() {
             </div>
             <div className="kivu-divider flex-1" />
             <span className="text-[#8A8178] text-sm font-medium">
-              {(liveShow as any).listenerCount} auditeurs en ligne
+              {liveShow.listenerCount} auditeurs en ligne
             </span>
           </div>
 
@@ -123,12 +137,12 @@ export default async function RadioEnDirectPage() {
           <div className="grid grid-cols-[1fr_400px] gap-6 items-start">
 
             {/* ── Colonne gauche : LivePlayer ── */}
-            <LivePlayerDesktop show={liveShow as any} />
+            <LivePlayer show={toLiveShow(liveShow)} variant="desktop" />
 
             {/* ── Colonne droite : Programme + Chat ── */}
             <div className="flex flex-col gap-5 sticky top-24">
-              <ProgramGridDesktop slots={programSlots as any} />
-              <LiveChatDesktop messages={displayChat as any} />
+              <ProgramGrid slots={programSlots} />
+              <LiveChat messages={displayChat} />
             </div>
           </div>
 

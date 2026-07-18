@@ -1,8 +1,9 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiPodcastToEpisode, mapApiEpisodeToPodcastEpisode } from "@/lib/mappers";
+import type { ApiEpisode } from "@/lib/api-types";
 
 export async function fetchEpisodes(page = 1, pageSize = 15) {
-  const data = await apiFetch<PaginatedResponse<any>>(
+  const data = await apiFetch<PaginatedResponse<ApiEpisode>>(
     `/api/v1/podcasts/episodes/?page=${page}&page_size=${pageSize}`
   );
   return { ...data, results: data.results.map(mapApiPodcastToEpisode) };
@@ -13,7 +14,7 @@ export async function fetchCategories() {
 }
 
 export async function fetchEpisode(slug: string) {
-  const data = await apiFetch<any>(`/api/v1/podcasts/episodes/${slug}/`);
+  const data = await apiFetch<ApiEpisode>(`/api/v1/podcasts/episodes/${slug}/`);
   return mapApiEpisodeToPodcastEpisode(data);
 }
 

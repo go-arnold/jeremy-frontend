@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiReleaseToFeaturedRelease } from "@/lib/mappers";
 import EngagementBar from "@/components/ui/EngagementBar";
+import type { ApiRelease } from "@/lib/api-types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +15,33 @@ interface Props {
 
 async function getRelease(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/releases/${slug}/`);
+    const data = await apiFetch<ApiRelease>(`/api/v1/releases/${slug}/`);
     return mapApiReleaseToFeaturedRelease(data);
   } catch (error) {
     console.error(`Failed to fetch release ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const release = await getRelease(slug);
+  if (!release) return { title: "Sortie introuvable | Art du Kivu" };
+
+  const title = `${release.title} | Art du Kivu`;
+  const description = release.description
+    ? release.description.slice(0, 160)
+    : `Découvrez ${release.title}${release.artistName ? ` par ${release.artistName}` : ""} sur Art du Kivu.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: release.coverImage ? [release.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function ReleaseDetailPage({ params }: Props) {
@@ -43,10 +67,12 @@ export default async function ReleaseDetailPage({ params }: Props) {
           {/* Cover */}
           <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: "1/1" }}>
             {release.coverImage && (
-              <img
+              <Image
                 alt={release.title}
                 src={release.coverImage}
-                className="absolute inset-0 w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 360px"
+                className="object-cover"
               />
             )}
             {release.isPremiere && (
@@ -115,7 +141,7 @@ export default async function ReleaseDetailPage({ params }: Props) {
             <div className="pt-4 border-t border-white/5">
               <EngagementBar
                 resourceType="releases"
-                id={release.slug || release.id}
+                id={release.slug || release.id || ""}
                 initialLikeCount={release.likeCount}
                 initialCommentCount={release.commentCount}
               />

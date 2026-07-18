@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Avatar from "@/components/ui/Avatar";
 import EngagementBar from "@/components/ui/EngagementBar";
 
@@ -9,9 +10,9 @@ interface PostData {
   timeAgo: string;
   title: string;
   coverImage?: string;
-  image?: string;
-  video?: string;
-  audio?: string;
+  image?: string | null;
+  video?: string | null;
+  audio?: string | null;
   duration?: string;
   likes: number;
   comments: number;
@@ -58,7 +59,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
       return (
         <div className="relative w-full rounded-xl overflow-hidden bg-black" ref={imgContainerRef}>
           <video
-            src={post.video}
+            src={post.video || undefined}
             controls
             preload="metadata"
             className="w-full max-h-80 object-contain"
@@ -79,7 +80,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
               <p className="text-white text-sm font-bold truncate">{post.title || post.caption}</p>
               <p className="text-gray-400 text-xs">{post.duration || "Audio"}</p>
             </div>
-            <audio src={post.audio} controls className="max-w-[200px] h-10" />
+            <audio src={post.audio || undefined} controls className="max-w-[200px] h-10" />
           </div>
         </div>
       );
@@ -94,12 +95,13 @@ export default function TalentPostCard({ post }: { post: PostData }) {
             </div>
           )}
           {imgInView && (
-            <img
+            <Image
               ref={imgRef}
               src={coverSrc}
-              alt={post.title || post.caption}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? "opacity-80" : "opacity-0"}`}
-              loading="lazy"
+              alt={post.title || post.caption || "Publication de la communauté"}
+              fill
+              sizes="(min-width: 1024px) 400px, 90vw"
+              className={`object-cover transition-opacity duration-300 ${imgLoaded ? "opacity-80" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}
               onError={() => setMediaError(true)}
             />

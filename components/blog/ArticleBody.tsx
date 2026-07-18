@@ -31,7 +31,7 @@ export default function ArticleBody({ blocks }: { blocks: ArticleBlock[] }) {
               className="relative my-8 p-6 bg-surface rounded-xl border-l-4 border-primary"
             >
               <span className="absolute top-4 left-4 text-6xl text-white/5 font-display font-black leading-none">
-                "
+                &quot;
               </span>
               <p className="font-display text-xl md:text-xl font-bold text-white italic relative z-10">
                 {block.content}

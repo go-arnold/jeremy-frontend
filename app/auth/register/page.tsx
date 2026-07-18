@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -60,8 +61,8 @@ export default function RegisterPage() {
       };
       await register(regData);
       router.push('/auth/login?registered=true');
-    } catch (err: any) {
-      setError(err.message || "Échec de l'inscription. Veuillez réessayer.");
+    } catch (err) {
+      setError((err instanceof Error ? err.message : null) || "Échec de l'inscription. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ export default function RegisterPage() {
               {googleLoading ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <img src="https://www.google.com/favicon.ico" className="w-4 h-4 grayscale group-hover:grayscale-0 transition-all" alt="Google" />
+                <Image src="https://www.google.com/favicon.ico" width={16} height={16} className="grayscale group-hover:grayscale-0 transition-all" alt="Google" />
               )}
               <span className="text-xs font-bold text-[#F0EDE8]">{googleLoading ? 'Connexion...' : 'Continuer avec Google'}</span>
             </button>
@@ -100,7 +101,7 @@ export default function RegisterPage() {
 
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px flex-1 bg-white/5" />
-            <span className="text-[9px] font-black text-[#4A443E] uppercase tracking-widest">Ou s'inscrire par email</span>
+            <span className="text-[9px] font-black text-[#4A443E] uppercase tracking-widest">Ou s&apos;inscrire par email</span>
             <div className="h-px flex-1 bg-white/5" />
           </div>
 
@@ -197,7 +198,7 @@ export default function RegisterPage() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  S'inscrire
+                  S&apos;inscrire
                   <span className="material-symbols-outlined text-base">person_add</span>
                 </>
               )}

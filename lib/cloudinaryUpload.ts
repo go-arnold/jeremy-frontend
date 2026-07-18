@@ -1,3 +1,16 @@
+interface CloudinaryUploadSignature {
+  api_key: string;
+  timestamp: number;
+  signature: string;
+  folder: string;
+  upload_url: string;
+}
+
+interface CloudinaryUploadResponse {
+  secure_url?: string;
+  error?: { message?: string };
+}
+
 /** Signed direct-to-Cloudinary upload, via XHR (not fetch) so real upload progress can be
  * reported — used to drive the circular progress indicator during community talent submission. */
 export async function uploadToCloudinaryWithProgress(
@@ -16,7 +29,7 @@ export async function uploadToCloudinaryWithProgress(
     throw new Error(err.detail || "Impossible d'obtenir la signature d'upload");
   }
 
-  const sig = await sigRes.json();
+  const sig: CloudinaryUploadSignature = await sigRes.json();
 
   const form = new FormData();
   form.append("file", file);
@@ -36,7 +49,7 @@ export async function uploadToCloudinaryWithProgress(
     };
 
     xhr.onload = () => {
-      let data: any = {};
+      let data: CloudinaryUploadResponse = {};
       try {
         data = JSON.parse(xhr.responseText);
       } catch {

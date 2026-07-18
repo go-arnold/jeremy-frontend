@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { FeaturedRelease } from "@/types/sortiesPremieres";
 
@@ -5,9 +6,11 @@ export default function FeaturedReleaseHero({ release }: { release: FeaturedRele
   return (
     <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-10 group shadow-2xl">
       {release.coverImage && (
-        <img
+        <Image
           alt={release.title}
-          className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-110"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-110"
           src={release.coverImage}
         />
       )}

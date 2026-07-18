@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { NewsArticle } from "@/types/magazine";
 
@@ -20,10 +21,11 @@ export default function NewsCard({ article }: Props) {
             </span>
           </div>
           {imageUrl && (
-            <img
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            <Image
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               src={imageUrl}
-              data-alt={imageAlt}
               alt={imageAlt ?? title}
             />
           )}
@@ -48,10 +50,11 @@ export default function NewsCard({ article }: Props) {
             </span>
           </div>
           {imageUrl && (
-            <img
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            <Image
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               src={imageUrl}
-              data-alt={imageAlt}
               alt={imageAlt ?? title}
             />
           )}
@@ -101,10 +104,11 @@ export default function NewsCard({ article }: Props) {
             </span>
           </div>
           {imageUrl && (
-            <img
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+            <Image
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
               src={imageUrl}
-              data-alt={imageAlt}
               alt={imageAlt ?? title}
             />
           )}

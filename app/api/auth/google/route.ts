@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     });
 
     const contentType = response.headers.get('content-type');
-    let data: any = {};
+    let data: Record<string, unknown> = {};
 
     if (contentType && contentType.includes('application/json')) {
       data = await response.json().catch(() => ({}));
@@ -45,15 +45,15 @@ export async function POST(request: Request) {
     }
 
     // data should contain access & refresh tokens
-    const accessToken = data.access || data.access_token;
-    const refreshToken = data.refresh || data.refresh_token;
+    const accessToken = (data.access || data.access_token) as string | undefined;
+    const refreshToken = (data.refresh || data.refresh_token) as string | undefined;
     const user = data.user || null;
 
     if (!accessToken) {
       return NextResponse.json({ detail: 'no_token' }, { status: 400 });
     }
 
-    const res = NextResponse.json({ user, access: accessToken, refresh: refreshToken });
+    const res = NextResponse.json({ user });
 
     res.cookies.set('access_token', accessToken, {
       httpOnly: true,
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     }
 
     return res;
-  } catch (err: any) {
+  } catch (err) {
     console.error('Google OAuth route error:', err);
     return NextResponse.json({ detail: 'server_error' }, { status: 500 });
   }

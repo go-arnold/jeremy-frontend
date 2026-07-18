@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { GalleryPhoto } from "@/types/artistes";
 
 interface Props {
@@ -15,13 +16,14 @@ export default function PhotoGallery({ photos }: Props) {
         {photos.map((photo) => (
           <div
             key={photo.id}
-            className="break-inside-avoid relative rounded-xl overflow-hidden group"
+            className="break-inside-avoid relative aspect-[4/3] rounded-xl overflow-hidden group"
           >
-            <img
+            <Image
               src={photo.src}
               alt={photo.alt}
-              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>

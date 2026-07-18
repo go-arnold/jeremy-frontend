@@ -1,32 +1,36 @@
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+import type { ApiVideo } from '@/lib/api-types';
 
 async function getDocumentaires() {
   try {
     // Real backend category value is "docs" (WebTVVideo.CATEGORY_CHOICES) — "documentary"
     // never matched anything, so this page always rendered empty regardless of real data.
-    const res = await apiFetch<any>(
+    const res = await apiFetch<PaginatedResponse<ApiVideo>>(
       `/api/v1/webtv/videos/?category=docs&page_size=50`,
       { next: { revalidate: 3600 } }
     );
     return res;
-  } catch (err) {
-    return { results: [], count: 0 };
+  } catch {
+    return { results: [] as ApiVideo[], count: 0 };
   }
 }
 
-function DocCard({ video }: any) {
+function DocCard({ video }: { video: ApiVideo }) {
   return (
     <Link href={`/web-tv/${video.slug}`}>
       <div className="group cursor-pointer overflow-hidden rounded-xl">
         <div className="relative aspect-video bg-slate-900">
           {video.thumbnail_url && (
-            <img
+            <Image
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover group-hover:scale-105 transition-transform"
             />
           )}
           {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
@@ -63,7 +67,7 @@ export default async function DocumentairesPage() {
 
         {data.results?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {data.results.map((video: any) => (
+            {data.results.map((video) => (
               <Suspense key={video.id} fallback={<div className="bg-slate-800 rounded-xl h-48 animate-pulse" />}>
                 <DocCard video={video} />
               </Suspense>

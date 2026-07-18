@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { FreestyleVideo, FreestyleAspect } from "@/types/webtv";
 
@@ -13,8 +14,9 @@ const ASPECT_CLASS: Record<FreestyleAspect, string> = {
 
 export default function FreestylesSection({ videos }: Props) {
   return (
-    <section className="px-4 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <section className="flex flex-col gap-4 px-4 lg:px-0">
+      {/* Header — mobile */}
+      <div className="flex items-center justify-between lg:hidden">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-accent-pink">mic_external_on</span>
           <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Freestyles</h2>
@@ -24,12 +26,22 @@ export default function FreestylesSection({ videos }: Props) {
         </a>
       </div>
 
-      <div className="columns-2 gap-4 space-y-4">
+      {/* Header — desktop */}
+      <div className="hidden lg:flex items-center gap-3">
+        <span className="material-symbols-outlined text-accent-pink">mic_external_on</span>
+        <h2 className="text-white text-xl font-bold tracking-tight">Freestyles</h2>
+        <div className="kivu-divider flex-1" />
+        <a className="text-primary text-xs font-bold hover:text-[#F0EDE8] transition-colors" href="/freestyles">
+          Voir tout
+        </a>
+      </div>
+
+      <div className="columns-2 lg:columns-4 gap-4 space-y-4">
         {videos.map((video) => (
           <Link
             key={video.id}
             href={video.href || "#"}
-            className="relative break-inside-avoid rounded-xl overflow-hidden bg-surface-dark group ring-1 ring-white/5"
+            className={`relative break-inside-avoid rounded-xl overflow-hidden bg-surface-dark group ring-1 ring-white/5 cursor-pointer block w-full ${ASPECT_CLASS[video.aspect]}`}
           >
             {/* "New" badge */}
             {video.isNew && (
@@ -38,9 +50,11 @@ export default function FreestylesSection({ videos }: Props) {
               </div>
             )}
 
-            <img
+            <Image
               alt={video.imageAlt}
-              className={`w-full ${ASPECT_CLASS[video.aspect]} object-cover group-hover:scale-105 transition-transform duration-500`}
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               src={video.imageUrl}
             />
 
@@ -53,8 +67,8 @@ export default function FreestylesSection({ videos }: Props) {
 
             {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="size-10 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur">
-                <span className="material-symbols-outlined text-xl">play_arrow</span>
+              <div className="size-10 lg:w-12 lg:h-12 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur lg:shadow-lg">
+                <span className="material-symbols-outlined text-xl lg:text-2xl">play_arrow</span>
               </div>
             </div>
           </Link>

@@ -1,9 +1,10 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiRadioToRadioProgram, formatRelativeDate } from "@/lib/mappers";
+import type { ApiRadioOrLiveProgram as ApiRadioProgram } from "@/lib/api-types";
 
 export async function fetchCurrentSession() {
   try {
-    const data = await apiFetch<any>("/api/v1/live_music/sessions/current/");
+    const data = await apiFetch<ApiRadioProgram>("/api/v1/live_music/sessions/current/");
     return mapApiRadioToRadioProgram(data);
   } catch {
     return null; // nothing live right now
@@ -11,12 +12,22 @@ export async function fetchCurrentSession() {
 }
 
 export async function fetchProgramme() {
-  const data = await apiFetch<PaginatedResponse<any> | any[]>("/api/v1/live_music/programme/");
+  const data = await apiFetch<PaginatedResponse<ApiRadioProgram> | ApiRadioProgram[]>(
+    "/api/v1/live_music/programme/"
+  );
   const results = Array.isArray(data) ? data : data.results || [];
   return results.map(mapApiRadioToRadioProgram);
 }
 
-export function mapChatMessage(msg: any) {
+interface RawApiChatMessage {
+  id?: string | number;
+  username?: string;
+  avatar_url?: string;
+  message?: string;
+  created_at?: string;
+}
+
+export function mapChatMessage(msg: RawApiChatMessage) {
   return {
     id: String(msg.id || Math.random()),
     username: msg.username || "Anonyme",
@@ -35,7 +46,7 @@ export function mapChatMessage(msg: any) {
  * architecture as WebTV — so pair this with `useLiveRoom("live_music", slug)` for real-time
  * delivery to other viewers, not just this poster's own optimistic append. */
 export async function fetchLiveMusicChat(slug: string) {
-  const data = await apiFetch<PaginatedResponse<any> | any[]>(
+  const data = await apiFetch<PaginatedResponse<RawApiChatMessage> | RawApiChatMessage[]>(
     `/api/v1/live_music/sessions/${slug}/chat/`
   );
   const results = Array.isArray(data) ? data : data.results || [];
@@ -43,7 +54,7 @@ export async function fetchLiveMusicChat(slug: string) {
 }
 
 export async function postLiveMusicChatMessage(slug: string, message: string) {
-  const data = await apiFetch<any>(`/api/v1/live_music/sessions/${slug}/chat/`, {
+  const data = await apiFetch<RawApiChatMessage>(`/api/v1/live_music/sessions/${slug}/chat/`, {
     method: "POST",
     body: JSON.stringify({ message }),
   });

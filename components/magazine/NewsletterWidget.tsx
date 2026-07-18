@@ -16,8 +16,8 @@ export default function NewsletterWidget() {
       setMessage(res.detail || "Merci de votre inscription !");
       setStatus("done");
       setEmail("");
-    } catch (err: any) {
-      setMessage(err.message || "Échec de l'inscription.");
+    } catch (err) {
+      setMessage((err instanceof Error ? err.message : null) || "Échec de l'inscription.");
       setStatus("error");
     }
   };

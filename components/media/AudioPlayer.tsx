@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 interface AudioPlayerProps {
   src: string;
@@ -111,8 +112,8 @@ export default function AudioPlayer({
       {/* Cover + Info */}
       <div className="flex gap-4 mb-6">
         {thumbnail && (
-          <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-            <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+            <Image src={thumbnail} alt={title} fill sizes="64px" className="object-cover" />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -129,6 +130,7 @@ export default function AudioPlayer({
           max={totalDuration || 0}
           value={currentTime}
           onChange={handleProgressChange}
+          aria-label="Progression de la lecture"
           className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-primary"
           style={{
             background: `linear-gradient(to right, #E63012 0%, #E63012 ${
@@ -149,6 +151,7 @@ export default function AudioPlayer({
             onClick={() => skip(-10)}
             className="text-white hover:text-primary transition-colors flex-shrink-0"
             title="Reculer 10s"
+            aria-label="Reculer de 10 secondes"
           >
             <span className="material-symbols-outlined">replay_10</span>
           </button>
@@ -156,6 +159,7 @@ export default function AudioPlayer({
           <button
             onClick={togglePlay}
             className="flex items-center justify-center w-14 h-14 rounded-full bg-primary hover:bg-[#B8240C] transition-colors text-white flex-shrink-0"
+            aria-label={isPlaying ? 'Mettre en pause' : 'Lire'}
           >
             <span className="material-symbols-outlined text-2xl">
               {isPlaying ? 'pause' : 'play_arrow'}
@@ -166,6 +170,7 @@ export default function AudioPlayer({
             onClick={() => skip(10)}
             className="text-white hover:text-primary transition-colors flex-shrink-0"
             title="Avancer 10s"
+            aria-label="Avancer de 10 secondes"
           >
             <span className="material-symbols-outlined">forward_10</span>
           </button>
@@ -175,6 +180,7 @@ export default function AudioPlayer({
           <button
             onClick={toggleMute}
             className="text-white/60 hover:text-white transition-colors flex-shrink-0"
+            aria-label={isMuted || volume === 0 ? 'Réactiver le son' : 'Couper le son'}
           >
             <span className="material-symbols-outlined">
               {isMuted || volume === 0 ? 'volume_off' : 'volume_up'}
@@ -187,6 +193,7 @@ export default function AudioPlayer({
             step="0.01"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
+            aria-label="Volume"
             className="w-24 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-primary"
           />
         </div>

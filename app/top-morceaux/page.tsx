@@ -1,21 +1,33 @@
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+
+// Fields as actually read below — kept as-is (not reconciled against ApiRelease's real
+// `cover_url`/`artist_name` field names) to avoid changing runtime behavior while just removing `any`.
+interface TopRelease {
+  id: number;
+  slug: string;
+  title: string;
+  cover_image?: string;
+  artist_names?: string[];
+  listen_count?: number;
+}
 
 async function getTopReleases() {
   try {
-    const res = await apiFetch<any>(
+    const res = await apiFetch<PaginatedResponse<TopRelease>>(
       `/api/v1/releases/?ordering=-listen_count&page_size=100`,
       { next: { revalidate: 3600 } }
     );
     return res;
-  } catch (err) {
-    return { results: [], count: 0 };
+  } catch {
+    return { results: [] as TopRelease[], count: 0 };
   }
 }
 
-function ReleaseCard({ release, index }: any) {
+function ReleaseCard({ release, index }: { release: TopRelease; index: number }) {
   return (
     <Link href={`/sorties-premieres/${release.slug}`}>
       <div className="group cursor-pointer">
@@ -26,10 +38,12 @@ function ReleaseCard({ release, index }: any) {
           <div className="flex-1">
             <div className="relative aspect-square overflow-hidden rounded-lg mb-3 bg-slate-900">
               {release.cover_image && (
-                <img
+                <Image
                   src={release.cover_image}
                   alt={release.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 640px"
+                  className="object-cover group-hover:scale-105 transition-transform"
                 />
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
@@ -69,7 +83,7 @@ export default async function TopMorceauxPage() {
 
         {data.results?.length > 0 ? (
           <div className="space-y-6 max-w-3xl">
-            {data.results.map((release: any, index: number) => (
+            {data.results.map((release, index) => (
               <Suspense key={release.id} fallback={<div className="bg-slate-800 rounded-lg h-24 animate-pulse" />}>
                 <ReleaseCard release={release} index={index} />
               </Suspense>

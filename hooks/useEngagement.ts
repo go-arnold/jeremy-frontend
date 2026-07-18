@@ -19,7 +19,14 @@ interface UseEngagementOptions {
   initialSaved?: boolean;
 }
 
-async function proxyFetch(endpoint: string, method: string, body?: any) {
+// Response shape is inherently dynamic — different engagement mixin endpoints return different
+// fields (see the function doc comment below) — the index signature keeps property access
+// possible without reintroducing `any`.
+interface ProxyResponse {
+  [key: string]: unknown;
+}
+
+async function proxyFetch(endpoint: string, method: string, body?: unknown): Promise<ProxyResponse> {
   const response = await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`, {
     method,
     headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -32,15 +39,15 @@ async function proxyFetch(endpoint: string, method: string, body?: any) {
   return data;
 }
 
-function mapComment(c: any): EngagementComment {
+function mapComment(c: Record<string, unknown>): EngagementComment {
   return {
     id: c.id?.toString() || Math.random().toString(),
-    username: c.username || "Membre",
-    handle: c.handle,
-    avatarUrl: c.avatar_url || "",
-    content: c.content || "",
-    createdAt: c.created_at || "",
-    parent: c.parent,
+    username: (c.username as string) || "Membre",
+    handle: c.handle as string | undefined,
+    avatarUrl: (c.avatar_url as string) || "",
+    content: (c.content as string) || "",
+    createdAt: (c.created_at as string) || "",
+    parent: c.parent as string | number | null | undefined,
   };
 }
 
@@ -94,7 +101,7 @@ export function useEngagement(
     setLoadingComments(true);
     try {
       const data = await proxyFetch(`${base}/comments/`, "GET");
-      const results = data.results || (Array.isArray(data) ? data : []);
+      const results = (data.results as Record<string, unknown>[]) || (Array.isArray(data) ? data : []);
       setComments(results.map(mapComment));
       if (typeof data.count === "number") setCommentCount(data.count);
       setCommentsLoaded(true);

@@ -38,16 +38,6 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!src) {
-    return (
-      <div className="w-full aspect-video bg-black rounded-2xl flex flex-col items-center justify-center border border-white/5 p-6 text-center">
-        <span className="material-symbols-outlined text-4xl text-gray-500 mb-2">videocam_off</span>
-        <p className="text-gray-400 text-sm font-bold">{title || "Vidéo non disponible"}</p>
-        {description && <p className="text-gray-500 text-xs mt-1 max-w-xs">{description}</p>}
-      </div>
-    );
-  }
-
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -58,21 +48,33 @@ export default function VideoPlayer({
       setIsPlaying(false);
       onPause?.();
     };
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
 
     video.addEventListener('timeupdate', updateTime);
     video.addEventListener('loadedmetadata', updateDuration);
     video.addEventListener('ended', handleEnded);
-    video.addEventListener('play', () => setIsPlaying(true));
-    video.addEventListener('pause', () => setIsPlaying(false));
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
 
     return () => {
       video.removeEventListener('timeupdate', updateTime);
       video.removeEventListener('loadedmetadata', updateDuration);
       video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('play', () => {});
-      video.removeEventListener('pause', () => {});
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
   }, [onPause]);
+
+  if (!src) {
+    return (
+      <div className="w-full aspect-video bg-black rounded-2xl flex flex-col items-center justify-center border border-white/5 p-6 text-center">
+        <span className="material-symbols-outlined text-4xl text-gray-500 mb-2">videocam_off</span>
+        <p className="text-gray-400 text-sm font-bold">{title || "Vidéo non disponible"}</p>
+        {description && <p className="text-gray-500 text-xs mt-1 max-w-xs">{description}</p>}
+      </div>
+    );
+  }
 
   const togglePlay = () => {
     const video = videoRef.current;

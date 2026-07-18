@@ -36,10 +36,10 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
       const updated = await voteOnPoll(poll.id, optionId);
       setPoll(updated);
       setVoted(true);
-    } catch (err: any) {
+    } catch (err) {
       // "Vous avez déjà voté à ce sondage." also means voting is now locked for this session.
       setVoted(true);
-      setError(err.message || "Vote impossible.");
+      setError((err instanceof Error ? err.message : null) || "Vote impossible.");
     } finally {
       setVoting(false);
     }

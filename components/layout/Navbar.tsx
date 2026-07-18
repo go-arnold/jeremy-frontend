@@ -96,9 +96,15 @@ function BottomItem({ href, icon, label, active, iconOnly = false, small = false
   );
 }
 
+interface NavLink {
+  href: string;
+  icon: string;
+  label: string;
+}
+
 // ── Drawer menu mobile ────────────────
 function DrawerMenu({ open, onClose, pathname, links, isAuthenticated, onLogout }: {
-  open: boolean; onClose: () => void; pathname: string; links: any[];
+  open: boolean; onClose: () => void; pathname: string; links: NavLink[];
   isAuthenticated: boolean; onLogout: () => void;
 }) {
   if (!open) return null;

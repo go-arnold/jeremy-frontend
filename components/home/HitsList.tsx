@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { Track } from "@/types";
 
@@ -44,8 +45,8 @@ export default function HitsList({
           <span className={`flex h-8 w-8 shrink-0 items-center justify-center text-xl font-black ${track.featured ? "text-[#E63012]" : "text-[#4A443E]"}`}>
             {track.rank}
           </span>
-          <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-[#221E1B]">
-            <img className="h-full w-full object-cover" alt={track.title} src={track.image} />
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-[#221E1B]">
+            <Image fill sizes="48px" className="object-cover" alt={track.title} src={track.image} />
           </div>
           <div className="flex flex-1 flex-col justify-center overflow-hidden">
             <h4 className="truncate text-base font-bold text-[#F0EDE8]">{track.title}</h4>

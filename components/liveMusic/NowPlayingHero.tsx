@@ -12,11 +12,11 @@ export default function NowPlayingHero({ track }: { track: NowPlaying }) {
   useConsumptionHeartbeat(isPlaying, "live_music", track.numericId, track.title, track.coverImage);
 
   return (
-    <section className="w-full px-6 z-10 flex flex-col items-center">
+    <section className="w-full px-6 lg:px-0 z-10 flex flex-col items-center lg:gap-6">
       <audio ref={audioRef} />
 
       {/* Live badge */}
-      <div className="flex items-center gap-2 mb-6 bg-black/40 border border-primary/30 rounded-full px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(255,0,51,0.2)]">
+      <div className="flex items-center gap-2 mb-6 lg:mb-0 bg-black/40 border border-primary/30 rounded-full px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(230,48,18,0.2)]">
         <span className="relative flex h-2.5 w-2.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
@@ -24,17 +24,20 @@ export default function NowPlayingHero({ track }: { track: NowPlaying }) {
         <span className="text-primary text-[11px] font-bold tracking-widest uppercase">En direct</span>
       </div>
 
-      {/* Cover art */}
-      <div className="relative w-full aspect-square max-w-[320px] mb-8 group">
+      {/* Cover art — plus grand sur desktop */}
+      <div className="relative w-full aspect-square max-w-[320px] lg:max-w-none mb-8 lg:mb-0 group">
         <div className="absolute inset-0 border border-white/10 rounded-[2rem] rotate-6 scale-95 transition-transform duration-700 group-hover:rotate-12 bg-[#181012]" />
         <div className="absolute inset-0 border border-primary/20 rounded-[2rem] -rotate-3 scale-95 transition-transform duration-700 group-hover:-rotate-6 bg-[#181012]" />
-        <div className="relative w-full h-full rounded-[2rem] overflow-hidden shadow-2xl neon-shadow ring-1 ring-white/10">
+        <div
+          className="relative w-full h-full rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10"
+          style={{ boxShadow: "0 0 40px rgba(230,48,18,0.15), 0 25px 60px rgba(0,0,0,0.6)" }}
+        >
           <div
             className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
             style={{ backgroundImage: `url('${track.coverImage}')` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          </div>
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
           {/* Waveform bars — decorative, doesn't represent the real audio signal */}
           <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-1.5 h-12 px-8">
             {[
@@ -60,20 +63,20 @@ export default function NowPlayingHero({ track }: { track: NowPlaying }) {
       </div>
 
       {/* Track info */}
-      <div className="text-center w-full mb-8">
-        <h2 className="text-3xl font-extrabold text-white mb-2 leading-tight tracking-tight">
+      <div className="text-center w-full mb-8 lg:mb-0">
+        <h2 className="text-3xl lg:text-2xl font-extrabold text-white mb-2 lg:mb-1 leading-tight tracking-tight">
           {track.title}
         </h2>
         <div className="flex items-center justify-center gap-2">
-          <span className="text-text-secondary text-lg font-medium">avec</span>
-          <span className="text-white text-lg font-bold bg-white/10 px-2 py-0.5 rounded-md">
+          <span className="text-text-secondary text-lg lg:text-base font-medium">avec</span>
+          <span className="text-white text-lg lg:text-base font-bold bg-white/10 px-2 py-0.5 rounded-md">
             {track.djName}
           </span>
         </div>
       </div>
 
       {/* Player controls */}
-      <div className="flex flex-col items-center gap-4 w-full max-w-[280px] mb-10">
+      <div className="flex flex-col items-center gap-4 lg:gap-6 w-full max-w-[280px] lg:max-w-none mb-10 lg:mb-0">
         {hasError ? (
           <button onClick={retry} className="text-primary text-sm font-bold underline">
             Réessayer
@@ -82,15 +85,16 @@ export default function NowPlayingHero({ track }: { track: NowPlaying }) {
           <button
             onClick={togglePlay}
             disabled={isLoading || !track.hlsUrl}
-            className="relative flex items-center justify-center w-20 h-20 rounded-full bg-primary text-white neon-shadow hover:scale-105 active:scale-95 transition-all duration-300 group disabled:opacity-50"
+            className="relative flex items-center justify-center w-20 h-20 rounded-full bg-primary text-white hover:scale-105 active:scale-95 transition-all duration-300 group disabled:opacity-50"
+            style={{ boxShadow: "0 0 30px rgba(230,48,18,0.4)" }}
           >
             <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500" />
             {isLoading ? (
               <span className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <span
-                className="material-symbols-outlined text-[48px] fill-1"
-                style={{ marginLeft: isPlaying ? "0" : "4px" }}
+                className="material-symbols-outlined text-[48px]"
+                style={{ fontVariationSettings: "'FILL' 1", marginLeft: isPlaying ? "0" : "4px" }}
               >
                 {isPlaying ? "pause" : "play_arrow"}
               </span>

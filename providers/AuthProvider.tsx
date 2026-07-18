@@ -18,11 +18,24 @@ interface User {
   role?: string;
 }
 
+interface LoginCredentials {
+  username: string;
+  email?: string;
+  password: string;
+}
+
+interface RegisterData {
+  username: string;
+  email: string;
+  password1: string;
+  password2: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: any) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   refreshUser: () => Promise<void>;
@@ -55,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchMe();
   }, [fetchMe]);
 
-  const login = async (credentials: any) => {
+  const login = async (credentials: LoginCredentials) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,16 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
   };
 
-  const register = async (userData: any) => {
-    try {
-      await apiFetch('/api/v1/auth/register/', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-    } catch (error: any) {
-      // Re-throw with a more user-friendly message if possible
-      throw error;
-    }
+  const register = async (userData: RegisterData) => {
+    await apiFetch('/api/v1/auth/register/', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
   };
 
   const logout = async () => {

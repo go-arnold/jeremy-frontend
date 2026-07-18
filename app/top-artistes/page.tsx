@@ -1,30 +1,43 @@
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+
+// Fields as actually read below — kept as-is (not reconciled against ApiArtistList's real
+// `photo_url` field name) to avoid changing runtime behavior while just removing `any`.
+interface TopArtist {
+  id: number;
+  slug: string;
+  name: string;
+  avatar_url?: string;
+  bio?: string;
+}
 
 async function getTopArtists() {
   try {
-    const res = await apiFetch<any>(
+    const res = await apiFetch<PaginatedResponse<TopArtist>>(
       `/api/v1/artists/?is_featured=true&page_size=50`,
       { next: { revalidate: 3600 } }
     );
     return res;
-  } catch (err) {
-    return { results: [], count: 0 };
+  } catch {
+    return { results: [] as TopArtist[], count: 0 };
   }
 }
 
-function ArtistCard({ artist }: any) {
+function ArtistCard({ artist }: { artist: TopArtist }) {
   return (
     <Link href={`/artistes/${artist.slug}`}>
       <div className="group cursor-pointer text-center">
         <div className="relative mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
           {artist.avatar_url && (
-            <img
+            <Image
               src={artist.avatar_url}
               alt={artist.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+              fill
+              sizes="192px"
+              className="object-cover group-hover:scale-110 transition-transform"
             />
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
@@ -59,7 +72,7 @@ export default async function TopArtistesPage() {
 
         {data.results?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {data.results.map((artist: any) => (
+            {data.results.map((artist) => (
               <Suspense key={artist.id} fallback={<div className="bg-slate-800 rounded-full h-48 w-48 mx-auto animate-pulse" />}>
                 <ArtistCard artist={artist} />
               </Suspense>

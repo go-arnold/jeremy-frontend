@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import type HlsType from 'hls.js';
+
+interface HlsErrorData {
+  fatal: boolean;
+  type: string;
+  details: string;
+}
 
 interface LiveStreamPlayerProps {
   hlsUrl?: string;
@@ -34,7 +42,7 @@ export default function LiveStreamPlayer({
 }: LiveStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const hlsInstanceRef = useRef<any>(null);
+  const hlsInstanceRef = useRef<HlsType | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
@@ -97,7 +105,7 @@ export default function LiveStreamPlayer({
           }
         });
 
-        hls.on(Hls.Events.ERROR, (_: any, data: any) => {
+        hls.on(Hls.Events.ERROR, (_event, data: HlsErrorData) => {
           if (data.fatal) {
             console.error('Fatal HLS error:', data.type, data.details);
             setHasError(true);
@@ -224,10 +232,12 @@ export default function LiveStreamPlayer({
 
         {/* Thumbnail / poster */}
         {thumbnail && (
-          <img
+          <Image
             src={thumbnail}
             alt={title}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${isLoading || !isPlaying ? 'opacity-100' : 'opacity-0'}`}
+            fill
+            sizes="100vw"
+            className={`object-cover transition-opacity duration-500 ${isLoading || !isPlaying ? 'opacity-100' : 'opacity-0'}`}
           />
         )}
 
@@ -260,6 +270,7 @@ export default function LiveStreamPlayer({
           <button
             onClick={togglePlay}
             className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors z-10"
+            aria-label="Lire la vidéo"
           >
             <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform">
               <span className="material-symbols-outlined text-white" style={{ fontSize: '40px', marginLeft: '4px' }}>
@@ -332,14 +343,22 @@ export default function LiveStreamPlayer({
           <div className="px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               {/* Play/Pause */}
-              <button onClick={togglePlay} className="text-white hover:text-primary transition-colors">
+              <button
+                onClick={togglePlay}
+                className="text-white hover:text-primary transition-colors"
+                aria-label={isPlaying ? 'Mettre en pause' : 'Lire'}
+              >
                 <span className="material-symbols-outlined">
                   {isPlaying ? 'pause' : 'play_arrow'}
                 </span>
               </button>
 
               {/* Volume */}
-              <button onClick={toggleMute} className="text-white hover:text-primary transition-colors">
+              <button
+                onClick={toggleMute}
+                className="text-white hover:text-primary transition-colors"
+                aria-label={isMuted || volume === 0 ? 'Réactiver le son' : 'Couper le son'}
+              >
                 <span className="material-symbols-outlined">
                   {isMuted || volume === 0 ? 'volume_off' : volume < 0.5 ? 'volume_down' : 'volume_up'}
                 </span>
@@ -351,6 +370,7 @@ export default function LiveStreamPlayer({
                 step="0.01"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
+                aria-label="Volume"
                 className="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-primary"
               />
 
@@ -364,7 +384,11 @@ export default function LiveStreamPlayer({
             </div>
 
             {/* Fullscreen */}
-            <button onClick={toggleFullscreen} className="text-white hover:text-primary transition-colors">
+            <button
+              onClick={toggleFullscreen}
+              className="text-white hover:text-primary transition-colors"
+              aria-label={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
+            >
               <span className="material-symbols-outlined">
                 {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
               </span>

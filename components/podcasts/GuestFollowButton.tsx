@@ -10,6 +10,12 @@ interface MatchedArtist {
   slug: string;
 }
 
+interface ApiSearchResult {
+  id: number;
+  slug: string;
+  title?: string;
+}
+
 /** Podcast `guests` is free-form text (JSONField, no FK to Artist) — this fuzzy-matches the
  * guest's name against the real search index to find out whether they're an actual artist on
  * the platform, and only then shows a real follow/favorite toggle (hidden otherwise, rather
@@ -22,9 +28,9 @@ export default function GuestFollowButton({ guestName, className }: { guestName:
 
   useEffect(() => {
     if (!guestName || guestName === "Invité") return;
-    apiFetch<any>(`/api/v1/search/?q=${encodeURIComponent(guestName)}&type=artists`)
+    apiFetch<{ results?: ApiSearchResult[] }>(`/api/v1/search/?q=${encodeURIComponent(guestName)}&type=artists`)
       .then((data) => {
-        const exact = data.results?.find((r: any) => r.title?.toLowerCase() === guestName.toLowerCase());
+        const exact = data.results?.find((r) => r.title?.toLowerCase() === guestName.toLowerCase());
         if (exact) setMatched({ id: exact.id, slug: exact.slug });
       })
       .catch(() => {});

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function Footer() {
@@ -14,24 +15,21 @@ export default function Footer() {
             </div>
             <p className="text-sm text-slate-200 dark:text-white">Plateforme culturelle et sonore du Kivu.</p>
             <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/">Accueil</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/podcasts">Podcasts</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/artistes">Artistes</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/episode-podcast.html">Épisode podcast</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/radio-en-direct">Radio en direct</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/evenements">Événements</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/sorties-premieres">Sorties &amp; Premières</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/web-tv">Web TV</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/magazine">Magazine</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/blog">Blog</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/lecture-article.html">Lecture article</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/communaute">Communauté</a>
-            <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/profil-artiste.html">Profil artiste</a>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/">Accueil</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/podcasts">Podcasts</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/artistes">Artistes</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/radio-en-direct">Radio en direct</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/evenements">Événements</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/sorties-premieres">Sorties &amp; Premières</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/web-tv">Web TV</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/magazine">Magazine</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/blog">Blog</Link>
+            <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/communaute">Communauté</Link>
             {!loading && (
               isAuthenticated ? (
-                <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/mon-profil">Mon profil</a>
+                <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/mon-profil">Mon profil</Link>
               ) : (
-                <a className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/auth/login">Se connecter</a>
+                <Link className="text-slate-300 dark:text-slate-300 hover:text-primary" href="/auth/login">Se connecter</Link>
               )
             )}
             </div>

@@ -52,7 +52,7 @@ export default function ListenHistory({ items }: { items: ListenHistoryItem[] })
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-xl">history</span>
-          Historique d'Écoute
+          Historique d&apos;Écoute
         </h3>
       </div>
       <div className="flex flex-col gap-4">

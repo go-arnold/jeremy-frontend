@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { isValidImageSrc } from "@/lib/image-utils";
 
 function PhotoPlaceholder() {
@@ -24,6 +25,10 @@ interface ContentImageProps {
   className?: string;
   imageClassName?: string;
   variant?: "fill" | "responsive";
+  /** Forwarded to next/image's `sizes` — override when the image occupies a known viewport
+   * fraction (e.g. a full-width hero) so the browser doesn't fetch a larger source than needed. */
+  sizes?: string;
+  priority?: boolean;
 }
 
 export default function ContentImage({
@@ -32,50 +37,41 @@ export default function ContentImage({
   className = "",
   imageClassName = "",
   variant = "fill",
+  sizes = "100vw",
+  priority = false,
 }: ContentImageProps) {
   const [failed, setFailed] = useState(!isValidImageSrc(src));
-
-  useEffect(() => {
+  // Reset `failed` when `src` changes, computed during render (React's documented pattern for
+  // adjusting state from a prop change) instead of a useEffect — avoids an extra render pass and
+  // the react-hooks/set-state-in-effect lint error.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setFailed(!isValidImageSrc(src));
-  }, [src]);
+  }
+
+  const wrapperClassName =
+    variant === "responsive"
+      ? `relative w-full aspect-[4/3] overflow-hidden ${className}`
+      : `relative overflow-hidden ${className}`;
 
   if (failed) {
-    if (variant === "responsive") {
-      return (
-        <div
-          className={`relative w-full aspect-[4/3] overflow-hidden ${className}`}
-          role="img"
-          aria-label={alt}
-        >
-          <PhotoPlaceholder />
-        </div>
-      );
-    }
-
     return (
-      <div className={`relative overflow-hidden ${className}`} role="img" aria-label={alt}>
+      <div className={wrapperClassName} role="img" aria-label={alt}>
         <PhotoPlaceholder />
       </div>
     );
   }
 
-  if (variant === "responsive") {
-    return (
-      <img
-        src={src!}
-        alt={alt}
-        className={`w-full h-auto object-cover ${className} ${imageClassName}`}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      <img
+    <div className={wrapperClassName}>
+      <Image
         src={src!}
         alt={alt}
-        className={`absolute inset-0 h-full w-full object-cover ${imageClassName}`}
+        fill
+        sizes={sizes}
+        priority={priority}
+        className={`object-cover ${imageClassName}`}
         onError={() => setFailed(true)}
       />
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Avatar from "@/components/ui/Avatar";
 import EngagementBar from "@/components/ui/EngagementBar";
 
@@ -6,9 +7,9 @@ interface ArtPostData {
   id: string;
   artist: { username: string; avatar: string; location: string; isVerified?: boolean };
   timeAgo: string;
-  image?: string;
+  image?: string | null;
   coverImage?: string;
-  video?: string;
+  video?: string | null;
   caption: string;
   tags: string[];
   likes?: number;
@@ -45,8 +46,8 @@ export default function ArtPostCard({ post }: { post: ArtPostData }) {
           <video src={post.video} controls className="w-full max-h-80 object-contain" />
         </div>
       ) : mediaSrc ? (
-        <div className="relative w-full rounded-xl overflow-hidden bg-surface-dark">
-          <img src={mediaSrc} alt={post.caption} className="w-full object-cover max-h-80" />
+        <div className="relative w-full aspect-[4/3] max-h-80 rounded-xl overflow-hidden bg-surface-dark">
+          <Image src={mediaSrc} alt={post.caption || "Publication"} fill sizes="(max-width: 768px) 100vw, 500px" className="object-cover" />
         </div>
       ) : (
         <div className="w-full h-24 rounded-xl bg-surface-dark flex items-center justify-center">

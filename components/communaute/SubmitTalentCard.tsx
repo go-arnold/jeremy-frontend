@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useState } from "react";
+import Image from "next/image";
 import CircularProgress from "@/components/ui/CircularProgress";
 import { uploadToCloudinaryWithProgress } from "@/lib/cloudinaryUpload";
 
@@ -120,9 +121,9 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
       setDescription("");
       removeFile();
       onSubmitted?.();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setStatusMsg(err.message || "Erreur lors de la soumission. Assurez-vous d'être connecté.");
+      setStatusMsg((err instanceof Error ? err.message : null) || "Erreur lors de la soumission. Assurez-vous d'être connecté.");
       setStatusType("error");
     } finally {
       setUploading(false);
@@ -167,7 +168,11 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
             {selected && (
               <div className="rounded-lg overflow-hidden border border-white/10 relative">
                 {selected.category === "image" && selected.preview && (
-                  <img src={selected.preview} alt="preview" className="w-full max-h-40 object-cover" />
+                  // blob: object URL from the local file picker — can't go through the Next.js
+                  // image optimizer, which needs a fetchable http(s) URL.
+                  <div className="relative w-full aspect-[4/3] max-h-40">
+                    <Image src={selected.preview} alt="Aperçu de l'image sélectionnée" fill unoptimized className="object-cover" />
+                  </div>
                 )}
                 {selected.category === "video" && (
                   <div className="flex items-center gap-2 bg-black/40 p-3">

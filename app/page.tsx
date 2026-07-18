@@ -10,8 +10,19 @@ import {
   mapApiALaUneToNewsCards,
   mapApiHitToTrack,
   mapApiMagazineArticle,
+  type ApiMagazineArticle,
 } from "@/lib/mappers";
-import { cacheConfig } from "@/lib/cache";
+import type { ApiHeroBanner, ApiALaUne, ApiHit } from "@/lib/api-types";
+
+interface ApiHomeData {
+  banner?: ApiHeroBanner;
+  a_la_une?: ApiALaUne;
+  hits_du_mois?: ApiHit[];
+  magazine?: {
+    hero?: ApiMagazineArticle;
+    articles?: ApiMagazineArticle[];
+  };
+}
 
 import {
   heroData as mockedHero,
@@ -26,7 +37,7 @@ async function getHomeData() {
   try {
     // According to YAML, /api/v1/home/ returns aggregated payload
     // Cache for 15 minutes (home content updates regularly)
-    const data = await apiFetch<any>("/api/v1/home/", {}, 900000);
+    const data = await apiFetch<ApiHomeData>("/api/v1/home/", {}, 900000);
     return data;
   } catch (error) {
     console.error("Failed to fetch home data:", error);
@@ -48,7 +59,7 @@ export default async function HomePage() {
   const displayNews = newsCards.length > 0 ? newsCards : mockedNews;
 
   // hits_du_mois → HitsList + Top10Card
-  const hitsRaw: any[] = homeData?.hits_du_mois || [];
+  const hitsRaw: ApiHit[] = homeData?.hits_du_mois || [];
   const hitsOfMonth = hitsRaw.length > 0
     ? hitsRaw.map((h, i) => mapApiHitToTrack(h, i))
     : mockedHits;
@@ -57,7 +68,7 @@ export default async function HomePage() {
     : mockedTop10;
 
   // magazine → MagazineGrid
-  const magArticlesRaw: any[] = [
+  const magArticlesRaw: ApiMagazineArticle[] = [
     ...(homeData?.magazine?.hero ? [homeData.magazine.hero] : []),
     ...(homeData?.magazine?.articles || []),
   ];

@@ -49,6 +49,17 @@ export default function SearchResults() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
+  // Reset `loading` synchronously as soon as q/type change, computed during render (React's
+  // documented pattern for adjusting state from a prop change) instead of a useEffect — avoids
+  // an extra render pass and the react-hooks/set-state-in-effect lint error. The actual fetch
+  // (and its eventual setLoading(false)) still happens in the effect below.
+  const searchKey = `${q}:${type}`;
+  const [prevSearchKey, setPrevSearchKey] = useState(searchKey);
+  if (searchKey !== prevSearchKey) {
+    setPrevSearchKey(searchKey);
+    setLoading(true);
+  }
+
   const runSearch = useCallback(async (term: string, activeType: string, page: number, append = false) => {
     if (!term.trim()) {
       setResults([]);
@@ -63,8 +74,8 @@ export default function SearchResults() {
       setResults((prev) => (append ? [...prev, ...data.results] : data.results));
       setCount(data.count);
       setError("");
-    } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
       if (!append) {
         setResults([]);
         setCount(0);
@@ -73,7 +84,11 @@ export default function SearchResults() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
+    // react-hooks/set-state-in-effect flags this conservatively: its static analysis sees
+    // `runSearch` (a plain async callback) can call setState before its first `await` (the
+    // `!term.trim()` early-return branch). The actual network fetch + setState-on-completion is
+    // exactly the effect pattern React's own docs recommend for syncing with an external API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     runSearch(q, type, 1, false).finally(() => setLoading(false));
   }, [q, type, runSearch]);
 

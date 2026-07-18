@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -18,7 +19,13 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered');
   const oauthError = searchParams.get('error');
-  
+  // Only accept an internal path (never a protocol-relative or absolute URL) — prevents an
+  // open-redirect via a crafted ?redirect= query param.
+  const redirectParam = searchParams.get('redirect');
+  const redirectTo = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+    ? redirectParam
+    : '/mon-profil';
+
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(
@@ -30,9 +37,9 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.push('/mon-profil');
+      router.push(redirectTo);
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, router, redirectTo]);
 
   // (PDF) Google login should land on the home page, not the profile page.
   // The Google flow sets cookies via a raw fetch (bypassing AuthProvider.login()), so
@@ -62,9 +69,9 @@ export default function LoginForm() {
         email: identifier.includes('@') ? identifier : undefined, 
         password 
       });
-      router.push('/mon-profil');
-    } catch (err: any) {
-      setError(err.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
+      router.push(redirectTo);
+    } catch (err) {
+      setError((err instanceof Error ? err.message : null) || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
     } finally {
       setLoading(false);
     }
@@ -102,7 +109,7 @@ export default function LoginForm() {
               {googleLoading ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <img src="https://www.google.com/favicon.ico" className="w-4 h-4 grayscale group-hover:grayscale-0 transition-all" alt="Google" />
+                <Image src="https://www.google.com/favicon.ico" width={16} height={16} className="grayscale group-hover:grayscale-0 transition-all" alt="Google" />
               )}
               <span className="text-xs font-bold text-[#F0EDE8]">{googleLoading ? 'Connexion...' : 'Continuer avec Google'}</span>
             </button>
@@ -185,7 +192,7 @@ export default function LoginForm() {
           <p className="mt-8 text-center text-[11px] text-[#8A8178]">
             Pas encore de compte ?{" "}
             <Link href="/auth/register" className="text-primary font-black uppercase hover:underline ml-1">
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </p>
         </div>

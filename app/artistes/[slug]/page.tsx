@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getArtisteDetail as getMockedArtisteDetail } from "@/data/artistes";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiArtistDetailToArtisteDetail } from "@/lib/mappers";
+import type { ApiArtistDetail } from "@/lib/api-types";
 
 import ArtisteDetailHero from "@/components/artistesComp/ArtisteDetailHero";
 import LatestReleases    from "@/components/artistesComp/LatestReleases";
@@ -17,12 +19,34 @@ interface Props {
 
 async function getArtiste(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/artists/${slug}/`);
+    const data = await apiFetch<ApiArtistDetail>(`/api/v1/artists/${slug}/`);
     return mapApiArtistDetailToArtisteDetail(data);
   } catch (error) {
     console.error(`Failed to fetch artist ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let artiste = await getArtiste(slug);
+  if (!artiste) artiste = getMockedArtisteDetail(slug);
+  if (!artiste) return { title: "Artiste introuvable | Art du Kivu" };
+
+  const title = `${artiste.name} | Art du Kivu`;
+  const description = artiste.bio
+    ? artiste.bio.slice(0, 160)
+    : `Découvrez ${artiste.name} sur Art du Kivu, plateforme culturelle et sonore du Kivu.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: artiste.coverImage ? [artiste.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function ArtisteDetailPage({ params }: Props) {
@@ -33,7 +57,7 @@ export default async function ArtisteDetailPage({ params }: Props) {
   
   // Fallback to mocked data if API fails or artist not found in API
   if (!artiste) {
-    artiste = getMockedArtisteDetail(slug) as any;
+    artiste = getMockedArtisteDetail(slug);
   }
   
   if (!artiste) notFound();
@@ -148,6 +172,7 @@ export default async function ArtisteDetailPage({ params }: Props) {
 ════════════════════════════════════════════════════ */
 
 import type { Release, VideoItem, GalleryPhoto } from "@/types/artistes";
+import Image from "next/image";
 import Link from "next/link";
 
 // ── LatestReleases desktop ──────────────────────────
@@ -306,10 +331,14 @@ function PhotoGalleryDesktop({ photos }: { photos: GalleryPhoto[] }) {
             key={photo.id}
             className="break-inside-avoid relative rounded-xl overflow-hidden group cursor-pointer"
           >
-            <img
+            <Image
               src={photo.src}
               alt={photo.alt}
-              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+              width={800}
+              height={600}
+              sizes="(max-width: 1024px) 100vw, 33vw"
+              style={{ width: "100%", height: "auto" }}
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

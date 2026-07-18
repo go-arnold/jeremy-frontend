@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Badge } from "@/types/monProfil";
 
 function BadgeItem({ badge }: { badge: Badge }) {
@@ -14,11 +15,11 @@ function BadgeItem({ badge }: { badge: Badge }) {
   return (
     <div className="flex flex-col items-center gap-2 flex-1 p-2 rounded-xl bg-gradient-to-b from-surface-dark-highlight to-transparent border border-white/5">
       <div
-        className={`w-10 h-10 rounded-full bg-[#111317] flex items-center justify-center ${badge.color}`}
+        className={`relative w-10 h-10 rounded-full bg-[#111317] flex items-center justify-center ${badge.color}`}
         style={{ boxShadow: `0 0 10px ${badge.glowColor}` }}
       >
         {badge.iconUrl ? (
-          <img src={badge.iconUrl} alt="" className="w-5 h-5 object-contain" />
+          <Image src={badge.iconUrl} alt={badge.label} width={20} height={20} className="object-contain" />
         ) : (
           <span className="material-symbols-outlined">{badge.icon}</span>
         )}

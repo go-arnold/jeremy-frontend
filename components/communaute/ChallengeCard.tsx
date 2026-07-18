@@ -34,11 +34,11 @@ export default function ChallengeCard({ challenge }: { challenge: ApiChallenge }
       const result = await joinChallenge(challenge.slug);
       setJoined(true);
       setMessage(result.detail);
-    } catch (err: any) {
+    } catch (err) {
       // Backend returns "Vous participez déjà à ce défi." as the error message when already
       // joined — still a terminal "you're in" state from the user's perspective, not a failure.
       setJoined(true);
-      setMessage(err.message || "Participation enregistrée.");
+      setMessage((err instanceof Error ? err.message : null) || "Participation enregistrée.");
     } finally {
       setJoining(false);
     }

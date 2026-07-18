@@ -1,13 +1,11 @@
 import NowPlayingHero from "@/components/liveMusic/NowPlayingHero";
-import NowPlayingHeroDesktop from "@/components/liveMusic/NowPlayingHeroDesktop";
-import ProgramScheduleDesktop from "@/components/liveMusic/ProgramScheduleDesktop";
-import LiveChatDesktop from "@/components/liveMusic/LiveChatDesktop";
 import LiveChat from "@/components/liveMusic/LiveChat";
 import ProgramSchedule from "@/components/liveMusic/ProgramSchedule";
 import EngagementBar from "@/components/ui/EngagementBar";
 import { fetchCurrentSession, fetchProgramme, fetchLiveMusicChat } from "@/lib/services/liveMusic";
 import EmptyState from "@/components/ui/EmptyState";
 import { programSlots as mockedSlots, chatMessages as mockedChat } from "@/data/liveMusic";
+import type { ProgramSlot } from "@/types/liveMusic";
 
 async function getLivePrograms() {
   try {
@@ -15,6 +13,20 @@ async function getLivePrograms() {
   } catch {
     return [];
   }
+}
+
+// `fetchProgramme()` returns the shared radio/live-music mapper shape (time/presenter/status:
+// "now"|"next"|"later"), not the `ProgramSlot` shape `ProgramSchedule` renders — adapt between
+// the two rather than casting past the mismatch.
+function toProgramSlot(program: Awaited<ReturnType<typeof fetchProgramme>>[number]): ProgramSlot {
+  return {
+    id: program.id,
+    time: program.time,
+    title: program.title,
+    subtitle: program.presenter || program.host || program.description || "",
+    icon: program.isLive ? "graphic_eq" : "schedule",
+    status: program.status === "now" ? "on-air" : "upcoming",
+  };
 }
 
 async function getLiveChat(slug: string) {
@@ -28,7 +40,7 @@ async function getLiveChat(slug: string) {
 export default async function Page() {
   const liveShow = await fetchCurrentSession();
   const programs = await getLivePrograms();
-  const programSlots = programs.length > 0 ? programs : mockedSlots;
+  const programSlots = programs.length > 0 ? programs.map(toProgramSlot) : mockedSlots;
 
   // If no live session is active, show an empty state
   if (!liveShow) {
@@ -45,11 +57,11 @@ export default async function Page() {
             <>
               {/* Mobile */}
               <div className="lg:hidden w-full px-4 mt-4 pb-10">
-                <ProgramSchedule slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots} variant="mobile" />
               </div>
               {/* Desktop */}
               <div className="hidden lg:block w-full max-w-2xl mx-auto mt-4 pb-10">
-                <ProgramScheduleDesktop slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots} variant="desktop" />
               </div>
             </>
           )}
@@ -59,21 +71,21 @@ export default async function Page() {
   }
 
   // Fetch live chat using the session slug/id
-  const slug = (liveShow as any).id || "";
+  const slug = liveShow.id || "";
   const chatMessages = await getLiveChat(slug);
   const displayChat = chatMessages.length > 0 ? chatMessages : mockedChat;
 
   const nowPlaying = {
     slug,
-    numericId: (liveShow as any).numericId ?? null,
-    title: (liveShow as any).title,
-    djName: (liveShow as any).presenter || (liveShow as any).host || "Art du Kivu",
-    coverImage: (liveShow as any).image || "",
+    numericId: liveShow.numericId ?? null,
+    title: liveShow.title,
+    djName: liveShow.presenter || liveShow.host || "Art du Kivu",
+    coverImage: liveShow.image || "",
     isLive: true,
-    listenerCount: (liveShow as any).listenerCount || 0,
-    hlsUrl: (liveShow as any).hlsUrl || null,
-    likeCount: (liveShow as any).likeCount || 0,
-    commentCount: (liveShow as any).commentCount || 0,
+    listenerCount: liveShow.listenerCount || 0,
+    hlsUrl: liveShow.hlsUrl || null,
+    likeCount: liveShow.likeCount || 0,
+    commentCount: liveShow.commentCount || 0,
   };
 
   return (
@@ -87,7 +99,7 @@ export default async function Page() {
           {/* Ambient glow */}
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-md h-[420px] bg-primary/10 blur-[120px] rounded-full pointer-events-none z-0 mix-blend-screen" />
 
-          <NowPlayingHero track={nowPlaying as any} />
+          <NowPlayingHero track={nowPlaying} />
 
           <div className="px-6">
             <EngagementBar
@@ -102,9 +114,9 @@ export default async function Page() {
             <div className="w-full flex justify-center pt-4 pb-2">
               <div className="w-12 h-1.5 bg-white/10 rounded-full" />
             </div>
-            <LiveChat slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
+            <LiveChat slug={slug} messages={displayChat} listenerCount={nowPlaying.listenerCount} />
             <div className="w-full h-px bg-white/5 my-2" />
-            <ProgramSchedule slots={programSlots as any} />
+            <ProgramSchedule slots={programSlots} variant="mobile" />
             <div className="h-10" />
           </div>
         </div>
@@ -141,7 +153,7 @@ export default async function Page() {
 
               {/* ── Col 1 : Now Playing ── */}
               <div className="sticky top-24 flex flex-col gap-6">
-                <NowPlayingHeroDesktop track={nowPlaying as any} />
+                <NowPlayingHero track={nowPlaying} />
                 <EngagementBar
                   resourceType="live_music/sessions"
                   id={slug}
@@ -152,12 +164,12 @@ export default async function Page() {
 
               {/* ── Col 2 : Programme ── */}
               <div>
-                <ProgramScheduleDesktop slots={programSlots as any} />
+                <ProgramSchedule slots={programSlots} variant="desktop" />
               </div>
 
               {/* ── Col 3 : Chat ── */}
               <div className="sticky top-24">
-                <LiveChatDesktop slug={slug} messages={displayChat as any} listenerCount={nowPlaying.listenerCount} />
+                <LiveChat slug={slug} messages={displayChat} listenerCount={nowPlaying.listenerCount} />
               </div>
             </div>
           </div>

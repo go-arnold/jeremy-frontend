@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEventDetail as getMockedEventDetail, getSimilarEvents } from "@/data/evenements";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiEventDetailToEventDetail } from "@/lib/mappers";
+import type { ApiEvent } from "@/lib/api-types";
 
 import EventHero     from "@/components/evenements/EventHero";
 import EventInfoGrid from "@/components/evenements/EventInfoGrid";
@@ -10,8 +12,7 @@ import EventAbout    from "@/components/evenements/EventAbout";
 import EventSchedule from "@/components/evenements/EventSchedule";
 import EventVenue    from "@/components/evenements/EventVenue";
 import SimilarEvents from "@/components/evenements/SimilarEvents";
-import BookingButton from "@/components/evenements/BookingButton";
-import BookingWidgetDesktop from "@/components/evenements/BookingWidgetDesktop";
+import BookingWidget from "@/components/evenements/BookingWidget";
 import ShareEventWidget from "@/components/evenements/ShareEventWidget";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +23,34 @@ interface Props {
 
 async function getEvent(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/events/${slug}/`);
+    const data = await apiFetch<ApiEvent>(`/api/v1/events/${slug}/`);
     return mapApiEventDetailToEventDetail(data);
   } catch (error) {
     console.error(`Failed to fetch event ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let event = await getEvent(slug);
+  if (!event) event = getMockedEventDetail(slug);
+  if (!event) return { title: "Événement introuvable | Art du Kivu" };
+
+  const title = `${event.title} | Art du Kivu`;
+  const description = event.description
+    ? event.description.slice(0, 160)
+    : `${event.title} — ${event.location}, ${event.date}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: event.coverImage ? [event.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function EvenementDetailPage({ params }: Props) {
@@ -38,7 +61,7 @@ export default async function EvenementDetailPage({ params }: Props) {
   
   // Fallback to mocked data
   if (!event) {
-    event = getMockedEventDetail(slug) as any;
+    event = getMockedEventDetail(slug);
   }
 
   if (!event) notFound();
@@ -61,7 +84,7 @@ export default async function EvenementDetailPage({ params }: Props) {
           <ShareEventWidget title={event.title} slug={event.slug} />
         </div>
         <SimilarEvents events={similar} />
-        <BookingButton slug={event.slug} price={event.price} />
+        <BookingWidget slug={event.slug} price={event.price} variant="mobile" />
       </main>
 
       {/* ══════════════════════════════════════
@@ -102,11 +125,12 @@ export default async function EvenementDetailPage({ params }: Props) {
             <aside className="sticky top-24 flex flex-col gap-5">
 
               {/* Booking CTA */}
-              <BookingWidgetDesktop
+              <BookingWidget
                 slug={event.slug}
                 price={event.price}
                 date={event.date}
                 time={event.time}
+                variant="desktop"
               />
 
               {/* Infos clés */}
@@ -232,7 +256,7 @@ function EventScheduleDesktop({ items }: { items: EventScheduleItem[] }) {
         {/* Ligne verticale timeline */}
         <div className="absolute left-[108px] top-0 bottom-0 w-px bg-white/10" />
 
-        {items.map((item, i) => (
+        {items.map((item) => (
           <div key={item.date + item.time} className="flex items-center gap-6 py-4">
             {/* Date */}
             <div className="w-24 shrink-0 text-right">
