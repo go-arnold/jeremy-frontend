@@ -2,6 +2,8 @@
 
 Plateforme culturelle et sonore du Kivu : radio en direct, web-TV, podcasts, blog/magazine, événements, communauté et profil utilisateur gamifié. Frontend Next.js consommant l'API REST Django d'Art du Kivu.
 
+> Pour le contexte d'architecture et les conventions du projet, voir [`CLAUDE.md`](./CLAUDE.md). Pour les recettes pas-à-pas (ajouter une page, intégrer une API), voir [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
 ## Stack
 
 - [Next.js 16](https://nextjs.org) (App Router, React Server Components)
