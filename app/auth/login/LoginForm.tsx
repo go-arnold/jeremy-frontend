@@ -70,8 +70,8 @@ export default function LoginForm() {
         password 
       });
       router.push(redirectTo);
-    } catch (err: any) {
-      setError(err.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : null) || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
     } finally {
       setLoading(false);
     }
@@ -192,7 +192,7 @@ export default function LoginForm() {
           <p className="mt-8 text-center text-[11px] text-[#8A8178]">
             Pas encore de compte ?{" "}
             <Link href="/auth/register" className="text-primary font-black uppercase hover:underline ml-1">
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </p>
         </div>

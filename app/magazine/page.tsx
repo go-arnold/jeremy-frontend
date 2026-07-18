@@ -1,6 +1,6 @@
 import { heroArticle as mockedHero, newsArticles as mockedNews, youthItems, radioBanner } from "@/data/magazine";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiArticleToMagazineHero, mapApiArticleToNewsArticle } from "@/lib/mappers";
+import { mapApiArticleToMagazineHero, mapApiArticleToNewsArticle, type ApiMagazineArticle } from "@/lib/mappers";
 import HeroSection from "@/components/magazine/HeroSection";
 import NewsSection from "@/components/magazine/NewsSection";
 import YouthSection from "@/components/magazine/YouthSection";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 async function getMagazineArticles() {
   try {
-    const data = await apiFetch<PaginatedResponse<any>>("/api/v1/articles/?page_size=10");
+    const data = await apiFetch<PaginatedResponse<ApiMagazineArticle>>("/api/v1/articles/?page_size=10");
     if (data.results.length === 0) return null;
     // Featured article (if any) leads as the hero; the rest fill the News grid. Falls back to
     // the first article when nothing is explicitly featured, same convention as Home/Events.

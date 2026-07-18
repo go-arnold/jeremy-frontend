@@ -147,7 +147,7 @@ function LiveChatPanel({ slug }: { slug: string }) {
         {messages.length === 0 ? (
           <p className="text-gray-500 text-xs text-center py-4">Aucun message pour l&apos;instant.</p>
         ) : (
-          messages.map((m: any) => (
+          messages.map((m) => (
             <div key={m.id} className="flex gap-2">
               <span className="text-white text-xs font-bold">{m.username}</span>
               <span className="text-gray-300 text-xs">{m.message}</span>

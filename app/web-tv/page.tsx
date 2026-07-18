@@ -1,6 +1,7 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiVideoToWebTVVideo } from "@/lib/mappers";
 import WebTVPageClient from "./WebTVPageClient";
+import type { ApiVideo } from "@/lib/api-types";
 
 type WebTVVideo = ReturnType<typeof mapApiVideoToWebTVVideo>;
 
@@ -12,11 +13,11 @@ export default async function WebTVPage() {
 
   try {
     const [videoData, premierData, live] = await Promise.all([
-      apiFetch<PaginatedResponse<any>>("/api/v1/webtv/videos/?page_size=15"),
-      apiFetch<any>("/api/v1/webtv/videos/premiers/"),
+      apiFetch<PaginatedResponse<ApiVideo>>("/api/v1/webtv/videos/?page_size=15"),
+      apiFetch<PaginatedResponse<ApiVideo> | ApiVideo[]>("/api/v1/webtv/videos/premiers/"),
       // 404 means "nothing is live right now" — not an error, so it's caught locally
       // instead of failing the whole Promise.all.
-      apiFetch<any>("/api/v1/webtv/videos/live/").catch(() => null),
+      apiFetch<ApiVideo>("/api/v1/webtv/videos/live/").catch(() => null),
     ]);
 
     videos = videoData.results.map(mapApiVideoToWebTVVideo);

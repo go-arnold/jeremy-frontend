@@ -84,8 +84,8 @@ export default function EditProfileModal({
       await updateProfile(payload);
       await refreshUser();
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Échec de la mise à jour du profil.");
+    } catch (err) {
+      setError((err instanceof Error ? err.message : null) || "Échec de la mise à jour du profil.");
     } finally {
       setSaving(false);
     }

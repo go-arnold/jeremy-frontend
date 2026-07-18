@@ -2,9 +2,20 @@ import { useEffect, useRef, useState } from "react";
 
 const MAX_RECONNECT_DELAY_MS = 30000;
 
+// Raw `chat.message` broadcast payload — same shape the REST chat-history endpoints return
+// (see `RawApiChatMessage` in lib/services/liveMusic.ts / radio.ts), normalized by each
+// consumer's own `mapChatMessage`.
+export interface LiveRoomMessage {
+  id?: string | number;
+  username?: string;
+  avatar_url?: string;
+  message?: string;
+  created_at?: string;
+}
+
 export function useLiveRoom(roomType: string, roomId: string, token?: string) {
   const [onlineCount, setOnlineCount] = useState(0);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<LiveRoomMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {

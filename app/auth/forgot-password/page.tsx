@@ -33,12 +33,13 @@ export default function ForgotPasswordPage() {
       });
       setMessage('Un lien de réinitialisation a été envoyé à votre adresse e-mail.');
       setEmail('');
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : undefined;
       // Si le backend renvoie une erreur spécifique pour email non trouvé
-      if (err.message?.toLowerCase().includes('not found') || err.message?.toLowerCase().includes('aucun')) {
+      if (message?.toLowerCase().includes('not found') || message?.toLowerCase().includes('aucun')) {
         setError("Aucun compte n'est associé à cette adresse e-mail. Veuillez vérifier ou créer un compte.");
       } else {
-        setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
+        setError(message || 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       setLoading(false);

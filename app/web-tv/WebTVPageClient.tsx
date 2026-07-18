@@ -21,8 +21,17 @@ import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiVideoToWebTVVideo } from "@/lib/mappers";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
+import type { ApiVideo } from "@/lib/api-types";
+import type { FreestyleVideo } from "@/types/webtv";
 
 type WebTVVideo = ReturnType<typeof mapApiVideoToWebTVVideo>;
+
+// FreestyleVideo requires an `aspect` ratio the shared WebTVVideo mapper shape doesn't carry
+// (purely a display heuristic, no backend equivalent — same pattern as mappers.ts NEWS_VARIANTS).
+const FREESTYLE_ASPECTS: FreestyleVideo["aspect"][] = ["3/4", "square", "9/16"];
+function toFreestyleVideo(video: WebTVVideo, index: number): FreestyleVideo {
+  return { ...video, aspect: FREESTYLE_ASPECTS[index % FREESTYLE_ASPECTS.length] };
+}
 
 interface WebTVPageClientProps {
   initialVideos: WebTVVideo[];
@@ -47,7 +56,7 @@ export default function WebTVPageClient({
   const loadMore = async (page: number) => {
     setLoadingLoadingMore(true);
     try {
-      const data = await apiFetch<PaginatedResponse<any>>(`/api/v1/webtv/videos/?page=${page}&page_size=15`);
+      const data = await apiFetch<PaginatedResponse<ApiVideo>>(`/api/v1/webtv/videos/?page=${page}&page_size=15`);
       const newVideos = data.results.map(mapApiVideoToWebTVVideo);
       setVideos((prev) => [...prev, ...newVideos]);
       setHasMore(!!data.next);
@@ -91,13 +100,13 @@ export default function WebTVPageClient({
         <>
           {/* MOBILE */}
           <main className="lg:hidden flex flex-col gap-8 pb-8 pt-4 mx-5">
-            <PremierSection video={premierVideo as any} />
+            <PremierSection video={premierVideo} />
             <LiveVsVideosSeparator isLive={!!liveVideo} />
-            <div id="studio-sessions"><StudioSessionsSection variant="mobile" sessions={studioSessions.length > 0 ? studioSessions as any : mockedStudio} /></div>
-            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
-            <div id="docs"><DocsSection variant="mobile" docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
-            <div id="interviews"><InterviewsSection variant="mobile" interviews={interviewVideos.length > 0 ? interviewVideos as any : mockedInterviews} /></div>
-            <div id="concerts"><ConcertsSection variant="mobile" concerts={concertVideos.length > 0 ? concertVideos as any : mockedConcerts} /></div>
+            <div id="studio-sessions"><StudioSessionsSection variant="mobile" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} /></div>
+            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
+            <div id="docs"><DocsSection variant="mobile" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
+            <div id="interviews"><InterviewsSection variant="mobile" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
+            <div id="concerts"><ConcertsSection variant="mobile" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
             <VoirPlusPagination
               onLoadMore={loadMore}
               hasMore={hasMore}
@@ -108,14 +117,14 @@ export default function WebTVPageClient({
           {/* DESKTOP */}
           <main className="hidden lg:flex lg:flex-col mt-20 gap-10 pb-16 pt-6 max-w-7xl mx-auto w-full px-8">
             <div className="grid grid-cols-[3fr_2fr] gap-6 items-start">
-              <PremierSection video={premierVideo as any} variant="desktop" />
-              <StudioSessionsSection variant="desktop" sessions={studioSessions.length > 0 ? studioSessions as any : mockedStudio} />
+              <PremierSection video={premierVideo} variant="desktop" />
+              <StudioSessionsSection variant="desktop" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} />
             </div>
             <LiveVsVideosSeparator isLive={!!liveVideo} />
-            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos as any : mockedFreestyles} /></div>
-            <div id="docs"><DocsSection variant="desktop" docs={docVideos.length > 0 ? docVideos as any : mockedDocs} /></div>
-            <div id="interviews"><InterviewsSection variant="desktop" interviews={interviewVideos.length > 0 ? interviewVideos as any : mockedInterviews} /></div>
-            <div id="concerts"><ConcertsSection variant="desktop" concerts={concertVideos.length > 0 ? concertVideos as any : mockedConcerts} /></div>
+            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
+            <div id="docs"><DocsSection variant="desktop" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
+            <div id="interviews"><InterviewsSection variant="desktop" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
+            <div id="concerts"><ConcertsSection variant="desktop" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
             <VoirPlusPagination
               onLoadMore={loadMore}
               hasMore={hasMore}

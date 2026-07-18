@@ -2,21 +2,32 @@ import { Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+
+// Fields as actually read below — kept as-is (not reconciled against ApiRelease's real
+// `cover_url`/`artist_name` field names) to avoid changing runtime behavior while just removing `any`.
+interface TopRelease {
+  id: number;
+  slug: string;
+  title: string;
+  cover_image?: string;
+  artist_names?: string[];
+  listen_count?: number;
+}
 
 async function getTopReleases() {
   try {
-    const res = await apiFetch<any>(
+    const res = await apiFetch<PaginatedResponse<TopRelease>>(
       `/api/v1/releases/?ordering=-listen_count&page_size=100`,
       { next: { revalidate: 3600 } }
     );
     return res;
-  } catch (err) {
-    return { results: [], count: 0 };
+  } catch {
+    return { results: [] as TopRelease[], count: 0 };
   }
 }
 
-function ReleaseCard({ release, index }: any) {
+function ReleaseCard({ release, index }: { release: TopRelease; index: number }) {
   return (
     <Link href={`/sorties-premieres/${release.slug}`}>
       <div className="group cursor-pointer">
@@ -72,7 +83,7 @@ export default async function TopMorceauxPage() {
 
         {data.results?.length > 0 ? (
           <div className="space-y-6 max-w-3xl">
-            {data.results.map((release: any, index: number) => (
+            {data.results.map((release, index) => (
               <Suspense key={release.id} fallback={<div className="bg-slate-800 rounded-lg h-24 animate-pulse" />}>
                 <ReleaseCard release={release} index={index} />
               </Suspense>

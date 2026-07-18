@@ -7,7 +7,7 @@ import { refreshAccessToken, applyRefreshedTokenCookies } from '@/lib/server/ref
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://art-du-kivu-api.kelor.tech';
 
 // Cache en mémoire pour les requêtes GET
-const requestCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+const requestCache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
 
 /**
  * Identifies the caller for cache-key scoping, without storing the raw token in memory.
@@ -169,7 +169,7 @@ async function handleProxy(request: Request) {
     });
     if (refreshed) applyRefreshedTokenCookies(res, refreshed);
     return res;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Proxy Fatal Error:', error);
     return NextResponse.json(
       { message: 'Le serveur est injoignable. Veuillez réessayer dans quelques instants.' },

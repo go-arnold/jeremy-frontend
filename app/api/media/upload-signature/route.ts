@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data);
-  } catch (err: any) {
+  } catch (err) {
     console.error('Upload signature error:', err);
     return NextResponse.json({ detail: 'Erreur serveur', code: 'server_error' }, { status: 500 });
   }

@@ -4,6 +4,7 @@ import { getPodcastEpisode as getMockedEpisode } from "@/data/podcasts";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiEpisodeToPodcastEpisode } from "@/lib/mappers";
+import type { ApiEpisode } from "@/lib/api-types";
 import EmptyState from "@/components/ui/EmptyState";
 
 import EpisodeHero     from "@/components/podcasts/EpisodeHero";
@@ -22,7 +23,7 @@ interface Props {
 
 async function getEpisode(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/podcasts/episodes/${slug}/`);
+    const data = await apiFetch<ApiEpisode>(`/api/v1/podcasts/episodes/${slug}/`);
     return mapApiEpisodeToPodcastEpisode(data);
   } catch (error) {
     console.error(`Failed to fetch podcast episode ${slug}:`, error);
@@ -33,7 +34,7 @@ async function getEpisode(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   let episode = await getEpisode(slug);
-  if (!episode) episode = getMockedEpisode(slug) as any;
+  if (!episode) episode = getMockedEpisode(slug);
   if (!episode) return { title: "Épisode introuvable | Art du Kivu" };
 
   const title = `${episode.title} | Art du Kivu`;
@@ -60,7 +61,7 @@ export default async function PodcastEpisodePage({ params }: Props) {
   
   // Fallback to mocked data
   if (!episode) {
-    episode = getMockedEpisode(slug) as any;
+    episode = getMockedEpisode(slug);
   }
   
   if (!episode) notFound();

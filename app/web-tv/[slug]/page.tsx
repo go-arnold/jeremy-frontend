@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiVideoToWebTVVideo } from "@/lib/mappers";
 import WebTVVideoDetail from "@/components/webTv/WebTVVideoDetail";
+import type { ApiVideo } from "@/lib/api-types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ interface Props {
 
 async function getVideo(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/webtv/videos/${slug}/`);
+    const data = await apiFetch<ApiVideo>(`/api/v1/webtv/videos/${slug}/`);
     return mapApiVideoToWebTVVideo(data);
   } catch (error) {
     console.error(`Failed to fetch WebTV video ${slug}:`, error);

@@ -2,21 +2,22 @@ import { Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+import type { ApiVideo } from '@/lib/api-types';
 
 async function getStudioSessions() {
   try {
-    const res = await apiFetch<any>(
+    const res = await apiFetch<PaginatedResponse<ApiVideo>>(
       `/api/v1/webtv/videos/?category=studio_sessions&page_size=50`,
       { next: { revalidate: 3600 } }
     );
     return res;
-  } catch (err) {
-    return { results: [], count: 0 };
+  } catch {
+    return { results: [] as ApiVideo[], count: 0 };
   }
 }
 
-function SessionCard({ video }: any) {
+function SessionCard({ video }: { video: ApiVideo }) {
   return (
     <Link href={`/web-tv/${video.slug}`}>
       <div className="group cursor-pointer overflow-hidden rounded-xl">
@@ -60,11 +61,11 @@ export default async function StudioSessionsPage() {
           Retour
         </Link>
         <h1 className="text-5xl font-bold text-white mb-4">Studio Sessions</h1>
-        <p className="text-white/60 mb-12">Découvrez les meilleures sessions d'enregistrement en studio.</p>
+        <p className="text-white/60 mb-12">Découvrez les meilleures sessions d&apos;enregistrement en studio.</p>
 
         {data.results?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {data.results.map((video: any) => (
+            {data.results.map((video) => (
               <Suspense key={video.id} fallback={<div className="bg-slate-800 rounded-xl h-48 animate-pulse" />}>
                 <SessionCard video={video} />
               </Suspense>

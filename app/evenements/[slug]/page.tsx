@@ -4,6 +4,7 @@ import { getEventDetail as getMockedEventDetail, getSimilarEvents } from "@/data
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiEventDetailToEventDetail } from "@/lib/mappers";
+import type { ApiEvent } from "@/lib/api-types";
 
 import EventHero     from "@/components/evenements/EventHero";
 import EventInfoGrid from "@/components/evenements/EventInfoGrid";
@@ -22,7 +23,7 @@ interface Props {
 
 async function getEvent(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/events/${slug}/`);
+    const data = await apiFetch<ApiEvent>(`/api/v1/events/${slug}/`);
     return mapApiEventDetailToEventDetail(data);
   } catch (error) {
     console.error(`Failed to fetch event ${slug}:`, error);
@@ -33,7 +34,7 @@ async function getEvent(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   let event = await getEvent(slug);
-  if (!event) event = getMockedEventDetail(slug) as any;
+  if (!event) event = getMockedEventDetail(slug);
   if (!event) return { title: "Événement introuvable | Art du Kivu" };
 
   const title = `${event.title} | Art du Kivu`;
@@ -60,7 +61,7 @@ export default async function EvenementDetailPage({ params }: Props) {
   
   // Fallback to mocked data
   if (!event) {
-    event = getMockedEventDetail(slug) as any;
+    event = getMockedEventDetail(slug);
   }
 
   if (!event) notFound();
@@ -255,7 +256,7 @@ function EventScheduleDesktop({ items }: { items: EventScheduleItem[] }) {
         {/* Ligne verticale timeline */}
         <div className="absolute left-[108px] top-0 bottom-0 w-px bg-white/10" />
 
-        {items.map((item, i) => (
+        {items.map((item) => (
           <div key={item.date + item.time} className="flex items-center gap-6 py-4">
             {/* Date */}
             <div className="w-24 shrink-0 text-right">

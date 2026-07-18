@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getArtisteDetail as getMockedArtisteDetail } from "@/data/artistes";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiArtistDetailToArtisteDetail } from "@/lib/mappers";
+import type { ApiArtistDetail } from "@/lib/api-types";
 
 import ArtisteDetailHero from "@/components/artistesComp/ArtisteDetailHero";
 import LatestReleases    from "@/components/artistesComp/LatestReleases";
@@ -18,7 +19,7 @@ interface Props {
 
 async function getArtiste(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/artists/${slug}/`);
+    const data = await apiFetch<ApiArtistDetail>(`/api/v1/artists/${slug}/`);
     return mapApiArtistDetailToArtisteDetail(data);
   } catch (error) {
     console.error(`Failed to fetch artist ${slug}:`, error);
@@ -29,7 +30,7 @@ async function getArtiste(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   let artiste = await getArtiste(slug);
-  if (!artiste) artiste = getMockedArtisteDetail(slug) as any;
+  if (!artiste) artiste = getMockedArtisteDetail(slug);
   if (!artiste) return { title: "Artiste introuvable | Art du Kivu" };
 
   const title = `${artiste.name} | Art du Kivu`;
@@ -56,7 +57,7 @@ export default async function ArtisteDetailPage({ params }: Props) {
   
   // Fallback to mocked data if API fails or artist not found in API
   if (!artiste) {
-    artiste = getMockedArtisteDetail(slug) as any;
+    artiste = getMockedArtisteDetail(slug);
   }
   
   if (!artiste) notFound();

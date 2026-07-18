@@ -55,8 +55,8 @@ export default function ResetPasswordForm() {
       setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : null) || 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }

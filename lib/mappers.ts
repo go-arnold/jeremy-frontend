@@ -3,6 +3,7 @@ import { BlogPost, BlogCard, BlogCategory, ArticleBlock, Comment } from "@/types
 import {PodcastEpisode} from "@/types/podcasts"
 import type { HeroArticle, NewsArticle } from "@/types/magazine";
 import type { EmissionStatus } from "@/types/emissions";
+import type { EventDetail } from "@/types/evenements";
 import type {
   ApiArtistList,
   ApiArtistDetail,
@@ -35,7 +36,7 @@ import type {
 /** Magazine article list shape — close to `ApiArticleList` but `category` is read as either the
  * nested `{name}` object (real serializer shape) or a raw string (defensive fallback already
  * present in the existing mapper logic below). */
-interface ApiMagazineArticle {
+export interface ApiMagazineArticle {
   id?: number | string;
   slug?: string;
   title: string;
@@ -223,7 +224,7 @@ export function mapApiEventToEvent(apiEvent: ApiEvent) {
   };
 }
 
-export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent) {
+export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent): EventDetail {
   const base = mapApiEventToEvent(apiDetail);
   return {
     ...base,
@@ -325,7 +326,7 @@ export function mapApiVideoToWebTVVideo(apiVideo: ApiVideo) {
     // The real `VideoDetailSerializer`'s live playback field — VOD's own `video_url` is used
     // for the non-live player; a live video plays `playbackHlsUrl` via LiveStreamPlayer instead.
     playbackHlsUrl: apiVideo.playback_hls_url || "",
-    duration: apiVideo.duration,
+    duration: apiVideo.duration || "",
     // Real backend field is `category` (snake_case values: freestyles, studio_sessions, docs,
     // interviews, premiers, concerts) — not `category_name`, which doesn't exist on the
     // serializer at all.
@@ -337,7 +338,7 @@ export function mapApiVideoToWebTVVideo(apiVideo: ApiVideo) {
     isLive: apiVideo.is_live || false,
     likeCount: apiVideo.like_count || 0,
     commentCount: apiVideo.comment_count || 0,
-    publishedAt: apiVideo.published_at_human,
+    publishedAt: apiVideo.published_at_human || "",
     // Aliases consumed by StudioSession/DocVideo-shaped card components.
     author: apiVideo.artist_names?.[0] || "",
     date: apiVideo.published_at_human || "",
@@ -356,7 +357,7 @@ export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
     title: apiProgram.title,
     description: apiProgram.description || "",
     presenter: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0],
-    host: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0],
+    host: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0] || "",
     startTime: apiProgram.start_time,
     endTime: apiProgram.end_time,
     time: `${apiProgram.start_time || ''} - ${apiProgram.end_time || ''}`,
@@ -371,7 +372,7 @@ export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
     dashUrl: null,
     isLive: apiProgram.status === 'live',
     listenerCount: apiProgram.listener_count || apiProgram.online_followers || 0,
-    status: apiProgram.status === 'live' ? 'now' : (apiProgram.status === 'upcoming' ? 'next' : 'later'),
+    status: (apiProgram.status === 'live' ? 'now' : (apiProgram.status === 'upcoming' ? 'next' : 'later')) as 'now' | 'next' | 'later',
     // Only present on MusicLiveSessionSerializer (Live Music) — RadioProgram has no
     // EngagementActionsMixin/like-comment support server-side, so these default to 0 there.
     likeCount: apiProgram.like_count || 0,

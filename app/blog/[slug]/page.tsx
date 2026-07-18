@@ -4,6 +4,7 @@ import { getBlogPost as getMockedBlogPost, getRelatedCards } from "@/data/blog";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiArticleToBlogPost } from "@/lib/mappers";
+import type { ApiArticleDetail } from "@/lib/api-types";
 
 import ReadingProgress  from "@/components/blog/ReadingProgress";
 import ArticleHero      from "@/components/blog/ArticleHero";
@@ -23,7 +24,7 @@ interface Props {
 
 async function getArticle(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/articles/${slug}/`);
+    const data = await apiFetch<ApiArticleDetail>(`/api/v1/articles/${slug}/`);
     return mapApiArticleToBlogPost(data);
   } catch (error) {
     console.error(`Failed to fetch article ${slug}:`, error);
@@ -34,7 +35,7 @@ async function getArticle(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   let post = await getArticle(slug);
-  if (!post) post = getMockedBlogPost(slug) as any;
+  if (!post) post = getMockedBlogPost(slug);
   if (!post) return { title: "Article introuvable | Art du Kivu" };
 
   const firstParagraph = post.blocks?.find((b) => b.type === "paragraph")?.content || "";
@@ -62,7 +63,7 @@ export default async function BlogPostPage({ params }: Props) {
   
   // Fallback to mocked data
   if (!post) {
-    post = getMockedBlogPost(slug) as any;
+    post = getMockedBlogPost(slug);
   }
   
   if (!post) notFound();
@@ -349,7 +350,7 @@ function TableOfContents({ blocks }: { blocks: ArticleBlock[] }) {
             style={{ background: "rgba(230,48,18,0.06)", borderLeft: "2px solid rgba(230,48,18,0.4)" }}
           >
             <p className="text-[#F0EDE8]/80 text-xs italic leading-relaxed line-clamp-3">
-              "{q.content}"
+              &quot;{q.content}&quot;
             </p>
           </div>
         ))}

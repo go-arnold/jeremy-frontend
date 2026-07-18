@@ -121,9 +121,9 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
       setDescription("");
       removeFile();
       onSubmitted?.();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setStatusMsg(err.message || "Erreur lors de la soumission. Assurez-vous d'être connecté.");
+      setStatusMsg((err instanceof Error ? err.message : null) || "Erreur lors de la soumission. Assurez-vous d'être connecté.");
       setStatusType("error");
     } finally {
       setUploading(false);

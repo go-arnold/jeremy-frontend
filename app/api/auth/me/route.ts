@@ -63,11 +63,11 @@ export async function GET() {
     const res = NextResponse.json(data);
     if (refreshed) applyRefreshedTokenCookies(res, refreshed);
     return res;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Auth Me Route Fatal Error:', error);
     return NextResponse.json({
       message: 'Impossible de contacter le serveur d\'authentification',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 }

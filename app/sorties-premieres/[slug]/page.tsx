@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiReleaseToFeaturedRelease } from "@/lib/mappers";
 import EngagementBar from "@/components/ui/EngagementBar";
+import type { ApiRelease } from "@/lib/api-types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ interface Props {
 
 async function getRelease(slug: string) {
   try {
-    const data = await apiFetch<any>(`/api/v1/releases/${slug}/`);
+    const data = await apiFetch<ApiRelease>(`/api/v1/releases/${slug}/`);
     return mapApiReleaseToFeaturedRelease(data);
   } catch (error) {
     console.error(`Failed to fetch release ${slug}:`, error);
