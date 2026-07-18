@@ -1,10 +1,11 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiBlogToBlogCard, mapApiArticleToBlogPost } from "@/lib/mappers";
+import type { ApiArticleList, ApiArticleDetail } from "@/lib/api-types";
 
 export async function fetchArticles(page = 1, pageSize = 15, category?: string) {
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
   if (category) params.set("category", category);
-  const data = await apiFetch<PaginatedResponse<any>>(`/api/v1/articles/?${params.toString()}`);
+  const data = await apiFetch<PaginatedResponse<ApiArticleList>>(`/api/v1/articles/?${params.toString()}`);
   return { ...data, results: data.results.map(mapApiBlogToBlogCard) };
 }
 
@@ -13,7 +14,7 @@ export async function fetchArticleCategories() {
 }
 
 export async function fetchArticle(slug: string) {
-  const data = await apiFetch<any>(`/api/v1/articles/${slug}/`);
+  const data = await apiFetch<ApiArticleDetail>(`/api/v1/articles/${slug}/`);
   return mapApiArticleToBlogPost(data);
 }
 

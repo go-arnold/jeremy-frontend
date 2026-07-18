@@ -22,7 +22,7 @@ export function useGoogleAuth(onSuccess: () => void, onError: (message: string) 
   onSuccessRef.current = onSuccess;
   onErrorRef.current = onError;
 
-  const handleGoogleCredentialResponse = useCallback(async (response: any) => {
+  const handleGoogleCredentialResponse = useCallback(async (response: CredentialResponse) => {
     if (!response?.credential) {
       onErrorRef.current("Aucun identifiant reçu de Google.");
       setGoogleLoading(false);
@@ -45,8 +45,9 @@ export function useGoogleAuth(onSuccess: () => void, onError: (message: string) 
       }
 
       onSuccessRef.current();
-    } catch (err: any) {
-      onErrorRef.current(err.message || "Échec de la connexion Google.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Échec de la connexion Google.";
+      onErrorRef.current(message);
     } finally {
       setGoogleLoading(false);
     }
@@ -84,7 +85,7 @@ export function useGoogleAuth(onSuccess: () => void, onError: (message: string) 
     const gsi = window.google?.accounts?.id;
     if (gsi) {
       setGoogleLoading(true);
-      gsi.prompt((notification: any) => {
+      gsi.prompt((notification: PromptMomentNotification) => {
         if (notification.isNotDisplayed()) {
           setGoogleLoading(false);
         }

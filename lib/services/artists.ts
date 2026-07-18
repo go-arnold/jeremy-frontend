@@ -1,8 +1,9 @@
 import { apiFetch } from "@/lib/api-client";
 import { mapApiArtistToArtiste } from "@/lib/mappers";
+import type { ApiArtistList } from "@/lib/api-types";
 
 export async function fetchFavoriteArtists(userId: string | number) {
-  const data = await apiFetch<any[]>(`/api/v1/users/${userId}/favorites/`);
+  const data = await apiFetch<ApiArtistList[]>(`/api/v1/users/${userId}/favorites/`);
   return data.map(mapApiArtistToArtiste);
 }
 

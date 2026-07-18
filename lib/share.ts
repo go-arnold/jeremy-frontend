@@ -17,8 +17,8 @@ export async function shareContent(params: { title: string; url: string; text?: 
     try {
       await navigator.share({ title: params.title, text: params.text, url: shareUrl });
       return "shared";
-    } catch (err: any) {
-      if (err?.name === "AbortError") return "cancelled";
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return "cancelled";
       // fall through to clipboard on any other native-share failure
     }
   }

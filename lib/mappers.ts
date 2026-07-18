@@ -1,7 +1,54 @@
-import { Artiste, Genre, ArtisteDetail, Release, VideoItem, GalleryPhoto } from "@/types/artistes";
+import { Artiste, ArtisteDetail, Release, VideoItem, GalleryPhoto } from "@/types/artistes";
 import { BlogPost, BlogCard, BlogCategory, ArticleBlock, Comment } from "@/types/blog";
 import {PodcastEpisode} from "@/types/podcasts"
 import type { HeroArticle, NewsArticle } from "@/types/magazine";
+import type { EmissionStatus } from "@/types/emissions";
+import type {
+  ApiArtistList,
+  ApiArtistDetail,
+  ApiGenre,
+  ApiRelease as ApiArtistRelease,
+  ApiArtistVideo,
+  ApiArtistPhoto,
+  ApiArticleList,
+  ApiArticleDetail,
+  ApiTag,
+  ApiComment,
+  ApiEvent,
+  ApiEventSchedule,
+  ApiEpisode,
+  ApiEpisodeGuest,
+  ApiVideo,
+  ApiRadioOrLiveProgram,
+  ApiCommunityPost,
+  ApiRelease,
+  ApiHeroBanner,
+  ApiHit,
+  ApiALaUne,
+  ApiBadge,
+  ApiMediaRankingItem,
+  ApiSavedItem,
+  ApiActivityEntry,
+  ApiEmission,
+} from "@/lib/api-types";
+
+/** Magazine article list shape — close to `ApiArticleList` but `category` is read as either the
+ * nested `{name}` object (real serializer shape) or a raw string (defensive fallback already
+ * present in the existing mapper logic below). */
+interface ApiMagazineArticle {
+  id?: number | string;
+  slug?: string;
+  title: string;
+  excerpt?: string;
+  featured_image_url?: string;
+  image_url?: string;
+  category?: { name?: string } | string;
+  read_time?: number;
+  is_featured?: boolean;
+  published_at?: string | null;
+  author_name?: string;
+  author?: { username?: string; avatar_url?: string };
+}
 
 /** Several serializers (podcasts, emissions) only return a raw ISO `published_at`/`created_at`,
  * no `*_human` companion field — this covers those cases with the same relative-time convention
@@ -24,9 +71,11 @@ export function formatRelativeDate(iso: string | null | undefined): string {
 /** `guests` on a podcast episode is a genuinely free-form JSONField (no fixed shape enforced
  * server-side) — accepts either a plain string name or an object with at least a `name`, and
  * never invents fields (avatar/bio/website/...) the API doesn't actually provide. */
-function parseEpisodeGuests(guests: any): { name: string; title: string; avatar: string; bio: string; website?: string; twitter?: string }[] {
+function parseEpisodeGuests(
+  guests: (string | ApiEpisodeGuest)[] | null | undefined
+): { name: string; title: string; avatar: string; bio: string; website?: string; twitter?: string }[] {
   if (!Array.isArray(guests)) return [];
-  return guests.map((g: any) => {
+  return guests.map((g) => {
     if (typeof g === "string") return { name: g, title: "", avatar: "", bio: "" };
     return {
       name: g?.name || g?.title || "Invité",
@@ -39,14 +88,12 @@ function parseEpisodeGuests(guests: any): { name: string; title: string; avatar:
   });
 }
 
-export function mapApiArtistToArtiste(apiArtist: any): Artiste {
+export function mapApiArtistToArtiste(apiArtist: ApiArtistList): Artiste {
   //const genreNames = typeof apiArtist.genre_names === 'string' ? apiArtist.genre_names : "";
   //const genresArray = genreNames.split(',').map(g => g.trim()).filter(Boolean);
 
-  console.log("GENRES: ",apiArtist.genre_names);
-  const genreNames = apiArtist.genre_names;
-  const genresArray = genreNames;
-  
+  const genresArray = apiArtist.genre_names || [];
+
   return {
     id: apiArtist.slug || apiArtist.id?.toString(),
     name: apiArtist.name || "Artiste",
@@ -57,43 +104,43 @@ export function mapApiArtistToArtiste(apiArtist: any): Artiste {
   };
 }
 
-export function mapApiArtistDetailToArtisteDetail(apiDetail: any): ArtisteDetail {
+export function mapApiArtistDetailToArtisteDetail(apiDetail: ApiArtistDetail): ArtisteDetail {
   return {
     id: apiDetail.slug || apiDetail.id?.toString(),
     artistId: apiDetail.id ?? null,
     name: apiDetail.name || "Artiste",
     city: apiDetail.city || "Kivu",
     country: apiDetail.country || "RD Congo",
-    genres: apiDetail.genres?.map((g: any) => g.name) || [],
+    genres: apiDetail.genres?.map((g: ApiGenre) => g.name) || [],
     bio: apiDetail.bio || "",
     coverImage: apiDetail.cover_url || apiDetail.photo_url || "",
     bookingLabel: "Réserver l'artiste",
-    releases: apiDetail.releases?.map((r: any) => ({
-      id: r.slug || r.id?.toString(),
-      title: r.title,
+    releases: apiDetail.releases?.map((r: ApiArtistRelease): Release => ({
+      id: r.slug || r.id?.toString() || "",
+      title: r.title || "",
       year: r.release_date ? new Date(r.release_date).getFullYear().toString() : "",
-      type: r.format?.toUpperCase() || "SINGLE",
+      type: (r.format?.toUpperCase() as Release["type"]) || "SINGLE",
       coverImage: r.cover_url || "",
       href: `/releases/${r.slug}`
     })) || [],
-    videos: apiDetail.videos?.map((v: any) => ({
+    videos: apiDetail.videos?.map((v: ApiArtistVideo): VideoItem => ({
       id: v.id?.toString() || Math.random().toString(),
-      title: v.title,
+      title: v.title || "",
       thumbnail: v.thumbnail_url || "",
       duration: v.duration || "",
       views: "",
       publishedAt: v.published_at_human || "",
       href: v.video_url || "#"
     })) || [],
-    gallery: apiDetail.gallery?.map((p: any) => ({
+    gallery: apiDetail.gallery?.map((p: ApiArtistPhoto): GalleryPhoto => ({
       id: p.id?.toString() || Math.random().toString(),
-      src: p.image_url,
+      src: p.image_url || "",
       alt: p.caption || apiDetail.name
     })) || []
   };
 }
 
-export function mapApiBlogToBlogCard(apiArticle: any): BlogCard {
+export function mapApiBlogToBlogCard(apiArticle: ApiArticleList): BlogCard {
   return {
     id: apiArticle.slug || apiArticle.id?.toString(),
     slug: apiArticle.slug,
@@ -109,7 +156,7 @@ export function mapApiBlogToBlogCard(apiArticle: any): BlogCard {
   };
 }
 
-export function mapApiArticleToBlogPost(apiArticle: any): BlogPost {
+export function mapApiArticleToBlogPost(apiArticle: ApiArticleDetail): BlogPost {
   const paragraphs = apiArticle.content?.split('\n\n') || [];
   const blocks: ArticleBlock[] = paragraphs.map((p: string) => ({
     type: "paragraph",
@@ -129,12 +176,12 @@ export function mapApiArticleToBlogPost(apiArticle: any): BlogPost {
     },
     readTime: apiArticle.read_time ? `${apiArticle.read_time} min` : "5 min",
     blocks: blocks,
-    tags: apiArticle.tags?.map((t: any) => t.name) || [],
+    tags: apiArticle.tags?.map((t: ApiTag) => t.name) || [],
     relatedPosts: [],
     likeCount: apiArticle.like_count || 0,
     // Real CommentSerializer fields: {id, author_name, author_avatar, content, like_count,
     // created_at} — flat, no nested `user`, no `created_at_human`.
-    comments: apiArticle.comments?.map((c: any): Comment => ({
+    comments: apiArticle.comments?.map((c: ApiComment): Comment => ({
       id: c.id?.toString() || Math.random().toString(),
       author: c.author_name || "Anonyme",
       avatar: c.author_avatar || "",
@@ -145,7 +192,7 @@ export function mapApiArticleToBlogPost(apiArticle: any): BlogPost {
   };
 }
 
-export function mapApiEventToEvent(apiEvent: any) {
+export function mapApiEventToEvent(apiEvent: ApiEvent) {
   const eventDate = apiEvent.date ? new Date(apiEvent.date) : new Date();
   
   const day = eventDate.getDate().toString().padStart(2, '0');
@@ -169,14 +216,14 @@ export function mapApiEventToEvent(apiEvent: any) {
     location: apiEvent.venue_name || apiEvent.city?.name || "Kivu",
     venue: apiEvent.venue_name,
     city: apiEvent.city?.name || apiEvent.city_name,
-    category: apiEvent.category_name || apiEvent.category,
+    category: apiEvent.category_name || apiEvent.category || "Événement",
     description: apiEvent.description || "",
     isFeatured: apiEvent.is_featured,
     time: apiEvent.date ? new Date(apiEvent.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : "18:00",
   };
 }
 
-export function mapApiEventDetailToEventDetail(apiDetail: any): any {
+export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent) {
   const base = mapApiEventToEvent(apiDetail);
   return {
     ...base,
@@ -188,16 +235,16 @@ export function mapApiEventDetailToEventDetail(apiDetail: any): any {
       address: apiDetail.venue_address || "Goma, Kivu",
       image: apiDetail.image_url || ""
     },
-    schedule: apiDetail.schedule?.map((s: any) => ({
+    schedule: apiDetail.schedule?.map((s: ApiEventSchedule) => ({
       date: s.date ? new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : "Aujourd'hui",
       time: s.start_time || "18:00",
-      label: s.title || s.activity
+      label: s.title || s.activity || "Programme"
     })) || [],
-    similarEvents: [] 
+    similarEvents: []
   };
 }
 
-export function mapApiPodcastToEpisode(apiEpisode: any) {
+export function mapApiPodcastToEpisode(apiEpisode: ApiEpisode) {
   const guests = parseEpisodeGuests(apiEpisode.guests);
   return {
     id: apiEpisode.slug || apiEpisode.id?.toString(),
@@ -215,7 +262,7 @@ export function mapApiPodcastToEpisode(apiEpisode: any) {
   };
 }
 
-export function mapApiEpisodeToPodcastEpisode(apiEpisode: any): PodcastEpisode {
+export function mapApiEpisodeToPodcastEpisode(apiEpisode: ApiEpisode): PodcastEpisode {
   const guests = parseEpisodeGuests(apiEpisode.guests);
   return {
     id: apiEpisode.slug || apiEpisode.id?.toString(),
@@ -255,7 +302,7 @@ const WEBTV_CATEGORY_LABELS: Record<string, string> = {
   concerts: "Concert",
 };
 
-export function mapApiVideoToWebTVVideo(apiVideo: any) {
+export function mapApiVideoToWebTVVideo(apiVideo: ApiVideo) {
   return {
     id: apiVideo.slug || apiVideo.id?.toString(),
     // Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
@@ -285,7 +332,7 @@ export function mapApiVideoToWebTVVideo(apiVideo: any) {
     category: apiVideo.category,
     // DocsSection/InterviewsSection/ConcertsSection all read `tag` as their card badge label —
     // the real serializer has no separate "tag" concept, just `category`.
-    tag: WEBTV_CATEGORY_LABELS[apiVideo.category] || apiVideo.category || "",
+    tag: WEBTV_CATEGORY_LABELS[apiVideo.category ?? ""] || apiVideo.category || "",
     isPremier: apiVideo.is_premier,
     isLive: apiVideo.is_live || false,
     likeCount: apiVideo.like_count || 0,
@@ -298,7 +345,7 @@ export function mapApiVideoToWebTVVideo(apiVideo: any) {
   };
 }
 
-export function mapApiRadioToRadioProgram(apiProgram: any) {
+export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
   return {
     id: apiProgram.slug || apiProgram.id?.toString(),
     // Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
@@ -333,8 +380,27 @@ export function mapApiRadioToRadioProgram(apiProgram: any) {
   };
 }
 
-export function mapApiPostToCommunityItem(apiPost: any) {
-  if (!apiPost) return { type: "talent", data: {} };
+const EMPTY_COMMUNITY_POST_DATA = {
+  id: "",
+  artist: { username: "Membre", avatar: "", location: "Kivu", isVerified: false },
+  author: { name: "Membre", avatar: "", isVerified: false },
+  content: "",
+  caption: "",
+  image: null as string | null,
+  coverImage: "",
+  video: null as string | null,
+  audio: null as string | null,
+  likes: 0,
+  comments: 0,
+  time: "Récemment",
+  timeAgo: "Récemment",
+  title: "",
+  duration: "0:00",
+  tags: [] as string[],
+};
+
+export function mapApiPostToCommunityItem(apiPost: ApiCommunityPost | null | undefined) {
+  if (!apiPost) return { type: "talent", data: EMPTY_COMMUNITY_POST_DATA };
 
   // The real CommunityPostSerializer never returns media_url/image_url/video_url — only
   // `media: [{type: "image"|"song"|"video", url}]` (per TalentSubmissionSerializer /
@@ -374,7 +440,7 @@ export function mapApiPostToCommunityItem(apiPost: any) {
     timeAgo: formatRelativeDate(apiPost.created_at),
     title: apiPost.title || "",
     duration: apiPost.duration || "0:00",
-    tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t: any) => typeof t === 'string' ? t : (t.name || t.label)) : []
+    tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t) => typeof t === 'string' ? t : (t.name || t.label || "")) : []
   };
 
   return {
@@ -383,7 +449,7 @@ export function mapApiPostToCommunityItem(apiPost: any) {
   };
 }
 
-export function mapApiReleaseToFeaturedRelease(apiRelease: any) {
+export function mapApiReleaseToFeaturedRelease(apiRelease: ApiRelease | null | undefined) {
   if (!apiRelease) return null;
   const date = apiRelease.release_date ? new Date(apiRelease.release_date) : new Date();
   return {
@@ -458,7 +524,7 @@ import type { Hero, Track, MagazineArticle, NewsCard } from "@/types";
  * Maps API banner object → Hero type used by HeroSection.
  * API shape: { image_url, title, subtitle, cta_label, cta_url }
  */
-export function mapApiBannerToHero(apiBanner: any, fallback: Hero): Hero {
+export function mapApiBannerToHero(apiBanner: ApiHeroBanner | null | undefined, fallback: Hero): Hero {
   if (!apiBanner) return fallback;
   return {
     title: apiBanner.title || fallback.title,
@@ -477,7 +543,7 @@ export function mapApiBannerToHero(apiBanner: any, fallback: Hero): Hero {
  * Maps a single API hits_du_mois track → Track type used by HitsList.
  * API shape: { id, slug, title, artist_name, cover_url, rank }
  */
-export function mapApiHitToTrack(apiHit: any, index: number): Track {
+export function mapApiHitToTrack(apiHit: ApiHit, index: number): Track {
   const rank = (apiHit.rank ?? index + 1).toString().padStart(2, "0");
   return {
     rank,
@@ -493,12 +559,12 @@ export function mapApiHitToTrack(apiHit: any, index: number): Track {
  * Maps a single API magazine article → MagazineArticle type.
  * API shape: { id, slug, title, featured_image_url, category, excerpt, is_featured }
  */
-export function mapApiMagazineArticle(apiArticle: any): MagazineArticle {
+export function mapApiMagazineArticle(apiArticle: ApiMagazineArticle): MagazineArticle {
   return {
     id: apiArticle.slug || apiArticle.id?.toString() || Math.random().toString(),
     title: apiArticle.title || "Article",
     image: apiArticle.featured_image_url || apiArticle.image_url || "",
-    category: apiArticle.category?.name || apiArticle.category || "Magazine",
+    category: (typeof apiArticle.category === "string" ? apiArticle.category : apiArticle.category?.name) || "Magazine",
     featured: !!apiArticle.is_featured,
     href: `/magazine/${apiArticle.slug || apiArticle.id}`,
     excerpt: apiArticle.excerpt || "",
@@ -509,7 +575,7 @@ export function mapApiMagazineArticle(apiArticle: any): MagazineArticle {
  * Maps the API a_la_une object → array of NewsCard for NewsCarousel.
  * a_la_une: { artist_of_month, featured_podcast, featured_event }
  */
-export function mapApiALaUneToNewsCards(aLaUne: any): NewsCard[] {
+export function mapApiALaUneToNewsCards(aLaUne: ApiALaUne | null | undefined): NewsCard[] {
   if (!aLaUne) return [];
   const cards: NewsCard[] = [];
 
@@ -603,10 +669,10 @@ const BADGE_PALETTE = [
   { color: "text-emerald-400", glowColor: "rgba(52,211,153,0.2)" },
 ];
 
-export function mapApiBadgeToBadge(apiBadge: any, unlocked: boolean, index: number) {
+export function mapApiBadgeToBadge(apiBadge: ApiBadge, unlocked: boolean, index: number) {
   const palette = BADGE_PALETTE[index % BADGE_PALETTE.length];
   return {
-    id: apiBadge.slug || apiBadge.id?.toString(),
+    id: apiBadge.slug || apiBadge.id?.toString() || Math.random().toString(),
     icon: "military_tech",
     iconUrl: apiBadge.icon_url || null,
     label: apiBadge.name || "",
@@ -632,8 +698,8 @@ const CONTENT_TYPE_ICON: Record<string, { icon: string; accentColor: string; ico
   release: { icon: "album", accentColor: "bg-pink-500/20", iconColor: "text-pink-400" },
 };
 
-export function mapApiMediaRankingToListenHistoryItem(apiItem: any) {
-  const style = CONTENT_TYPE_ICON[apiItem.content_type] || {
+export function mapApiMediaRankingToListenHistoryItem(apiItem: ApiMediaRankingItem) {
+  const style = CONTENT_TYPE_ICON[apiItem.content_type ?? ""] || {
     icon: "graphic_eq",
     accentColor: "bg-white/10",
     iconColor: "text-white/60",
@@ -661,39 +727,39 @@ const SAVED_KIND_TO_SEARCH_TYPE: Record<string, string> = {
   article: "articles",
 };
 
-export function mapApiSavedItemToSavedEntry(apiItem: any) {
+export function mapApiSavedItemToSavedEntry(apiItem: ApiSavedItem) {
   return {
     id: `${apiItem.kind}-${apiItem.id}`,
     title: apiItem.title || "",
     coverImage: apiItem.cover_url || "",
-    href: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[apiItem.kind] || apiItem.kind, apiItem.slug, apiItem.id),
+    href: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[apiItem.kind ?? ""] || apiItem.kind || "", apiItem.slug, apiItem.id),
   };
 }
 
 // `GET /users/{id}/activity/` shares the exact same `_resolve_target()` `kind` vocabulary as
 // `saved/` (both backed by `apps.accounts.profile_services`) — same href mapping applies.
-export function mapApiActivityEntryToActivityEntry(apiEntry: any) {
+export function mapApiActivityEntryToActivityEntry(apiEntry: ApiActivityEntry) {
   const target = apiEntry.target || {};
   return {
     id: `${apiEntry.action}-${target.kind}-${target.id}-${apiEntry.created_at}`,
-    action: apiEntry.action,
+    action: (apiEntry.action as "like" | "comment") || "like",
     createdAt: formatRelativeDate(apiEntry.created_at),
     excerpt: apiEntry.excerpt || undefined,
     targetTitle: target.title || "",
     targetCoverImage: target.cover_url || "",
-    targetHref: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[target.kind] || target.kind, target.slug, target.id),
+    targetHref: typeToHref(SAVED_KIND_TO_SEARCH_TYPE[target.kind ?? ""] || target.kind || "", target.slug, target.id ?? ""),
   };
 }
 
 // Émissions has no frontend integration at all today — this mapper is net-new, built directly
 // from `EmissionListSerializer`/`EmissionDetailSerializer` (backend/apps/emissions/serializers.py).
-export function mapApiEmissionToEmissionCard(apiEmission: any) {
+export function mapApiEmissionToEmissionCard(apiEmission: ApiEmission) {
   return {
     id: apiEmission.slug || apiEmission.id?.toString(),
     slug: apiEmission.slug,
     title: apiEmission.title,
     coverImage: apiEmission.cover_url || "",
-    status: apiEmission.status,
+    status: (apiEmission.status as EmissionStatus) || "recorded",
     isLive: apiEmission.status === "live",
     scheduledAt: apiEmission.scheduled_at || null,
     durationMinutes: apiEmission.duration_minutes || 0,
@@ -703,7 +769,7 @@ export function mapApiEmissionToEmissionCard(apiEmission: any) {
   };
 }
 
-export function mapApiEmissionToEmissionDetail(apiEmission: any) {
+export function mapApiEmissionToEmissionDetail(apiEmission: ApiEmission) {
   return {
     ...mapApiEmissionToEmissionCard(apiEmission),
     description: apiEmission.description || "",
@@ -721,9 +787,9 @@ export function mapApiEmissionToEmissionDetail(apiEmission: any) {
 // heuristic, cycled by position so a real article list still gets the intended masonry variety.
 const NEWS_VARIANTS: NewsArticle["variant"][] = ["tall-image", "square-image", "text-only", "short-image"];
 
-export function mapApiArticleToMagazineHero(apiArticle: any): HeroArticle {
+export function mapApiArticleToMagazineHero(apiArticle: ApiMagazineArticle): HeroArticle {
   return {
-    id: apiArticle.slug || apiArticle.id?.toString(),
+    id: apiArticle.slug || apiArticle.id?.toString() || Math.random().toString(),
     slug: apiArticle.slug,
     tag: "À la une",
     readTime: apiArticle.read_time || 5,
@@ -739,13 +805,13 @@ export function mapApiArticleToMagazineHero(apiArticle: any): HeroArticle {
   };
 }
 
-export function mapApiArticleToNewsArticle(apiArticle: any, index: number): NewsArticle {
+export function mapApiArticleToNewsArticle(apiArticle: ApiMagazineArticle, index: number): NewsArticle {
   const imageUrl = apiArticle.featured_image_url || "";
   const variant = imageUrl ? NEWS_VARIANTS[index % 3] : "text-only";
   return {
-    id: apiArticle.slug || apiArticle.id?.toString(),
+    id: apiArticle.slug || apiArticle.id?.toString() || Math.random().toString(),
     slug: apiArticle.slug,
-    category: apiArticle.category?.name || "Culture",
+    category: (typeof apiArticle.category === "string" ? apiArticle.category : apiArticle.category?.name) || "Culture",
     title: apiArticle.title,
     subtitle: apiArticle.excerpt || "",
     imageUrl,
