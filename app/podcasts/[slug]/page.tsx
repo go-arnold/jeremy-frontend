@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPodcastEpisode as getMockedEpisode } from "@/data/podcasts";
 import Link from "next/link";
@@ -27,6 +28,28 @@ async function getEpisode(slug: string) {
     console.error(`Failed to fetch podcast episode ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let episode = await getEpisode(slug);
+  if (!episode) episode = getMockedEpisode(slug) as any;
+  if (!episode) return { title: "Épisode introuvable | Art du Kivu" };
+
+  const title = `${episode.title} | Art du Kivu`;
+  const description = episode.description
+    ? episode.description.slice(0, 160)
+    : `Écoutez ${episode.title} sur Art du Kivu.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: episode.coverImage ? [episode.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function PodcastEpisodePage({ params }: Props) {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEventDetail as getMockedEventDetail, getSimilarEvents } from "@/data/evenements";
 import Link from "next/link";
@@ -10,8 +11,7 @@ import EventAbout    from "@/components/evenements/EventAbout";
 import EventSchedule from "@/components/evenements/EventSchedule";
 import EventVenue    from "@/components/evenements/EventVenue";
 import SimilarEvents from "@/components/evenements/SimilarEvents";
-import BookingButton from "@/components/evenements/BookingButton";
-import BookingWidgetDesktop from "@/components/evenements/BookingWidgetDesktop";
+import BookingWidget from "@/components/evenements/BookingWidget";
 import ShareEventWidget from "@/components/evenements/ShareEventWidget";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,28 @@ async function getEvent(slug: string) {
     console.error(`Failed to fetch event ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let event = await getEvent(slug);
+  if (!event) event = getMockedEventDetail(slug) as any;
+  if (!event) return { title: "Événement introuvable | Art du Kivu" };
+
+  const title = `${event.title} | Art du Kivu`;
+  const description = event.description
+    ? event.description.slice(0, 160)
+    : `${event.title} — ${event.location}, ${event.date}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: event.coverImage ? [event.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function EvenementDetailPage({ params }: Props) {
@@ -61,7 +83,7 @@ export default async function EvenementDetailPage({ params }: Props) {
           <ShareEventWidget title={event.title} slug={event.slug} />
         </div>
         <SimilarEvents events={similar} />
-        <BookingButton slug={event.slug} price={event.price} />
+        <BookingWidget slug={event.slug} price={event.price} variant="mobile" />
       </main>
 
       {/* ══════════════════════════════════════
@@ -102,11 +124,12 @@ export default async function EvenementDetailPage({ params }: Props) {
             <aside className="sticky top-24 flex flex-col gap-5">
 
               {/* Booking CTA */}
-              <BookingWidgetDesktop
+              <BookingWidget
                 slug={event.slug}
                 price={event.price}
                 date={event.date}
                 time={event.time}
+                variant="desktop"
               />
 
               {/* Infos clés */}

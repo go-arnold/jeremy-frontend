@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import { mapApiVideoToWebTVVideo } from "@/lib/mappers";
@@ -17,6 +18,27 @@ async function getVideo(slug: string) {
     console.error(`Failed to fetch WebTV video ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const video = await getVideo(slug);
+  if (!video) return { title: "Vidéo introuvable | Art du Kivu" };
+
+  const title = `${video.title} | Art du Kivu`;
+  const description = video.description
+    ? video.description.slice(0, 160)
+    : `Regardez ${video.title} sur Art du Kivu Web TV.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: video.thumbnail ? [video.thumbnail] : undefined,
+    },
+  };
 }
 
 export default async function WebTVVideoPage({ params }: Props) {

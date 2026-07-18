@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBlogPost as getMockedBlogPost, getRelatedCards } from "@/data/blog";
 import Link from "next/link";
@@ -28,6 +29,29 @@ async function getArticle(slug: string) {
     console.error(`Failed to fetch article ${slug}:`, error);
     return null;
   }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let post = await getArticle(slug);
+  if (!post) post = getMockedBlogPost(slug) as any;
+  if (!post) return { title: "Article introuvable | Art du Kivu" };
+
+  const firstParagraph = post.blocks?.find((b) => b.type === "paragraph")?.content || "";
+  const title = `${post.title} | Art du Kivu`;
+  const description = firstParagraph
+    ? firstParagraph.slice(0, 160)
+    : "Découvrez cet article sur Art du Kivu, plateforme culturelle et sonore du Kivu.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: post.coverImage ? [post.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: Props) {

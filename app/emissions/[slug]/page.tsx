@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { fetchEmission } from "@/lib/services/emissions";
 import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
@@ -22,6 +24,32 @@ function formatScheduledAt(iso: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  let emission;
+  try {
+    emission = await fetchEmission(slug);
+  } catch (error) {
+    console.error(`Failed to fetch emission ${slug}:`, error);
+  }
+  if (!emission) return { title: "Émission introuvable | Art du Kivu" };
+
+  const title = `${emission.title} | Art du Kivu`;
+  const description = emission.description
+    ? emission.description.slice(0, 160)
+    : `Regardez ${emission.title} sur Art du Kivu.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: emission.coverImage ? [emission.coverImage] : undefined,
+    },
+  };
 }
 
 export default async function EmissionDetailPage({ params }: Props) {
@@ -53,10 +81,12 @@ export default async function EmissionDetailPage({ params }: Props) {
             style={{ background: "rgba(18,34,60,0.6)" }}
           >
             {emission.coverImage && (
-              <img
+              <Image
                 alt={emission.title}
                 src={emission.coverImage}
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                fill
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className="object-cover opacity-40"
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />

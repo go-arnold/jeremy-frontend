@@ -1,79 +1,40 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import { featuredEvent as mockedFeatured, upcomingEvents as mockedUpcoming, eventCities as mockedCities } from "@/data/evenements";
+import { upcomingEvents as mockedUpcoming, eventCities as mockedCities } from "@/data/evenements";
 import EventsPageClient from "@/components/evenements/EventsPageClient";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiEventToEvent } from "@/lib/mappers";
 import EmptyState from "@/components/ui/EmptyState";
-import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 
-export default function EvenementsPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+interface CityApiItem {
+  name?: string;
+}
 
-  useEffect(() => {
-    async function init() {
-      try {
-        const [eventData, cityData] = await Promise.all([
-          apiFetch<PaginatedResponse<any>>("/api/v1/events/?page_size=15"),
-          apiFetch<any>("/api/v1/events/cities/")
-        ]);
+export default async function EvenementsPage() {
+  let events: ReturnType<typeof mapApiEventToEvent>[] = [];
+  let cities: string[] = mockedCities;
+  let hasMore = false;
 
-        setEvents(eventData.results.map(mapApiEventToEvent));
-        setHasMore(!!eventData.next);
+  try {
+    const [eventData, cityData] = await Promise.all([
+      apiFetch<PaginatedResponse<Parameters<typeof mapApiEventToEvent>[0]>>("/api/v1/events/?page_size=15"),
+      apiFetch<CityApiItem[] | PaginatedResponse<CityApiItem>>("/api/v1/events/cities/"),
+    ]);
 
-        const cityResults = cityData.results || (Array.isArray(cityData) ? cityData : []);
-        setCities(cityResults.map((c: any) => c.name || c));
-      } catch (error) {
-        console.error("Failed to fetch events initial data:", error);
-        setEvents(mockedUpcoming as any);
-        setCities(mockedCities);
-      } finally {
-        setLoading(false);
-        setInitialDataLoaded(true);
-      }
-    }
-    init();
-  }, []);
+    events = eventData.results.map(mapApiEventToEvent);
+    hasMore = !!eventData.next;
 
-  const loadMore = async (page: number) => {
-    setLoadingLoadingMore(true);
-    try {
-      const data = await apiFetch<PaginatedResponse<any>>(`/api/v1/events/?page=${page}&page_size=15`);
-      const newEvents = data.results.map(mapApiEventToEvent);
-      setEvents(prev => [...prev, ...newEvents]);
-      setHasMore(!!data.next);
-    } catch (error) {
-      console.error("Failed to load more events:", error);
-      setHasMore(false);
-    } finally {
-      setLoadingLoadingMore(false);
-    }
-  };
-
-  const showEmptyState = initialDataLoaded && events.length === 0;
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center pt-16">
-        <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
+    const cityResults = Array.isArray(cityData) ? cityData : cityData.results || [];
+    cities = cityResults.map((c) => (typeof c === "string" ? c : c.name) || "").filter(Boolean);
+  } catch (error) {
+    console.error("Failed to fetch events initial data:", error);
+    events = mockedUpcoming as unknown as ReturnType<typeof mapApiEventToEvent>[];
+    cities = mockedCities;
   }
 
-  const featured = events.find(e => e.isFeatured) || events[0] || mockedFeatured;
-  const upcoming = events.filter(e => e.id !== featured?.id);
-
-  if (showEmptyState) {
+  if (events.length === 0) {
     return (
       <div className="pt-24 pb-16 px-4 max-w-7xl mx-auto w-full">
-        <EmptyState 
-          message="Pas d'événements à l'horizon" 
+        <EmptyState
+          message="Pas d'événements à l'horizon"
           description="La scène culturelle du Kivu reprend son souffle. De nouveaux événements seront annoncés très prochainement."
           icon="calendar_today"
         />
@@ -82,19 +43,10 @@ export default function EvenementsPage() {
   }
 
   return (
-    <>
-      <EventsPageClient
-        cities={cities.length > 0 ? cities : mockedCities}
-        featured={featured as any}
-        upcoming={upcoming as any}
-      />
-      <div className="max-w-7xl mx-auto px-8 pb-16">
-        <VoirPlusPagination 
-          onLoadMore={loadMore} 
-          hasMore={hasMore} 
-          isLoading={loadingMore} 
-        />
-      </div>
-    </>
+    <EventsPageClient
+      cities={cities.length > 0 ? cities : mockedCities}
+      initialEvents={events}
+      initialHasMore={hasMore}
+    />
   );
 }
