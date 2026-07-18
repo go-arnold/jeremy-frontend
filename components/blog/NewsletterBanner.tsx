@@ -12,10 +12,10 @@ export default function NewsletterBanner() {
           Restez Connecté
         </h3>
         <p className="text-gray-400 text-sm mb-4">
-          L'actualité culturelle du Kivu, directement dans votre boîte.
+          L&apos;actualité culturelle du Kivu, directement dans votre boîte.
         </p>
         <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-lg text-sm transition-colors shadow-lg">
-          S'abonner
+          S&apos;abonner
         </button>
       </div>
     </div>

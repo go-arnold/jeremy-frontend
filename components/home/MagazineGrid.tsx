@@ -70,7 +70,7 @@ export default function MagazineGrid({ articles }: Props) {
                 <p className="text-[#8A8178] text-sm line-clamp-3 mt-1">{featured.excerpt}</p>
               )}
               <div className="flex items-center gap-2 mt-3 text-[#E63012] text-sm font-bold">
-                <span>Lire l'article</span>
+                <span>Lire l&apos;article</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </div>
             </div>

@@ -144,7 +144,7 @@ export default function HeroSection({ article }: Props) {
                       className="flex items-center gap-2 bg-primary hover:bg-[#B8240C] text-white px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] shadow-lg shadow-primary/20"
                     >
                       <span className="material-symbols-outlined text-lg">article</span>
-                      Lire l'article
+                      Lire l&apos;article
                     </Link>
                   </div>
                 </div>

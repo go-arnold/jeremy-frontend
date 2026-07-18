@@ -201,7 +201,7 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
             <span className="material-symbols-outlined text-primary text-3xl block mb-3">mail</span>
             <h3 className="text-[#F0EDE8] font-black text-base mb-1">Restez Connecté</h3>
             <p className="text-[#8A8178] text-xs mb-4 leading-relaxed">
-              L'actualité culturelle du Kivu, directement dans votre boîte.
+              L&apos;actualité culturelle du Kivu, directement dans votre boîte.
             </p>
             <input
               type="email"
@@ -210,7 +210,7 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
               style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}
             />
             <button className="w-full py-2.5 bg-primary hover:bg-[#B8240C] text-white font-bold rounded-xl text-sm transition-all">
-              S'abonner
+              S&apos;abonner
             </button>
           </div>
 

@@ -20,7 +20,7 @@ export default function Error({
         Une erreur est survenue
       </h1>
       <p className="max-w-sm text-sm text-[#8A8178]">
-        Quelque chose s'est mal passé. Vous pouvez réessayer ou revenir plus tard.
+        Quelque chose s&apos;est mal passé. Vous pouvez réessayer ou revenir plus tard.
       </p>
       <button
         onClick={reset}

@@ -8,13 +8,13 @@ export default function NotFound() {
         Page introuvable
       </h1>
       <p className="max-w-sm text-sm text-[#8A8178]">
-        Le contenu que vous cherchez n'existe pas ou a été déplacé.
+        Le contenu que vous cherchez n&apos;existe pas ou a été déplacé.
       </p>
       <Link
         href="/"
         className="mt-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-[#B8240C]"
       >
-        Retour à l'accueil
+        Retour à l&apos;accueil
       </Link>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,11 @@ import ActivityFeed from "@/components/monProfil/ActivityFeed";
 import EditProfileModal from "@/components/monProfil/EditProfileModal";
 import Avatar from "@/components/ui/Avatar";
 import type { ActivityEntry } from "@/types/monProfil";
+import type { ApiArtistList, ApiMediaRankingItem, ApiSavedItem, ApiBadge } from "@/lib/api-types";
+
+interface ApiEarnedBadge {
+  badge: { slug?: string };
+}
 
 function formatSecondsAsHours(totalSeconds: number): string {
   const hours = totalSeconds / 3600;
@@ -45,7 +50,6 @@ export default function MonProfilPage() {
   const [favoriteArtists, setFavoriteArtists] = useState(mockedFavoriteArtists);
   const [listenHistory, setListenHistory] = useState(mockedListenHistory);
   const [badges, setBadges] = useState(mockedBadges);
-  const [profileStats, setProfileStats] = useState(mockedProfileStats);
   const [savedItems, setSavedItems] = useState<ReturnType<typeof mapApiSavedItemToSavedEntry>[]>([]);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -60,18 +64,18 @@ export default function MonProfilPage() {
   useEffect(() => {
     if (!user?.id) return;
 
-    apiFetch<any[]>(`/api/v1/users/${user.id}/favorites/`)
+    apiFetch<ApiArtistList[]>(`/api/v1/users/${user.id}/favorites/`)
       .then((data) => setFavoriteArtists(data.map((a) => {
         const artiste = mapApiArtistToArtiste(a);
         return { id: artiste.id, name: artiste.name, avatar: artiste.image };
       })))
       .catch((error) => console.error("Failed to fetch favorite artists:", error));
 
-    apiFetch<any[]>(`/api/v1/gamification/media-ranking/`)
+    apiFetch<ApiMediaRankingItem[]>(`/api/v1/gamification/media-ranking/`)
       .then((data) => setListenHistory(data.map(mapApiMediaRankingToListenHistoryItem)))
       .catch((error) => console.error("Failed to fetch media ranking:", error));
 
-    apiFetch<any[]>(`/api/v1/users/${user.id}/saved/`)
+    apiFetch<ApiSavedItem[]>(`/api/v1/users/${user.id}/saved/`)
       .then((data) => setSavedItems(data.map(mapApiSavedItemToSavedEntry)))
       .catch((error) => console.error("Failed to fetch saved items:", error));
 
@@ -80,29 +84,33 @@ export default function MonProfilPage() {
       .catch((error) => console.error("Failed to fetch activity:", error));
 
     Promise.all([
-      apiFetch<any[]>(`/api/v1/gamification/badges/`),
-      apiFetch<any[]>(`/api/v1/gamification/users/${user.id}/badges/`),
+      apiFetch<ApiBadge[]>(`/api/v1/gamification/badges/`),
+      apiFetch<ApiEarnedBadge[]>(`/api/v1/gamification/users/${user.id}/badges/`),
     ])
       .then(([catalog, earned]) => {
         const earnedSlugs = new Set(earned.map((e) => e.badge.slug));
-        const sorted = [...catalog].sort((a, b) => a.order - b.order);
+        const sorted = [...catalog].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         setBadges(sorted.map((b, i) => mapApiBadgeToBadge(b, earnedSlugs.has(b.slug), i)));
       })
       .catch((error) => console.error("Failed to fetch badges:", error));
   }, [user?.id]);
 
-  useEffect(() => {
-    setProfileStats((prev) => prev.map((stat) => {
-      if (stat.id === "artistes") return { ...stat, value: String(favoriteArtists.length) };
-      if (stat.id === "badges") return { ...stat, value: String(badges.filter((b) => b.unlocked).length) };
-      if (stat.id === "ecoute") {
-        const totalSeconds = listenHistory.reduce((sum: number, item: any) => sum + (item.totalSeconds || 0), 0);
-        return totalSeconds > 0 ? { ...stat, value: formatSecondsAsHours(totalSeconds) } : stat;
-      }
-      return stat;
-    }));
-     
-  }, [favoriteArtists, badges, listenHistory]);
+  // Derived directly from favoriteArtists/badges/listenHistory during render instead of an
+  // effect that copies them into a separate `profileStats` state — avoids the extra render pass
+  // (react-hooks/set-state-in-effect) since this value has no state of its own.
+  const profileStats = useMemo(
+    () =>
+      mockedProfileStats.map((stat) => {
+        if (stat.id === "artistes") return { ...stat, value: String(favoriteArtists.length) };
+        if (stat.id === "badges") return { ...stat, value: String(badges.filter((b) => b.unlocked).length) };
+        if (stat.id === "ecoute") {
+          const totalSeconds = listenHistory.reduce((sum, item) => sum + (item.totalSeconds || 0), 0);
+          return totalSeconds > 0 ? { ...stat, value: formatSecondsAsHours(totalSeconds) } : stat;
+        }
+        return stat;
+      }),
+    [favoriteArtists, badges, listenHistory]
+  );
 
   if (loading) {
     return (

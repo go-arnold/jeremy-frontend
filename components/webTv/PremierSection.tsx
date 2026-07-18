@@ -48,7 +48,7 @@ export default function PremierSection({ video, variant = "mobile" }: PremierSec
       <section className="flex flex-col gap-4">
         {/* Label section */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">À l'affiche</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">À l&apos;affiche</span>
           <div className="kivu-divider flex-1" />
         </div>
 
