@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useEngagement } from "@/hooks/useEngagement";
@@ -194,9 +195,9 @@ export default function EngagementBar({
             <div className="flex flex-col gap-3 max-h-64 overflow-y-auto no-scrollbar">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-surface-dark border border-white/10 overflow-hidden flex-shrink-0">
+                  <div className="relative w-7 h-7 rounded-full bg-surface-dark border border-white/10 overflow-hidden flex-shrink-0">
                     {c.avatarUrl ? (
-                      <img src={c.avatarUrl} alt={c.username} className="w-full h-full object-cover" />
+                      <Image src={c.avatarUrl} alt={c.username} fill sizes="28px" className="object-cover" />
                     ) : (
                       <span className="material-symbols-outlined text-gray-400 text-sm flex items-center justify-center h-full">
                         person

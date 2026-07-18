@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import type { PodcastEpisode } from "@/types/podcasts";
 import { recordEpisodePlay } from "@/lib/services/podcasts";
 import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
@@ -46,7 +46,12 @@ export default function EpisodePlayer({ episode }: { episode: PodcastEpisode }) 
   const [speed, setSpeed] = useState(1);
   const [showSpeed, setShowSpeed] = useState(false);
   const [buffered, setBuffered] = useState(0);
-  const waveform = useRef(generateWaveform(episode.id || episode.title || "podcast"));
+  // Derived from episode data and read during render — belongs in useMemo, not a ref (refs
+  // must not be read during render, per react-hooks/refs).
+  const waveform = useMemo(
+    () => generateWaveform(episode.id || episode.title || "podcast"),
+    [episode.id, episode.title]
+  );
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -177,7 +182,7 @@ export default function EpisodePlayer({ episode }: { episode: PodcastEpisode }) 
         onMouseLeave={() => { dragging.current = false; }}
         onMouseMove={handleWaveformMouseMove}
       >
-        {waveform.current.map((h, i) => {
+        {waveform.map((h, i) => {
           const barPct = (i / BAR_COUNT) * 100;
           const isPlayed = barPct <= progress;
           const isBuffered = barPct <= buffered;

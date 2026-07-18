@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 export interface ChatMessage {
   id: string;
@@ -110,11 +111,15 @@ export default function LiveChat({
                 className={`flex gap-2 ${msg.isLive ? 'animate-fade-in' : ''}`}
               >
                 {msg.avatar ? (
-                  <img
-                    src={msg.avatar}
-                    alt={msg.author}
-                    className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                  />
+                  <div className="relative w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
+                    <Image
+                      src={msg.avatar}
+                      alt={msg.author}
+                      fill
+                      sizes="28px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-primary text-xs font-bold">

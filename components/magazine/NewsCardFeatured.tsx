@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { HeroArticle, NewsArticle, YouthItem, RadioBanner } from "@/types/magazine";
 
 
@@ -6,8 +7,10 @@ export default function NewsCardFeatured({ article }: { article: NewsArticle }) 
   return (
     <article className="relative h-full min-h-[360px] rounded-2xl overflow-hidden group cursor-pointer shadow-xl">
       {article.imageUrl && (
-        <img
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        <Image
+          fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-700"
           src={article.imageUrl}
           alt={article.imageAlt ?? article.title}
         />

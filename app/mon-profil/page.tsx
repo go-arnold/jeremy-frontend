@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
@@ -100,7 +101,7 @@ export default function MonProfilPage() {
       }
       return stat;
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [favoriteArtists, badges, listenHistory]);
 
   if (loading) {
@@ -374,11 +375,11 @@ function AccomplishmentsDesktop({ badges, totalUnlocked }: { badges: Badge[]; to
               style={{ background: "rgba(255,255,255,0.03)" }}
             >
               <div
-                className={`w-10 h-10 rounded-full bg-[#111317] flex items-center justify-center ${badge.color}`}
+                className={`relative w-10 h-10 rounded-full bg-[#111317] flex items-center justify-center ${badge.color}`}
                 style={{ boxShadow: `0 0 10px ${badge.glowColor}` }}
               >
                 {badge.iconUrl ? (
-                  <img src={badge.iconUrl} alt="" className="w-5 h-5 object-contain" />
+                  <Image src={badge.iconUrl} alt={badge.label} width={20} height={20} className="object-contain" />
                 ) : (
                   <span className="material-symbols-outlined text-base">{badge.icon}</span>
                 )}

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api-client';
@@ -23,10 +24,12 @@ function DocCard({ video }: any) {
       <div className="group cursor-pointer overflow-hidden rounded-xl">
         <div className="relative aspect-video bg-slate-900">
           {video.thumbnail_url && (
-            <img
+            <Image
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover group-hover:scale-105 transition-transform"
             />
           )}
           {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { UpcomingRelease } from "@/types/sortiesPremieres";
 
@@ -7,9 +8,11 @@ export default function UpcomingReleaseCard({ release }: { release: UpcomingRele
       {/* Cover with date badge */}
       <div className="relative h-60 w-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
         {release.coverImage && (
-          <img
+          <Image
             alt={release.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
             src={release.coverImage}
           />
         )}

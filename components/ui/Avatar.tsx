@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { isValidImageSrc } from "@/lib/image-utils";
 
 const sizeMap = {
@@ -36,10 +37,14 @@ interface AvatarProps {
 
 export default function Avatar({ src, alt, size = "md", className = "" }: AvatarProps) {
   const [failed, setFailed] = useState(!isValidImageSrc(src));
-
-  useEffect(() => {
+  // Reset `failed` when `src` changes, computed during render (React's documented pattern for
+  // adjusting state from a prop change) instead of a useEffect — avoids an extra render pass and
+  // the react-hooks/set-state-in-effect lint error.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setFailed(!isValidImageSrc(src));
-  }, [src]);
+  }
 
   const sizeClass = size === "custom" ? "" : sizeMap[size];
 
@@ -56,11 +61,15 @@ export default function Avatar({ src, alt, size = "md", className = "" }: Avatar
   }
 
   return (
-    <img
-      src={src!}
-      alt={alt}
-      className={`${sizeClass} rounded-full object-cover shrink-0 ${className}`}
-      onError={() => setFailed(true)}
-    />
+    <div className={`relative ${sizeClass} rounded-full overflow-hidden shrink-0 ${className}`}>
+      <Image
+        src={src!}
+        alt={alt}
+        fill
+        sizes="112px"
+        className="object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
   );
 }

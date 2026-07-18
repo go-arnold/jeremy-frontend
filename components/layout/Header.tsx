@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
+import logo from "@/public/logoReviewed.png";
 
 const navLinks = [
   { href: "/artistes",  icon: "mic_external_on", label: "Artistes" },
@@ -48,9 +50,10 @@ export default function Header() {
         {/* ── LOGO — au bord gauche ── */}
         <div className="shrink-0">
           <Link href="/">
-            <img
-              src="/logoReviewed.png"
+            <Image
+              src={logo}
               alt="Art du Kivu"
+              priority
               className="h-9 w-auto object-contain"
               style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5))" }}
             />

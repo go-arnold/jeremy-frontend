@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/providers/AuthProvider";
 import { updateProfile } from "@/lib/services/profile";
 
@@ -109,7 +110,16 @@ export default function EditProfileModal({
 
         {/* Cover */}
         <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-white/5">
-          {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
+          {coverPreview && (
+            <Image
+              src={coverPreview}
+              alt="Aperçu de la photo de couverture"
+              fill
+              sizes="448px"
+              unoptimized={coverPreview.startsWith("blob:")}
+              className="object-cover"
+            />
+          )}
           <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
             <span className="material-symbols-outlined text-white">photo_camera</span>
             <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
@@ -119,7 +129,16 @@ export default function EditProfileModal({
         {/* Avatar */}
         <div className="flex justify-center -mt-14">
           <label className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-[#12100F] bg-white/10 cursor-pointer group">
-            {avatarPreview && <img src={avatarPreview} alt="" className="w-full h-full object-cover" />}
+            {avatarPreview && (
+              <Image
+                src={avatarPreview}
+                alt="Aperçu de la photo de profil"
+                fill
+                sizes="96px"
+                unoptimized={avatarPreview.startsWith("blob:")}
+                className="object-cover"
+              />
+            )}
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="material-symbols-outlined text-white">photo_camera</span>
             </div>

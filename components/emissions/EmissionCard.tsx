@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { EmissionCard as EmissionCardType } from "@/types/emissions";
 
@@ -28,10 +29,12 @@ export default function EmissionCard({ emission }: { emission: EmissionCardType 
     >
       <div className="relative aspect-video overflow-hidden bg-black">
         {emission.coverImage && (
-          <img
+          <Image
             alt={emission.title}
             src={emission.coverImage}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(min-width: 1024px) 33vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )}
         <div

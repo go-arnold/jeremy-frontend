@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api-client';
@@ -26,10 +27,12 @@ function ReleaseCard({ release, index }: any) {
           <div className="flex-1">
             <div className="relative aspect-square overflow-hidden rounded-lg mb-3 bg-slate-900">
               {release.cover_image && (
-                <img
+                <Image
                   src={release.cover_image}
                   alt={release.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 640px"
+                  className="object-cover group-hover:scale-105 transition-transform"
                 />
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
