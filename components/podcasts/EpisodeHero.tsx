@@ -1,15 +1,13 @@
 import Link from "next/link";
 import type { PodcastEpisode } from "@/types/podcasts";
+import ContentImage from "@/components/ui/ContentImage";
 
 export default function EpisodeHero({ episode }: { episode: PodcastEpisode }) {
   return (
     <div className="relative w-full h-[55vh] overflow-hidden">
 
       {/* Cover */}
-      <div
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url('${episode.coverImage}')` }}
-      />
+      <ContentImage src={episode.coverImage} alt={episode.title} className="absolute inset-0" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#12223ce6] via-[#12223ce6]/40 to-transparent" />
 
       {/* Bouton retour */}

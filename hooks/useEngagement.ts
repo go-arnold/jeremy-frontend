@@ -39,6 +39,12 @@ async function proxyFetch(endpoint: string, method: string, body?: unknown): Pro
   return data;
 }
 
+// Comments used to be fetched and rendered all at once in a scrollable box — fine for a handful
+// of comments, unusable for a popular post with hundreds. Paginating at the API level (which
+// already supports page/page_size DRF pagination) keeps the first render fast and gives the user
+// an explicit "voir plus" instead of an endless inner scrollbar.
+const COMMENTS_PAGE_SIZE = 10;
+
 function mapComment(c: Record<string, unknown>): EngagementComment {
   return {
     id: c.id?.toString() || Math.random().toString(),
@@ -76,6 +82,9 @@ export function useEngagement(
   const [comments, setComments] = useState<EngagementComment[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsHasMore, setCommentsHasMore] = useState(false);
+  const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [saved, setSaved] = useState(!!options.initialSaved);
   const [shareCount, setShareCount] = useState(0);
 
@@ -100,15 +109,34 @@ export function useEngagement(
   const loadComments = useCallback(async () => {
     setLoadingComments(true);
     try {
-      const data = await proxyFetch(`${base}/comments/`, "GET");
+      const data = await proxyFetch(`${base}/comments/?page=1&page_size=${COMMENTS_PAGE_SIZE}`, "GET");
       const results = (data.results as Record<string, unknown>[]) || (Array.isArray(data) ? data : []);
       setComments(results.map(mapComment));
       if (typeof data.count === "number") setCommentCount(data.count);
+      setCommentsHasMore(!!data.next);
+      setCommentsPage(1);
       setCommentsLoaded(true);
     } finally {
       setLoadingComments(false);
     }
   }, [base]);
+
+  const loadMoreComments = useCallback(async () => {
+    if (loadingMoreComments || !commentsHasMore) return;
+    setLoadingMoreComments(true);
+    const nextPage = commentsPage + 1;
+    try {
+      const data = await proxyFetch(`${base}/comments/?page=${nextPage}&page_size=${COMMENTS_PAGE_SIZE}`, "GET");
+      const results = (data.results as Record<string, unknown>[]) || [];
+      setComments((prev) => [...prev, ...results.map(mapComment)]);
+      setCommentsHasMore(!!data.next);
+      setCommentsPage(nextPage);
+    } catch {
+      // Leave page/hasMore as they were — the button just stays clickable for a retry.
+    } finally {
+      setLoadingMoreComments(false);
+    }
+  }, [base, commentsPage, commentsHasMore, loadingMoreComments]);
 
   const postComment = useCallback(
     async (content: string) => {
@@ -144,6 +172,9 @@ export function useEngagement(
     commentsLoaded,
     loadingComments,
     loadComments,
+    commentsHasMore,
+    loadingMoreComments,
+    loadMoreComments,
     postComment,
     shareCount,
     share,
