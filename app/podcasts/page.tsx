@@ -1,11 +1,12 @@
 import {
   podcastCategories as mockedCategories,
-  recentEpisodes as mockedRecent,
+  mockPodcastEpisodes,
 } from "@/data/podcasts";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiPodcastToEpisode } from "@/lib/mappers";
 import PodcastsPageClient from "./PodcastsPageClient";
 import type { ApiEpisode } from "@/lib/api-types";
+import type { PodcastListItem } from "@/types/podcasts";
 
 interface ApiPodcastCategory {
   id?: string | number;
@@ -43,7 +44,7 @@ async function getInitialData() {
   } catch (error) {
     console.error("Failed to fetch podcasts initial data:", error);
     return {
-      episodes: mockedRecent as unknown as ReturnType<typeof mapApiPodcastToEpisode>[],
+      episodes: mockPodcastEpisodes as PodcastListItem[],
       categories: mockedCategories,
       categoryIdByLabel: {} as Record<string, string>,
       hasMore: false,

@@ -1,9 +1,6 @@
 import type {
   PodcastCategory,
-  FeaturedEpisode,
-  SelectionEpisode,
-  RecentEpisode,
-  LatestPickEpisode,
+  PodcastListItem,
   PodcastEpisode,
 } from "@/types/podcasts";
 
@@ -13,93 +10,66 @@ export const podcastCategories: PodcastCategory[] = [
   "Entrepreneuriat Créatif", "Environnement",
 ];
 
-// ── Hero "À la une" ───────────────────────────────────────────────────────────
-export const featuredEpisode: FeaturedEpisode = {
-  id: "f1",
-  slug: "voix-de-la-paix-rencontre-panzi",
-  title: "L'avenir du numérique au Kivu",
-  description: "Le défi des jeunes innovateurs de Goma.",
-  image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCQ01zjaF5lSdK62jFzBJfk4IOo-wApO4lQ6yylAFWJxlv-TNsjahX54e5stdKRXYJohIwSSeDbNNUQOxaHme_hsB009d1VIP2KPLZ34dq6Qb1TvANHNf5uyAXMy7Q1GrMBT2vneV1zoIGzy-EAqwAJXAUs6Wu9N-Jqo5U6xCaQo9xM-LsEiPk37VgPEZBMqiJIHLTbCn6ykMonY_SP2J-SXLMsazD-MlK6n-Ck4ALPVhgGSlYP_MeibAhtEl7exQy8t0S0I-8wfik",
-  duration: "52 min",
-};
-
-// ── Sélection (grand plein largeur) ──────────────────────────────────────────
-export const selectionEpisode: SelectionEpisode = {
-  id: "s1",
-  slug: "voix-de-la-paix-rencontre-panzi",
-  title: "Voix de Bukavu : Ép. 12",
-  description: "L'art de la résilience face aux défis modernes. Une discussion profonde sur l'identité culturelle.",
-  image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYOH93lnidE9q3dSKIyuCWt_6GOLa1MEgpLbDCszVutqZNfB7N8gKsafTf0XZZdI2oAyo63Womahdm61DvgKh0XwxN29N5kJft6EzAvfab6PSEli75z4U7GE1u41BXIVF1EmREK0wcMzfXRIaFR4Wo8dd5mNAJgz4SjpE3Qzc1yFU60aQHSHATkdMMNy-W_6sdNB5dDSgp83s9AIUhjHTnz2Kzs0SVrqWNypIPW5G0KM2q98QUKW3_ZfPvJ-1fKQIekRRjyZ8Bw6c",
-  category: "Société",
-  duration: "48 min",
-  host: "Sarah M.",
-};
-
-// ── Récents (liste 3 épisodes) ────────────────────────────────────────────────
-export const recentEpisodes: RecentEpisode[] = [
+// ── Épisodes (À la une + Récents) — même forme partout, voir PodcastListItem ──
+export const mockPodcastEpisodes: PodcastListItem[] = [
+  {
+    id: "f1",
+    slug: "voix-de-la-paix-rencontre-panzi",
+    title: "L'avenir du numérique au Kivu",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCQ01zjaF5lSdK62jFzBJfk4IOo-wApO4lQ6yylAFWJxlv-TNsjahX54e5stdKRXYJohIwSSeDbNNUQOxaHme_hsB009d1VIP2KPLZ34dq6Qb1TvANHNf5uyAXMy7Q1GrMBT2vneV1zoIGzy-EAqwAJXAUs6Wu9N-Jqo5U6xCaQo9xM-LsEiPk37VgPEZBMqiJIHLTbCn6ykMonY_SP2J-SXLMsazD-MlK6n-Ck4ALPVhgGSlYP_MeibAhtEl7exQy8t0S0I-8wfik",
+    duration: "52 min",
+    category: "Société",
+    guestNames: "",
+    publishedAt: "Aujourd'hui",
+    isFeatured: true,
+  },
   {
     id: "r1",
     slug: "peindre-la-resilience",
     title: "Peindre la résilience",
-    guest: "Invité : Akram Idriss",
+    guestNames: "Akram Idriss",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB6Eiv43JuUsovaFSryFou8OJfe9-sdOfmQnvkbwBG21Kac73kKpiUuIl_gt4B0MjguoFCftxRn1dR1Om2nIVIT5fC4KdrdEwbKdzcHGtGr6cZ87GdFeJnimxHHSWThAkpMFW_ujYRgq-uoBSskcL1plJhBbnBr4d1NA24luCTBcloraLqNzyZo4uMW1AvsDylnWzuZDmyZkzPDVv95HG0xTnlK_yYRz5iclQ5V0BHmLIHSMZqFvqvVO0o_4wky2y0mj4oGBYX6zfM",
     category: "Artistes",
     duration: "28 min",
-    language: "FR",
+    episodeNumber: 12,
+    seasonNumber: 1,
+    publishedAt: "Il y a 2 jours",
   },
   {
     id: "r2",
     slug: "goma-ville-de-culture",
     title: "Goma : Ville de culture",
-    guest: "Table ronde : Urban Voices",
+    guestNames: "Urban Voices",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAJcjEB4a1UZWi1Ut1jMuM9-u330SiHNDOP5mGwC5cVGHTTZx28S1gJOlKbAI5Gerr4e5KeRBKT5xZOkaDg7fVdIDBsMlFI6QW7i1Qiy34_ToWyQxdMMbSngPKkS6sTrT0XwIVSJUJjpxCLbhceZS1jCbb1G2vVpK1nD1d23I_ZCfiWTJY5B0U3s79tyQI1ggFXw7x7HRy8wh7pSaHURhKc-GpIy4B5yPsegtyXH7o7hF_r1FYqnfSoAsk9NemZR3Q6xdBrt2p5L98",
     category: "Société",
     duration: "45 min",
-    language: "Français",
+    episodeNumber: 11,
+    seasonNumber: 1,
+    publishedAt: "Il y a 5 jours",
   },
   {
     id: "r3",
     slug: "or-noir-du-kivu",
     title: "L'or noir du Kivu",
-    guest: "Invité : Coopératives caféières",
+    guestNames: "Coopératives caféières",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB99lLNCqrf4JDM3G34WvUMMCABlTqMYom5-m-kYn_0gRVCEavfODtEUzKQY0Ww-DkMTkdSeIDwF6KIla-gNEANPNvoo9dTbinGpf3tZubP0bb_sJKpoBzOrmjlwygZTH1ix5JkWJC6W_yGj10cwTcrBMswUpZY2MlMVY1axmOEbjY77u7FsWJ2_MN01MnQjp6EkMiYe99ZLIc0C8zstCdOv9Ga0FmU_E0GtUXuZ_gnMaAYSB1wDCVun9Fr9L6Nv09JGJz-sR-bxc8",
     category: "Économie",
     duration: "35 min",
-    language: "FR",
+    episodeNumber: 10,
+    seasonNumber: 1,
+    publishedAt: "Il y a 1 semaine",
   },
-];
-
-// ── Sélection récente (layout horizontal) ────────────────────────────────────
-export const latestPickEpisodes: LatestPickEpisode[] = [
   {
     id: "lp1",
     slug: "entrepreneuriat-goma-defis",
     title: "Entrepreneuriat à Goma : Les défis de demain",
-    guest: "Invitée : Imani K. • Fondatrice de KivuTech",
+    guestNames: "Imani K.",
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDxtOBGGmXJyll8C3iUVIU4vvF9F_rsV1Fen43B4Nt78kx2g-ZJwDCwi1A7K6XC5yRm2UZ4jdcfmJej72KLt5hUqyz9_okbikmLEJKPIuEknk4x9Wzv9w-KY8G7rz7x4MW9Zdom7ZtBLcI9iV7COfatbpGDowMUOYpbHgUL4nAnrpFUw6uAUzkYFan3j4SwzjJzK_2ThMQGJL6m0NHvyjdMwazU6OAcho4kGLJrD-oWv9KTbio7IEWjcM7PUhaU_GPXL73aBz2b2_I",
     category: "Entrepreneuriat Créatif",
     duration: "45 min",
-    publishedAt: "Il y a 2 jours",
-  },
-  {
-    id: "lp2",
-    slug: "racines-rumba-ame-congo",
-    title: "Racines de la rumba : L'âme du Congo",
-    guest: "Spécial : l'âge d'or de la musique",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBfLJOf4TC-QSB96Q8H5o3OQEl9MA4RPCMV6qobuJEowDV55oS3-n2vbbYm9bVWzL4fjvT-4UgNmN5DUOccRlzX4fIyl28nMfW1kTbiv9jBe7H3Z9wJCDZUHTj2aRQ157CtarKYCGO6PSqcWNqMwFkaZED0jrbKJrtxqm4oEXV911uOQ6vTeAPbaj9rGS9bvSolK5HWdaFdc-MRxftfigEEGHCspEOgPL9UbwRwo0Q6G10FJbfo-0ybLl15QC7zMK7ZFfxHG1hlTjI",
-    category: "Histoire",
-    duration: "60 min",
-    publishedAt: "Il y a 5 jours",
-  },
-  {
-    id: "lp3",
-    slug: "tech-kivu-coder-avenir",
-    title: "Tech Kivu : Coder l'avenir",
-    guest: "Table ronde avec des développeurs locaux",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBGlBQ69dR6Tk4JxnjpRJJbwnCeGSQWx-4hd7doPe9Ft3z-BZQ2FwvbiACCGNULEXXtOxn6bzMRXc0uKineGymzEVaV6cB7m5yTEWqHmF8K0tnJ7j2nUMFXw5wf9-Mujw9jjIJCoNXhZdme8BQzeJj8_WlrEHUnQjkaSGFts_34K1B_MFUPWN6MtMCpDUKQhGAWFF2-PapgG2L3KE9qFUg0wu8Hvz4THN0DkG1RNoArjP9k1vQUjpDNIS9-nfM4bcNRZLLEn-GB14c",
-    category: "Innovation",
-    duration: "30 min",
-    publishedAt: "Il y a 1 semaine",
+    episodeNumber: 9,
+    seasonNumber: 1,
+    publishedAt: "Il y a 2 semaines",
   },
 ];
 
