@@ -24,9 +24,6 @@ export default function AuthPromptModal({ open, onClose, redirectTo, message }: 
         className="relative w-full max-w-xs rounded-2xl p-6 flex flex-col items-center text-center gap-4 animate-fade-up"
         style={{ background: "rgba(18,34,60,0.98)", border: "1px solid rgba(230,48,18,0.2)" }}
       >
-        <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary text-2xl">favorite</span>
-        </div>
         <p className="text-[#F0EDE8] text-sm font-bold leading-relaxed">
           {message || "Connectez-vous ou créez un compte : ça ne prend que 2 secondes !"}
         </p>

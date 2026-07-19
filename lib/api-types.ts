@@ -129,9 +129,10 @@ export interface ApiEvent {
   title: string;
   image_url?: string;
   date?: string;
+  end_date?: string | null;
   venue_name?: string;
   venue_address?: string;
-  city?: { name?: string };
+  city?: { name?: string } | null;
   city_name?: string;
   category?: string;
   category_name?: string;

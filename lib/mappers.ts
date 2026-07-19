@@ -1,6 +1,6 @@
 import { Artiste, ArtisteDetail, Release, VideoItem, GalleryPhoto } from "@/types/artistes";
 import { BlogPost, BlogCard, BlogCategory, ArticleBlock, Comment } from "@/types/blog";
-import {PodcastEpisode} from "@/types/podcasts"
+import { PodcastEpisode, PodcastListItem } from "@/types/podcasts"
 import type { HeroArticle, NewsArticle } from "@/types/magazine";
 import type { EmissionStatus } from "@/types/emissions";
 import type { EventDetail } from "@/types/evenements";
@@ -194,9 +194,23 @@ export function mapApiArticleToBlogPost(apiArticle: ApiArticleDetail): BlogPost 
   };
 }
 
-export function mapApiEventToEvent(apiEvent: ApiEvent) {
+// Cycled by list position for masonry variety — the real EventSerializer has no per-event layout
+// hint (`aspectRatio` never existed on the API response), matching the NEWS_VARIANTS pattern used
+// for magazine articles below.
+const EVENT_ASPECT_RATIOS = ["aspect-[3/4]", "aspect-[4/3]", "aspect-[3/5]", "aspect-square"];
+
+function capitalizeFirst(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function shortDayMonth(d: Date): string {
+  return capitalizeFirst(d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', ''));
+}
+
+export function mapApiEventToEvent(apiEvent: ApiEvent, index = 0) {
   const eventDate = apiEvent.date ? new Date(apiEvent.date) : new Date();
-  
+  const endDate = apiEvent.end_date ? new Date(apiEvent.end_date) : null;
+
   const day = eventDate.getDate().toString().padStart(2, '0');
   const monthStr = eventDate.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '').toUpperCase();
   const fullDate = eventDate.toLocaleDateString('fr-FR', {
@@ -205,8 +219,15 @@ export function mapApiEventToEvent(apiEvent: ApiEvent) {
     year: 'numeric'
   });
 
+  // "18 Fév" for single-day events, "20 Fév - 05 Mar" for multi-day ones.
+  const dateLabel = endDate && endDate.getTime() !== eventDate.getTime()
+    ? `${shortDayMonth(eventDate)} - ${shortDayMonth(endDate)}`
+    : shortDayMonth(eventDate);
+
   return {
-    id: apiEvent.slug || apiEvent.id?.toString(),
+    // `|| ""` guarantees a plain `string` (not `string | undefined`) — this feeds FeaturedEvent/
+    // EventGridItem directly now, both of which require non-optional string fields.
+    id: apiEvent.slug || apiEvent.id?.toString() || "",
     slug: apiEvent.slug,
     title: apiEvent.title,
     image: apiEvent.image_url || "",
@@ -215,14 +236,30 @@ export function mapApiEventToEvent(apiEvent: ApiEvent) {
       day: day,
       month: monthStr
     },
+    dateLabel,
+    aspectRatio: EVENT_ASPECT_RATIOS[index % EVENT_ASPECT_RATIOS.length],
     location: apiEvent.venue_name || apiEvent.city?.name || "Kivu",
-    venue: apiEvent.venue_name,
-    city: apiEvent.city?.name || apiEvent.city_name,
+    venue: apiEvent.venue_name || "",
+    // Real EventSerializer returns `city: null` far more often than a populated `{name}` — default
+    // to "Kivu" like `location` above instead of leaving the city badge/filter blank.
+    city: apiEvent.city?.name || apiEvent.city_name || "Kivu",
     category: apiEvent.category_name || apiEvent.category || "Événement",
     description: apiEvent.description || "",
     isFeatured: apiEvent.is_featured,
     time: apiEvent.date ? new Date(apiEvent.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : "18:00",
+    // Stable key/label for the month filter — matching against the abbreviated `dateLabel` was
+    // fragile (locale-dependent casing/accents); this doesn't depend on display formatting.
+    monthKey: `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`,
+    monthLabel: capitalizeFirst(eventDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })),
   };
+}
+
+// `ticket_price` is a raw decimal string (e.g. "20000.00") — real events are priced in Congolese
+// Francs, not USD, so this groups thousands the local way and appends "FC" instead of "$".
+function formatCdf(amount: string): string {
+  const value = Number.parseFloat(amount);
+  if (Number.isNaN(value)) return amount;
+  return `${Math.round(value).toLocaleString("fr-FR")} FC`;
 }
 
 export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent): EventDetail {
@@ -231,7 +268,7 @@ export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent): EventDetail
     ...base,
     coverImage: apiDetail.image_url || "",
     about: apiDetail.description || "",
-    price: apiDetail.ticket_price ? `${apiDetail.ticket_price} $` : "Gratuit",
+    price: apiDetail.ticket_price ? formatCdf(apiDetail.ticket_price) : "Gratuit",
     venue: {
       name: apiDetail.venue_name || "Lieu secret",
       address: apiDetail.venue_address || "Goma, Kivu",
@@ -246,21 +283,22 @@ export function mapApiEventDetailToEventDetail(apiDetail: ApiEvent): EventDetail
   };
 }
 
-export function mapApiPodcastToEpisode(apiEpisode: ApiEpisode) {
+export function mapApiPodcastToEpisode(apiEpisode: ApiEpisode): PodcastListItem {
   const guests = parseEpisodeGuests(apiEpisode.guests);
   return {
-    id: apiEpisode.slug || apiEpisode.id?.toString(),
+    id: apiEpisode.slug || apiEpisode.id?.toString() || "",
     slug: apiEpisode.slug,
     title: apiEpisode.title,
-    description: apiEpisode.description,
     // Real EpisodeListSerializer/EpisodeDetailSerializer only ever return `cover_url` —
     // `image_url` never exists on the response, so every real episode's thumbnail was blank.
     image: apiEpisode.cover_url || "",
     duration: apiEpisode.duration || "00:00",
     publishedAt: formatRelativeDate(apiEpisode.published_at),
     category: apiEpisode.series_title || "Podcast",
-    host: apiEpisode.series_title || "Art du Kivu",
-    guest: guests[0]?.name || "",
+    guestNames: guests.map((g) => g.name).filter(Boolean).join(", "),
+    episodeNumber: apiEpisode.episode_number,
+    seasonNumber: apiEpisode.season_number,
+    isFeatured: !!apiEpisode.is_featured,
   };
 }
 

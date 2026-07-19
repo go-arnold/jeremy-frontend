@@ -1,38 +1,62 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { FeaturedEvent, EventGridItem, EventCity } from "@/types/evenements";
-import { shareContent } from "@/lib/share";
+import type { EventCity, FeaturedEvent, EventGridItem } from "@/types/evenements";
+import { resolveShareUrl } from "@/lib/share";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiEventToEvent } from "@/lib/mappers";
 
 import EventsHeader        from "./EventsHeader";
 import FeaturedEventCard   from "./FeaturedEventCard";
 import UpcomingEventsGrid  from "./UpcomingEventsGrid";
+import MobileEventsCarousel from "./MobileEventsCarousel";
 import WhatsAppNotifBanner from "./WhatsAppNotifBanner";
+import MonthFilter, { type MonthOption } from "./MonthFilter";
 import ContentImage from "@/components/ui/ContentImage";
+import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
+import ShareMenu from "@/components/ui/ShareMenu";
+
+type MappedEvent = ReturnType<typeof mapApiEventToEvent>;
+
+// The compact preview (mobile carousel / desktop sidebar) always shows the same top N unfiltered
+// upcoming events — filtering or clicking "Voir plus" switches to the full expanded section below
+// the featured event instead of changing what the preview shows.
+const PREVIEW_LIMIT = 4;
 
 interface Props {
   cities: EventCity[];
-  // The real mapApiEventToEvent() shape only loosely matches FeaturedEvent/EventGridItem (e.g. no
-  // `dateLabel`/`aspectRatio`) — the original page already bridged this with `as any` at the call
-  // site, preserved here rather than reconciling the deeper shape mismatch.
-  initialEvents: ReturnType<typeof mapApiEventToEvent>[];
+  initialEvents: MappedEvent[];
   initialHasMore: boolean;
+}
+
+/** Distinct months actually present in the loaded events, sorted chronologically — drives
+ * MonthFilter's options instead of a hardcoded "Février 2026". */
+function useAvailableMonths(events: MappedEvent[]): MonthOption[] {
+  return useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const e of events) if (!seen.has(e.monthKey)) seen.set(e.monthKey, e.monthLabel);
+    return Array.from(seen, ([key, label]) => ({ key, label })).sort((a, b) => a.key.localeCompare(b.key));
+  }, [events]);
 }
 
 export default function EventsPageClient({ cities, initialEvents, initialHasMore }: Props) {
   const [activeCity, setActiveCity] = useState<EventCity>("Tous");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [events, setEvents] = useState(initialEvents);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Both mobile and desktop layouts are always mounted (toggled with CSS, not conditional
+  // rendering) — a single shared ref would just get overwritten by whichever renders last, so
+  // each breakpoint gets its own; scrolling the hidden one is a harmless no-op.
+  const mobileResultsRef = useRef<HTMLDivElement>(null);
+  const desktopResultsRef = useRef<HTMLDivElement>(null);
 
-  const featured = (events.find((e) => (e as { isFeatured?: boolean }).isFeatured) ||
-    events[0]) as unknown as FeaturedEvent;
-  const upcoming = events.filter((e) => e.id !== featured?.id) as unknown as EventGridItem[];
+  const months = useAvailableMonths(events);
+  const featured = events.find((e) => e.isFeatured) || events[0];
+  const upcoming = events.filter((e) => e.id !== featured?.id);
 
   const loadMore = async (page: number) => {
     setLoadingMore(true);
@@ -50,11 +74,31 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
     }
   };
 
+  const clearFilters = () => {
+    setActiveCity("Tous");
+    setSelectedMonth("");
+    setShowAllEvents(false);
+  };
+
+  const isFiltering = activeCity !== "Tous" || selectedMonth !== "";
+  const expanded = showAllEvents || isFiltering;
+
   const filtered = upcoming.filter((e) => {
     const matchesCity = activeCity === "Tous" || e.city === activeCity;
-    const matchesMonth = selectedMonth === "" || e.dateLabel.includes(selectedMonth);
+    const matchesMonth = selectedMonth === "" || e.monthKey === selectedMonth;
     return matchesCity && matchesMonth;
   });
+
+  const previewEvents = upcoming.slice(0, PREVIEW_LIMIT);
+
+  // "le client soit redirigé vers cette section" — scroll to the expanded results whenever they
+  // appear, whether triggered by "Voir plus" or by picking a city/month filter.
+  useEffect(() => {
+    if (expanded) {
+      mobileResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      desktopResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [expanded]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
@@ -63,10 +107,48 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
           MOBILE — layout original inchangé
       ══════════════════════════════════════ */}
       <div className="lg:hidden flex flex-col min-h-screen">
-        <EventsHeader cities={cities} activeCity={activeCity} onCityChange={setActiveCity} />
+        <EventsHeader
+          cities={cities}
+          activeCity={activeCity}
+          onCityChange={setActiveCity}
+          months={months}
+          activeMonth={selectedMonth}
+          onMonthChange={setSelectedMonth}
+        />
         <main className="flex flex-col px-4 pt-6 gap-8 pb-28">
-          <FeaturedEventCard event={featured} />
-          <UpcomingEventsGrid events={filtered} />
+          {featured && <FeaturedEventCard event={featured} />}
+
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-white">Prochainement</h2>
+              {!expanded && upcoming.length > PREVIEW_LIMIT && (
+                <button
+                  onClick={() => setShowAllEvents(true)}
+                  className="text-xs font-bold text-primary hover:text-white transition-colors"
+                >
+                  Voir tout
+                </button>
+              )}
+              {expanded && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs font-bold text-primary hover:text-white transition-colors"
+                >
+                  Réduire
+                </button>
+              )}
+            </div>
+
+            {!expanded ? (
+              <MobileEventsCarousel events={previewEvents} />
+            ) : (
+              <div ref={mobileResultsRef} className="flex flex-col gap-6">
+                <UpcomingEventsGrid events={filtered} onClearFilters={clearFilters} />
+                <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
+              </div>
+            )}
+          </section>
+
           <WhatsAppNotifBanner />
         </main>
       </div>
@@ -81,6 +163,9 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
           cities={cities}
           activeCity={activeCity}
           onCityChange={setActiveCity}
+          months={months}
+          activeMonth={selectedMonth}
+          onMonthChange={setSelectedMonth}
         />
 
         {/* ── Corps ── */}
@@ -90,42 +175,84 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
           <div className="grid grid-cols-[11fr_9fr] gap-8 items-start mb-10">
 
             {/* Featured cinématique */}
-            <FeaturedEventDesktop event={featured} />
+            {featured && <FeaturedEventDesktop event={featured} />}
 
-            {/* Upcoming sidebar scroll */}
+            {/* Upcoming sidebar scroll — aperçu des 4 premiers, non filtré */}
             <div className="flex flex-col pt-12 gap-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-[#F0EDE8] uppercase tracking-wide">
+                <h2 className="text-lg font-black text-[#F0EDE8] uppercase tracking-wide">
                   Prochainement
                 </h2>
-                <a className="text-sm font-bold text-primary hover:text-[#F0EDE8] transition-colors" href="#">
-                  Voir tout
-                </a>
-              </div>
-
-              {/* Grille 2 colonnes */}
-              <div className="grid grid-cols-2 gap-4">
-                {filtered.map((event) => (
-                  <EventGridCardDesktop key={event.id} event={event} />
-                ))}
-
-                {filtered.length === 0 && (
-                  <div className="col-span-2 flex flex-col items-center py-16 gap-3 text-center">
-                    <span className="material-symbols-outlined text-[#4A443E] text-5xl">event_busy</span>
-                    <p className="text-[#8A8178] text-sm">Aucun événement dans cette ville.</p>
-                  </div>
+                {!expanded && upcoming.length > PREVIEW_LIMIT && (
+                  <button
+                    onClick={() => setShowAllEvents(true)}
+                    className="text-sm font-bold text-primary hover:text-[#F0EDE8] transition-colors"
+                  >
+                    Voir plus
+                  </button>
                 )}
               </div>
+
+              {expanded ? (
+                <p className="flex items-center gap-2 text-[#8A8178] text-sm py-6">
+                  <span className="material-symbols-outlined text-primary text-lg">arrow_downward</span>
+                  Résultats affichés ci-dessous
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {previewEvents.map((event) => (
+                    <EventGridCardDesktop key={event.id} event={event} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Ligne 2 : WhatsApp banner pleine largeur */}
+          {/* Ligne 2 : résultats complets / filtrés, pleine largeur centrée */}
+          {expanded && (
+            <div ref={desktopResultsRef} className="pt-2 pb-10">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-black text-[#F0EDE8] uppercase tracking-wide">
+                  {isFiltering ? "Résultats" : "Tous les événements"}
+                </h2>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm font-bold text-primary hover:text-[#F0EDE8] transition-colors"
+                >
+                  Réduire
+                </button>
+              </div>
+
+              {filtered.length === 0 ? (
+                <EmptyState
+                  message="Aucun événement dans ce filtre"
+                  description="Essayez une autre ville ou un autre mois."
+                  icon="event_busy"
+                >
+                  <button
+                    onClick={clearFilters}
+                    className="mt-2 text-primary text-sm font-bold hover:underline"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                </EmptyState>
+              ) : (
+                <div className="grid grid-cols-4 gap-5">
+                  {filtered.map((event) => (
+                    <EventGridCardDesktop key={event.id} event={event} />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-8">
+                <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
+              </div>
+            </div>
+          )}
+
+          {/* Ligne 3 : WhatsApp banner pleine largeur */}
           <WhatsAppNotifBannerDesktop />
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-8 pb-16 w-full">
-        <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
       </div>
     </div>
   );
@@ -138,11 +265,14 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
 
 // ── Header desktop ──────────────────────────────────
 function EventsHeaderDesktop({
-  cities, activeCity, onCityChange,
+  cities, activeCity, onCityChange, months, activeMonth, onMonthChange,
 }: {
   cities: EventCity[];
   activeCity: EventCity;
   onCityChange: (c: EventCity) => void;
+  months: MonthOption[];
+  activeMonth: string;
+  onMonthChange: (m: string) => void;
 }) {
   return (
     <header
@@ -153,7 +283,7 @@ function EventsHeaderDesktop({
 
         {/* Titre + sous-titre */}
         <div className="shrink-0">
-          <h1 className="text-2xl font-black text-[#F0EDE8] leading-tight">
+          <h1 className="text-xl font-black text-[#F0EDE8] leading-tight">
             Calendrier des Événements
           </h1>
           <p className="text-xs text-[#8A8178] font-medium mt-0.5">
@@ -163,12 +293,7 @@ function EventsHeaderDesktop({
 
         {/* Filtres inline */}
         <div className="flex items-center gap-2 flex-1 justify-end">
-          {/* Bouton mois */}
-          <button className="flex shrink-0 items-center gap-2 rounded-xl bg-white/5 border border-white/10 py-2 px-4 hover:bg-white/10 transition-colors">
-            <span className="material-symbols-outlined text-primary text-lg">calendar_month</span>
-            <span className="text-white text-sm font-bold">Février 2026</span>
-            <span className="material-symbols-outlined text-[#8A8178] text-sm">expand_more</span>
-          </button>
+          <MonthFilter months={months} value={activeMonth} onChange={onMonthChange} />
 
           <div className="w-px h-6 bg-white/10 shrink-0" />
 
@@ -194,7 +319,26 @@ function EventsHeaderDesktop({
 
 // ── FeaturedEvent desktop ───────────────────────────
 function FeaturedEventDesktop({ event }: { event: FeaturedEvent }) {
-const router = useRouter();
+  const router = useRouter();
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const shareUrl = `/evenements/${event.slug}`;
+
+  const handleShare = async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: event.title,
+          text: `Découvrez ${event.title} sur Art du Kivu`,
+          url: resolveShareUrl(shareUrl),
+        });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        // fall through to the manual menu on any other native-share failure
+      }
+    }
+    setShareMenuOpen(true);
+  };
 
   return (
     <section className="flex flex-col pt-12 gap-4">
@@ -204,7 +348,7 @@ const router = useRouter();
       </div>
 
       <Link href={`/evenements/${event.slug}`} className="block group">
-        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl" style={{ height: "520px" }}>
+        <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl" style={{ height: "480px" }}>
 
           <ContentImage
             src={event.image}
@@ -227,10 +371,10 @@ const router = useRouter();
                 <span className="material-symbols-outlined text-sm">location_on</span>
                 <span className="text-sm font-medium">{event.location}</span>
               </div>
-              <h3 className="text-4xl xl:text-5xl font-black text-white leading-none tracking-tight mb-3">
+              <h3 className="text-3xl xl:text-4xl font-black text-white leading-none tracking-tight mb-3">
                 {event.title}
               </h3>
-              <p className="text-gray-300 text-base leading-relaxed max-w-xl line-clamp-2">
+              <p className="text-gray-300 text-sm leading-relaxed max-w-xl line-clamp-2">
                 {event.description}
               </p>
             </div>
@@ -239,6 +383,7 @@ const router = useRouter();
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   router.push(`/evenements/${event.slug}`);
                 }}
@@ -249,11 +394,16 @@ const router = useRouter();
               </button>
               {/* Pas de "bookmark_border" — les événements n'ont aucune capacité de
                   sauvegarde côté backend (pas d'EngagementActionsMixin), contrairement au
-                  share qui ne dépend d'aucune API. */}
+                  share qui ne dépend d'aucune API. preventDefault is required here, not just
+                  stopPropagation — this button sits inside the card's <Link>, and only
+                  preventDefault stops the browser's native "click inside an anchor navigates"
+                  behavior; stopPropagation alone just stops React's synthetic bubbling and left
+                  clicking "Partager" hard-navigating the *sharer* to the event page too. */}
               <button
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  shareContent({ title: event.title, url: `/evenements/${event.slug}` }).catch(() => {});
+                  handleShare();
                 }}
                 className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white hover:bg-white/20 transition-colors"
               >
@@ -263,6 +413,13 @@ const router = useRouter();
           </div>
         </div>
       </Link>
+
+      <ShareMenu
+        open={shareMenuOpen}
+        onClose={() => setShareMenuOpen(false)}
+        url={shareUrl}
+        text={`Découvrez ${event.title} sur Art du Kivu`}
+      />
     </section>
   );
 }
@@ -335,7 +492,7 @@ function WhatsAppNotifBannerDesktop() {
           <span className="material-symbols-outlined text-green-400 text-2xl">chat</span>
         </div>
         <div>
-          <h3 className="text-xl font-black text-[#F0EDE8] mb-1">Restez informés via WhatsApp</h3>
+          <h3 className="text-lg font-black text-[#F0EDE8] mb-1">Restez informés via WhatsApp</h3>
           <p className="text-[#8A8178] text-sm max-w-md leading-relaxed">
             Recevez les derniers événements culturels du Kivu directement dans WhatsApp.
           </p>

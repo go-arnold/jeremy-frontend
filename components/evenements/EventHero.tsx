@@ -18,9 +18,10 @@ export default function EventHero({ event }: { event: EventDetail }) {
         <div className="absolute top-4 left-4 z-10">
           <Link
             href="/evenements"
-            className="flex items-center justify-center size-9 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-white/10 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/30 backdrop-blur-md text-white hover:bg-white/10 transition-colors"
           >
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            <span className="text-xs font-bold">Événements</span>
           </Link>
         </div>
 
@@ -37,13 +38,13 @@ export default function EventHero({ event }: { event: EventDetail }) {
         {/* Titre + lieu */}
         <div className="absolute bottom-0 left-0 w-full p-5">
           <div className="flex items-center gap-2 text-gray-300 mb-1">
-            <span className="material-symbols-outlined text-[18px]">location_on</span>
-            <span className="text-sm font-medium">{event.location}</span>
+            <span className="material-symbols-outlined text-sm">location_on</span>
+            <span className="text-xs font-medium">{event.location}</span>
           </div>
-          <h1 className="text-3xl font-bold text-white leading-tight mb-2">
+          <h1 className="text-lg font-bold text-white leading-tight mb-2 break-words">
             {event.title}
           </h1>
-          <p className="text-gray-300 text-sm">{event.description}</p>
+          <p className="text-gray-300 text-[11px] leading-relaxed line-clamp-2">{event.description}</p>
         </div>
 
       </div>

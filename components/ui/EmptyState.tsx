@@ -4,12 +4,14 @@ interface EmptyStateProps {
   message?: string;
   description?: string;
   icon?: string;
+  children?: React.ReactNode;
 }
 
-export default function EmptyState({ 
-  message = "Aucune donnée trouvée", 
+export default function EmptyState({
+  message = "Aucune donnée trouvée",
   description = "Nous n'avons trouvé aucun résultat correspondant à votre recherche.",
-  icon = "search_off"
+  icon = "search_off",
+  children,
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-fade-up">
@@ -24,6 +26,7 @@ export default function EmptyState({
       <p className="text-text-muted max-w-xs mx-auto text-sm leading-relaxed">
         {description}
       </p>
+      {children}
       <div className="mt-8 w-12 h-1 bg-primary/30 rounded-full mx-auto" />
     </div>
   );
