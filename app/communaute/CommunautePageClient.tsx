@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { feedItems as mockedFeed } from "@/data/communaute";
 import SubmitTalentCard from "@/components/communaute/SubmitTalentCard";
 import FilterTabs, { type FilterTab } from "@/components/communaute/FilterTabs";
@@ -8,32 +8,77 @@ import TalentPostCard   from "@/components/communaute/TalentPostCard";
 import ChallengeCard    from "@/components/communaute/ChallengeCard";
 import PollCard         from "@/components/communaute/PollCard";
 import ArtPostCard      from "@/components/communaute/ArtPostCard";
+import AuthPromptModal  from "@/components/ui/AuthPromptModal";
+import { useAuth } from "@/providers/AuthProvider";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiPostToCommunityItem } from "@/lib/mappers";
+import { fetchChallenges } from "@/lib/services/community";
 import type { ApiChallenge, ApiPoll } from "@/types/communaute";
 import type { ApiCommunityPost } from "@/lib/api-types";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 import CircularProgress from "@/components/ui/CircularProgress";
-import { uploadToCloudinaryWithProgress } from "@/lib/cloudinaryUpload";
+import { useMediaSubmission, humanSize, MEDIA_LIMITS, type MediaCategory } from "@/hooks/useMediaSubmission";
 
 type MappedPost = ReturnType<typeof mapApiPostToCommunityItem>;
 
-const FILTER_TABS: FilterTab[] = [
+// Mobile keeps 4 tabs; desktop drops "Sondages" since polls always live in their own fixed
+// sidebar slot there, regardless of the active filter.
+const MOBILE_FILTER_TABS: FilterTab[] = [
   { id: "tous", label: "Tous" },
   { id: "talent", label: "Talents" },
   { id: "challenge", label: "Défis" },
   { id: "poll", label: "Sondages" },
-  { id: "art", label: "Art" },
-  { id: "goma", label: "Goma" },
-  { id: "bukavu", label: "Bukavu" },
 ];
 
+const DESKTOP_FILTER_TABS: FilterTab[] = [
+  { id: "tous", label: "Tous" },
+  { id: "talent", label: "Talents" },
+  { id: "challenge", label: "Défis" },
+];
+
+// "challenge" maps to the challenge_response post_type (participations), never the literal
+// string "challenge" — that value doesn't exist in the backend's PostTypeEnum. See
+// docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2.
 function buildEndpoint(filter: string, page: number): string {
   const params = new URLSearchParams({ page: String(page), page_size: "15" });
-  if (filter === "goma" || filter === "bukavu") params.set("city", filter);
-  else if (filter !== "tous") params.set("post_type", filter);
+  if (filter === "talent") params.set("post_type", "talent");
+  else if (filter === "challenge") params.set("post_type", "challenge_response");
   return `/api/v1/community/posts/?${params.toString()}`;
+}
+
+// Defensive client-side re-filter: `challenge_response` isn't a real value in the backend's
+// PostTypeEnum yet (docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2), so `?post_type=challenge_response`
+// is silently ignored server-side and the endpoint returns the *unfiltered* feed instead of an
+// empty result — which was masking the "no participations yet" empty state behind unrelated
+// talent/art posts. Re-filtering here guarantees correctness today and costs nothing once the
+// backend enforces the param for real (the results will already match).
+function keepMatchingType(items: MappedPost[], filter: string): MappedPost[] {
+  if (filter === "talent") return items.filter((item) => item.type === "talent");
+  if (filter === "challenge") return items.filter((item) => item.type === "challenge_response");
+  return items;
+}
+
+/** Pinned challenge results (docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.5) always render first. */
+function sortPinnedFirst(items: MappedPost[]): MappedPost[] {
+  return [...items].sort((a, b) => Number(!!b.data.isPinnedResult) - Number(!!a.data.isPinnedResult));
+}
+
+// Client-side trending: counts #hashtag-shaped tokens across the posts already fetched — no
+// backend support needed, per docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §4.
+function computeTrending(items: MappedPost[]): { label: string; count: number }[] {
+  const counts = new Map<string, { label: string; count: number }>();
+  for (const item of items) {
+    const text = `${item.data.content || ""} ${item.data.caption || ""}`;
+    const matches = text.match(/#\w+/g) || [];
+    for (const raw of matches) {
+      const key = raw.toLowerCase();
+      const entry = counts.get(key);
+      if (entry) entry.count += 1;
+      else counts.set(key, { label: raw, count: 1 });
+    }
+  }
+  return Array.from(counts.values()).sort((a, b) => b.count - a.count).slice(0, 6);
 }
 
 interface CommunautePageClientProps {
@@ -51,33 +96,41 @@ export default function CommunautePageClient({
 }: CommunautePageClientProps) {
   const [posts, setPosts] = useState<MappedPost[]>(initialPosts);
   const [challenges, setChallenges] = useState<ApiChallenge[]>(initialChallenges);
-  const [polls, setPolls] = useState<ApiPoll[]>(initialPolls);
-  const [loading, setLoading] = useState(false);
+  const [polls] = useState<ApiPoll[]>(initialPolls);
+  // Scoped to the feed only — sidebars (submit card, stats, défis, sondages) never re-render or
+  // refetch on a filter change, on either breakpoint.
+  const [postsLoading, setPostsLoading] = useState(false);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState("tous");
 
   const fetchPosts = async (filter: string, pg: number, append = false) => {
+    if (filter === "poll") {
+      setPosts([]);
+      setHasMore(false);
+      return;
+    }
     const endpoint = buildEndpoint(filter, pg);
     try {
       const data = await apiFetch<PaginatedResponse<ApiCommunityPost>>(endpoint);
-      const mapped = data.results.map(mapApiPostToCommunityItem);
-      setPosts((prev) => append ? [...prev, ...mapped] : mapped);
+      const mapped = keepMatchingType(data.results.map(mapApiPostToCommunityItem), filter);
+      setPosts((prev) => (append ? [...prev, ...mapped] : mapped));
       setHasMore(!!data.next);
       setPage(pg);
     } catch (error) {
       console.error("Failed to fetch community feed:", error);
-      if (!append) setPosts(mockedFeed as unknown as MappedPost[]);
+      if (!append) setPosts(filter === "tous" ? (mockedFeed as unknown as MappedPost[]) : []);
     }
   };
 
   const handleFilterChange = async (filter: string) => {
     if (filter === activeFilter) return;
     setActiveFilter(filter);
-    setLoading(true);
+    if (filter === "poll") return; // no posts fetch — Sondages shows only polls
+    setPostsLoading(true);
     await fetchPosts(filter, 1, false);
-    setLoading(false);
+    setPostsLoading(false);
   };
 
   const loadMore = async (nextPage?: number) => {
@@ -88,15 +141,38 @@ export default function CommunautePageClient({
     setLoadingLoadingMore(false);
   };
 
-  const showEmptyState = !loading && posts.length === 0;
+  const refreshChallenges = async () => {
+    try {
+      const data = await fetchChallenges();
+      if (data.results.length > 0) setChallenges(data.results);
+    } catch {
+      // Keep whatever challenges were already showing — a failed refresh isn't worth an error UI.
+    }
+  };
 
-  if (loading) {
+  const handleParticipated = () => {
+    refreshChallenges();
+    if (activeFilter === "challenge") fetchPosts("challenge", 1, false);
+  };
+
+  // Pinned admin results bubble to the top wherever they appear, not just under the Défis filter.
+  const displayedPosts = useMemo(() => sortPinnedFirst(posts), [posts]);
+  const trendingTags = useMemo(() => computeTrending(posts), [posts]);
+  const activeChallenges = challenges.filter((c) => c.is_active);
+
+  const showEmptyState = !postsLoading && activeFilter !== "poll" && displayedPosts.length === 0;
+
+  const renderPost = (item: MappedPost) => {
+    const data = { ...item.data, isChallengeResponse: item.type === "challenge_response" };
     return (
-      <div className="flex min-h-screen items-center justify-center pt-16">
-        <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
+      <>
+        {item.type === "talent" && <TalentPostCard post={data} />}
+        {item.type === "art" && <ArtPostCard post={item.data} />}
+        {item.type === "news" && <TalentPostCard post={data} />}
+        {item.type === "challenge_response" && <TalentPostCard post={data} />}
+      </>
     );
-  }
+  };
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
@@ -105,36 +181,74 @@ export default function CommunautePageClient({
       <main className="lg:hidden flex-1 overflow-y-auto pb-24 no-scrollbar">
         <SubmitTalentCard onSubmitted={() => fetchPosts(activeFilter, 1, false)} />
         <div className="flex flex-col gap-6 px-4">
-          <FilterTabs tabs={FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
-          {challenges.map((challenge) => (
-            <ChallengeCard key={challenge.id} challenge={challenge} />
-          ))}
-          {polls.map((poll) => (
-            <PollCard key={poll.id} poll={poll} />
-          ))}
-          {showEmptyState ? (
-            <EmptyState
-              message="Communauté tranquille"
-              description="Soyez le premier à partager votre talent ou une création avec le Kivu !"
-              icon="forum"
-            />
+          <FilterTabs tabs={MOBILE_FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
+
+          {activeFilter === "poll" ? (
+            polls.length === 0 ? (
+              <EmptyState message="Aucun sondage" description="Revenez plus tard pour voter." icon="bar_chart" />
+            ) : (
+              polls.map((poll) => <PollCard key={poll.id} poll={poll} />)
+            )
           ) : (
             <>
-              {posts.map((item, index) => (
-                <div key={item.data.id || index}>
-                  {item.type === "talent" && <TalentPostCard post={item.data} />}
-                  {item.type === "art"    && <ArtPostCard post={item.data} />}
-                  {item.type === "news"   && <TalentPostCard post={item.data} />}
-                  {index < posts.length - 1 && (
-                    <div className="h-px bg-white/5 w-full mt-6" />
+              {/* "Tous" shows défis + sondages alongside the mixed feed below; "Défis" shows
+               * only défis (+ their participations, in the feed below); "Talents" skips this
+               * block entirely. */}
+              {activeFilter === "challenge" && (
+                <div className="flex flex-col gap-4">
+                  {activeChallenges.length === 0 ? (
+                    <EmptyState message="Aucun défi actif" description="Revenez bientôt pour un nouveau défi." icon="emoji_events" />
+                  ) : (
+                    activeChallenges.map((challenge) => (
+                      <ChallengeCard key={challenge.id} challenge={challenge} onParticipated={handleParticipated} />
+                    ))
                   )}
                 </div>
-              ))}
-              <VoirPlusPagination
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                isLoading={loadingMore}
-              />
+              )}
+
+              {activeFilter === "tous" && activeChallenges.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {activeChallenges.map((challenge) => (
+                    <ChallengeCard key={challenge.id} challenge={challenge} onParticipated={handleParticipated} />
+                  ))}
+                </div>
+              )}
+
+              {activeFilter === "tous" && polls.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  {polls.map((poll) => (
+                    <PollCard key={poll.id} poll={poll} />
+                  ))}
+                </div>
+              )}
+
+              {postsLoading ? (
+                <div className="flex justify-center py-10">
+                  <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : showEmptyState ? (
+                <EmptyState
+                  message={activeFilter === "challenge" ? "Aucune participation aux défis" : "Communauté tranquille"}
+                  description={
+                    activeFilter === "challenge"
+                      ? "Soyez le premier à participer à un défi !"
+                      : "Soyez le premier à partager votre talent ou une création avec le Kivu !"
+                  }
+                  icon="forum"
+                />
+              ) : (
+                <>
+                  {displayedPosts.map((item, index) => (
+                    <div key={item.data.id || index}>
+                      {renderPost(item)}
+                      {index < displayedPosts.length - 1 && (
+                        <div className="h-px bg-white/5 w-full mt-6" />
+                      )}
+                    </div>
+                  ))}
+                  <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
+                </>
+              )}
             </>
           )}
         </div>
@@ -158,7 +272,7 @@ export default function CommunautePageClient({
                 Talents, défis et créations du Kivu
               </p>
             </div>
-            <FilterTabs tabs={FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
+            <FilterTabs tabs={DESKTOP_FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
           </div>
 
           <div className="grid grid-cols-[280px_1fr_300px] gap-8 items-start">
@@ -168,44 +282,39 @@ export default function CommunautePageClient({
             </aside>
 
             <main className="flex flex-col gap-6">
-              {posts.length === 0 ? (
+              {postsLoading ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : displayedPosts.length === 0 ? (
                 <EmptyState
-                  message="Rien de nouveau ici"
-                  description="Revenez plus tard pour voir les nouveaux talents du Kivu."
+                  message={activeFilter === "challenge" ? "Aucune participation aux défis" : "Rien de nouveau ici"}
+                  description={
+                    activeFilter === "challenge"
+                      ? "Soyez le premier à participer à un défi !"
+                      : "Revenez plus tard pour voir les nouveaux talents du Kivu."
+                  }
                 />
               ) : (
                 <>
-                  {posts.map((item, index) => (
+                  {displayedPosts.map((item, index) => (
                     <div
                       key={item.data.id || index}
                       className="rounded-2xl overflow-hidden border border-white/5"
                       style={{ background: "rgba(18,34,60,0.4)" }}
                     >
-                      <div className="p-5">
-                        {item.type === "talent" && <TalentPostCard post={item.data} />}
-                        {item.type === "art"    && <ArtPostCard post={item.data} />}
-                        {item.type === "news"   && <TalentPostCard post={item.data} />}
-                      </div>
+                      <div className="p-5">{renderPost(item)}</div>
                     </div>
                   ))}
-
-                  <VoirPlusPagination
-                    onLoadMore={loadMore}
-                    hasMore={hasMore}
-                    isLoading={loadingMore}
-                  />
+                  <VoirPlusPagination onLoadMore={loadMore} hasMore={hasMore} isLoading={loadingMore} />
                 </>
               )}
             </main>
 
             <aside className="sticky top-24 flex flex-col gap-5">
-              {challenges.map((challenge) => (
-                <ChallengeCard key={challenge.id} challenge={challenge} />
-              ))}
-              {polls.map((poll) => (
-                <PollCard key={poll.id} poll={poll} />
-              ))}
-              <TrendingWidget />
+              <DesktopChallengesSection challenges={challenges} onParticipated={handleParticipated} />
+              <DesktopPollsSection polls={polls} />
+              <TrendingWidget tags={trendingTags} />
             </aside>
           </div>
         </div>
@@ -219,79 +328,131 @@ export default function CommunautePageClient({
    WIDGETS DESKTOP
 ════════════════════════════════════════════════════ */
 
+// ── Défis (droite) — carrousel si plusieurs défis rejoignables, "voir plus" pour tous les
+// défis actifs. Ne montre que les défis auxquels on peut participer (docs §3.3 has_participated),
+// sauf en mode étendu où tous les défis actifs sont listés. ─────────────────────
+function DesktopChallengesSection({
+  challenges,
+  onParticipated,
+}: {
+  challenges: ApiChallenge[];
+  onParticipated?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const active = challenges.filter((c) => c.is_active);
+  const joinable = active.filter((c) => !c.has_participated);
+
+  const showCarousel = !expanded && joinable.length > 1;
+  // Clamp instead of resetting via effect — the joinable list can shrink (e.g. right after a
+  // participation) without activeIndex being reset first, which would otherwise index out of
+  // bounds for one render.
+  const safeIndex = joinable.length > 0 ? activeIndex % joinable.length : 0;
+
+  // Auto-advance every few seconds when several défis are joinable at once.
+  useEffect(() => {
+    if (!showCarousel) return;
+    const id = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % joinable.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [showCarousel, joinable.length]);
+
+  useEffect(() => {
+    if (!showCarousel) return;
+    const child = scrollRef.current?.children[safeIndex] as HTMLElement | undefined;
+    child?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }, [safeIndex, showCarousel]);
+
+  if (active.length === 0) return null;
+
+  const singleCard = !expanded && joinable.length <= 1 ? (joinable[0] || active[0]) : null;
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178]">Défis</p>
+        {active.length > 1 && (
+          <button onClick={() => setExpanded((v) => !v)} className="text-primary text-xs font-bold hover:underline">
+            {expanded ? "Voir moins" : "Voir plus"}
+          </button>
+        )}
+      </div>
+
+      {expanded ? (
+        <div className="flex flex-col gap-4">
+          {active.map((c) => (
+            <ChallengeCard key={c.id} challenge={c} onParticipated={onParticipated} />
+          ))}
+        </div>
+      ) : showCarousel ? (
+        <>
+          <div ref={scrollRef} className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1 -mx-1 px-1">
+            {joinable.map((c) => (
+              <div key={c.id} className="min-w-full snap-center">
+                <ChallengeCard challenge={c} onParticipated={onParticipated} />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-1.5 mt-3">
+            {joinable.map((c, i) => (
+              <span
+                key={c.id}
+                className={`h-1.5 rounded-full transition-all ${i === safeIndex ? "w-4 bg-primary" : "w-1.5 bg-white/20"}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : singleCard ? (
+        <ChallengeCard challenge={singleCard} onParticipated={onParticipated} />
+      ) : null}
+    </div>
+  );
+}
+
+// ── Sondages (droite, toujours visible, jamais un filtre sur desktop) ──────────
+function DesktopPollsSection({ polls }: { polls: ApiPoll[] }) {
+  if (polls.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-5">
+      {polls.map((poll) => (
+        <PollCard key={poll.id} poll={poll} />
+      ))}
+    </div>
+  );
+}
+
 // ── Submit Talent desktop (sidebar gauche) ──────────
 function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [selected, setSelected] = useState<{ file: File; category: string } | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [statusMsg, setStatusMsg] = useState("");
-  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info");
+  const { isAuthenticated } = useAuth();
+  const [authPrompt, setAuthPrompt] = useState(false);
+  const {
+    title, setTitle,
+    description, setDescription,
+    selected, selectFile,
+    uploading, uploadProgress,
+    statusMsg, statusType,
+    submit,
+  } = useMediaSubmission({ endpoint: "/api/v1/community/posts/submit_talent/", onSubmitted });
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const micInputRef = useRef<HTMLInputElement>(null);
 
-  const getContext = (cat: string): string => {
-    if (cat === "image") return "community_image";
-    if (cat === "video") return "community_video";
-    if (cat === "audio") return "community_song";
-    return "community_image";
-  };
-  const getMediaType = (cat: string): string => {
-    if (cat === "image") return "image";
-    if (cat === "video") return "video";
-    if (cat === "audio") return "song";
-    return "image";
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, category: string) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, category: MediaCategory) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSelected({ file, category });
-    setStatusMsg(`✓ ${file.name.slice(0, 20)}...`);
-    setStatusType("info");
+    selectFile(file, category);
     e.target.value = "";
   };
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !description.trim() || !selected) {
-      setStatusMsg("Titre, description et média (photo, audio ou vidéo) sont tous obligatoires.");
-      setStatusType("error");
+  const handleSubmit = () => {
+    if (!isAuthenticated) {
+      setAuthPrompt(true);
       return;
     }
-    setUploading(true);
-    setUploadProgress(0);
-    setStatusMsg("");
-    try {
-      const context = getContext(selected.category);
-      const mediaType = getMediaType(selected.category);
-      const mediaUrl = await uploadToCloudinaryWithProgress(selected.file, context, setUploadProgress);
-
-      const payload = {
-        title: title.trim(),
-        content: description.trim(),
-        media: [{ type: mediaType, url: mediaUrl }],
-      };
-      await apiFetch("/api/v1/community/posts/submit_talent/", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      setStatusMsg("🎉 Soumis !");
-      setStatusType("success");
-      setTitle("");
-      setDescription("");
-      setSelected(null);
-      onSubmitted?.();
-    } catch (err) {
-      console.error(err);
-      setStatusMsg(err instanceof Error ? err.message : "Erreur d'envoi.");
-      setStatusType("error");
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
+    submit();
   };
 
   return (
@@ -330,7 +491,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
             type="file"
             ref={photoInputRef}
             className="hidden"
-            accept="image/*,video/*"
+            accept="image/*"
             onChange={(e) => handleFileChange(e, "image")}
           />
           <input
@@ -353,6 +514,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
               type="button"
               onClick={() => photoInputRef.current?.click()}
               disabled={uploading}
+              title={`Photo (max ${MEDIA_LIMITS.MAX_IMAGE_MB} Mo)`}
               className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">add_a_photo</span>
@@ -361,6 +523,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
               type="button"
               onClick={() => videoInputRef.current?.click()}
               disabled={uploading}
+              title={`Vidéo (max ${MEDIA_LIMITS.MAX_VIDEO_MB} Mo)`}
               className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">videocam</span>
@@ -369,6 +532,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
               type="button"
               onClick={() => micInputRef.current?.click()}
               disabled={uploading}
+              title={`Audio (max ${MEDIA_LIMITS.MAX_AUDIO_MB} Mo)`}
               className={`flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-[#8A8178] hover:text-white"}`}
             >
               <span className="material-symbols-outlined text-lg">mic</span>
@@ -382,13 +546,15 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
               {uploading ? (
                 <CircularProgress percent={uploadProgress} size={22} strokeWidth={2.5} className="text-white" />
               ) : (
-                <>
-                  <span>Envoyer</span>
-                  <span className="material-symbols-outlined text-sm">send</span>
-                </>
+                <span>Envoyer</span>
               )}
             </button>
           </div>
+          {selected && (
+            <p className="text-[10px] text-gray-500">
+              ✓ {selected.file.name.slice(0, 24)} ({humanSize(selected.file.size)})
+            </p>
+          )}
           {statusMsg && (
             <p className={`text-xs mt-1 font-medium ${statusType === "success" ? "text-green-400" : statusType === "error" ? "text-red-400" : "text-primary"}`}>
               {statusMsg}
@@ -396,6 +562,13 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
           )}
         </div>
       </div>
+
+      <AuthPromptModal
+        open={authPrompt}
+        onClose={() => setAuthPrompt(false)}
+        redirectTo="/communaute"
+        message="Connectez-vous ou créez un compte pour soumettre votre talent : ça ne prend que 2 secondes !"
+      />
     </div>
   );
 }
@@ -434,13 +607,9 @@ function CommunityStatsWidget() {
   );
 }
 
-// ── Tendances ───────────────────────────────────────
-function TrendingWidget() {
-  const tags = [
-    "#GomaSounds", "#KivuRap", "#FreestyleKivu",
-    "#AfroKivu", "#BukavuBeats", "#TalentKivu",
-  ];
-
+// ── Tendances — calculées côté client à partir des #hashtags du contenu des posts déjà
+// chargés (voir computeTrending ci-dessus / docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §4). ──
+function TrendingWidget({ tags }: { tags: { label: string; count: number }[] }) {
   return (
     <div
       className="rounded-2xl p-5"
@@ -449,24 +618,28 @@ function TrendingWidget() {
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
         Tendances
       </p>
-      <div className="flex flex-col gap-1">
-        {tags.map((tag, i) => (
-          <button
-            key={tag}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all hover:bg-white/5 group"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-[#4A443E] w-4">{i + 1}</span>
-              <span className="text-sm font-bold text-primary group-hover:text-[#F0EDE8] transition-colors">
-                {tag}
+      {tags.length === 0 ? (
+        <p className="text-gray-500 text-xs">Pas encore de tendances — soyez les premiers à utiliser un #hashtag !</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {tags.map((tag, i) => (
+            <div
+              key={tag.label}
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all hover:bg-white/5 group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-black text-[#4A443E] w-4">{i + 1}</span>
+                <span className="text-sm font-bold text-primary group-hover:text-[#F0EDE8] transition-colors">
+                  {tag.label}
+                </span>
+              </div>
+              <span className="text-[#4A443E] text-xs group-hover:text-[#8A8178] transition-colors">
+                {tag.count}
               </span>
             </div>
-            <span className="material-symbols-outlined text-[#4A443E] text-sm group-hover:text-[#8A8178] transition-colors">
-              trending_up
-            </span>
-          </button>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -115,14 +115,15 @@ export function mapApiArtistDetailToArtisteDetail(apiDetail: ApiArtistDetail): A
     genres: apiDetail.genres?.map((g: ApiGenre) => g.name) || [],
     bio: apiDetail.bio || "",
     coverImage: apiDetail.cover_url || apiDetail.photo_url || "",
-    bookingLabel: "Réserver l'artiste",
     releases: apiDetail.releases?.map((r: ApiArtistRelease): Release => ({
       id: r.slug || r.id?.toString() || "",
       title: r.title || "",
       year: r.release_date ? new Date(r.release_date).getFullYear().toString() : "",
       type: (r.format?.toUpperCase() as Release["type"]) || "SINGLE",
       coverImage: r.cover_url || "",
-      href: `/releases/${r.slug}`
+      // Releases only ever have a detail page under /sorties-premieres/[slug] — /releases/[slug]
+      // was never a real route, so every release link from an artist's page was a dead link.
+      href: r.slug ? `/sorties-premieres/${r.slug}` : "/sorties-premieres",
     })) || [],
     videos: apiDetail.videos?.map((v: ApiArtistVideo): VideoItem => ({
       id: v.id?.toString() || Math.random().toString(),
@@ -398,6 +399,8 @@ const EMPTY_COMMUNITY_POST_DATA = {
   title: "",
   duration: "0:00",
   tags: [] as string[],
+  isPinnedResult: false,
+  challengeTitle: undefined as string | undefined,
 };
 
 export function mapApiPostToCommunityItem(apiPost: ApiCommunityPost | null | undefined) {
@@ -441,7 +444,11 @@ export function mapApiPostToCommunityItem(apiPost: ApiCommunityPost | null | und
     timeAgo: formatRelativeDate(apiPost.created_at),
     title: apiPost.title || "",
     duration: apiPost.duration || "0:00",
-    tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t) => typeof t === 'string' ? t : (t.name || t.label || "")) : []
+    tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t) => typeof t === 'string' ? t : (t.name || t.label || "")) : [],
+    // Both fields are proposed additions (docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2/§3.5) —
+    // undefined/false on every post until the backend actually sends them.
+    isPinnedResult: !!apiPost.is_pinned_result,
+    challengeTitle: typeof apiPost.challenge === "object" && apiPost.challenge ? apiPost.challenge.title : undefined,
   };
 
   return {
