@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useEngagement } from "@/hooks/useEngagement";
+import { resolveShareUrl } from "@/lib/share";
+import AuthPromptModal from "./AuthPromptModal";
+import ShareMenu from "./ShareMenu";
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -34,6 +36,8 @@ interface EngagementBarProps {
   initialCommentCount?: number;
   initialSaved?: boolean;
   enableSave?: boolean;
+  /** Where the "please sign in" prompt sends the user back after login. */
+  redirectTo?: string;
 }
 
 export default function EngagementBar({
@@ -44,12 +48,14 @@ export default function EngagementBar({
   initialCommentCount,
   initialSaved,
   enableSave = true,
+  redirectTo = "/communaute",
 }: EngagementBarProps) {
   const { isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [authPrompt, setAuthPrompt] = useState(false);
+  const [authPromptMessage, setAuthPromptMessage] = useState<string | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   const {
     liked,
@@ -71,12 +77,14 @@ export default function EngagementBar({
     initialSaved,
   });
 
-  const requireAuth = (action: () => void) => {
+  // Every gated action gets its own message so the prompt explains *what* requires an account —
+  // "aimer ce post" vs "commenter" vs "mettre ce post en signet" (partager reste libre, non
+  // gated : voir handleShare ci-dessous, qui n'appelle jamais requireAuth).
+  const requireAuth = (message: string, action: () => void) => {
     if (!isAuthenticated) {
-      setAuthPrompt(true);
+      setAuthPromptMessage(message);
       return;
     }
-    setAuthPrompt(false);
     action();
   };
 
@@ -98,10 +106,26 @@ export default function EngagementBar({
     }
   };
 
-  const handleShare = () => {
-    requireAuth(() => {
-      share().catch(() => {});
-    });
+  // Sharing a link never requires an account — only like/comment/save do. On devices/browsers
+  // with the native Web Share API (mostly mobile), that gives the OS share sheet with every
+  // installed app as a target. Elsewhere (mostly desktop), ShareMenu offers the same well-known
+  // external destinations instead of silently copying the link with no other option.
+  const handleShare = async () => {
+    share().catch(() => {});
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Art du Kivu — Communauté",
+          text: "Découvrez cette publication sur Art du Kivu",
+          url: resolveShareUrl(redirectTo),
+        });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        // fall through to the manual menu on any other native-share failure
+      }
+    }
+    setShareMenuOpen(true);
   };
 
   return (
@@ -109,58 +133,49 @@ export default function EngagementBar({
       <div className="flex items-center justify-between text-white">
         <div className="flex gap-4">
           <button
-            onClick={() => requireAuth(toggleLike)}
+            onClick={() => requireAuth("Connectez-vous ou créez un compte pour aimer ce post : ça ne prend que 2 secondes !", toggleLike)}
             className="flex flex-col items-center gap-0.5 group"
           >
             <span
-              className={`material-symbols-outlined text-[26px] transition-colors ${
+              className={`material-symbols-outlined text-[22px] sm:text-[26px] transition-colors ${
                 liked ? "text-red-500" : "group-hover:text-red-500"
               }`}
             >
               {liked ? "favorite" : "favorite_border"}
             </span>
-            <span className="text-xs font-medium text-gray-400">{formatCount(likeCount)}</span>
+            <span className="text-[10px] sm:text-xs font-medium text-gray-400">{formatCount(likeCount)}</span>
           </button>
 
           <button onClick={handleToggleComments} className="flex flex-col items-center gap-0.5 group">
             <span
-              className={`material-symbols-outlined text-[26px] transition-colors ${
+              className={`material-symbols-outlined text-[22px] sm:text-[26px] transition-colors ${
                 showComments ? "text-primary" : "group-hover:text-primary"
               }`}
             >
               {showComments ? "chat_bubble" : "chat_bubble_outline"}
             </span>
-            <span className="text-xs font-medium text-gray-400">{formatCount(commentCount)}</span>
+            <span className="text-[10px] sm:text-xs font-medium text-gray-400">{formatCount(commentCount)}</span>
           </button>
 
           <button onClick={handleShare} className="flex flex-col items-center gap-0.5 group">
-            <span className="material-symbols-outlined text-[26px] group-hover:text-primary transition-colors">
+            <span className="material-symbols-outlined text-[22px] sm:text-[26px] group-hover:text-primary transition-colors">
               ios_share
             </span>
-            <span className="text-xs font-medium text-gray-400">Partager</span>
+            <span className="text-[10px] sm:text-xs font-medium text-gray-400">Partager</span>
           </button>
         </div>
 
         {enableSave && (
           <button
-            onClick={() => requireAuth(toggleSave)}
+            onClick={() => requireAuth("Connectez-vous ou créez un compte pour mettre ce post en signet : ça ne prend que 2 secondes !", toggleSave)}
             className={saved ? "text-primary" : "text-gray-400 hover:text-primary"}
           >
-            <span className="material-symbols-outlined text-[26px]">
+            <span className="material-symbols-outlined text-[22px] sm:text-[26px]">
               {saved ? "bookmark" : "bookmark_border"}
             </span>
           </button>
         )}
       </div>
-
-      {authPrompt && (
-        <p className="text-xs text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
-          <Link href="/auth/login" className="font-bold underline">
-            Connectez-vous
-          </Link>{" "}
-          pour interagir avec ce contenu.
-        </p>
-      )}
 
       {showComments && (
         <div className="flex flex-col gap-3">
@@ -172,14 +187,14 @@ export default function EngagementBar({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  requireAuth(handleSubmitComment);
+                  requireAuth("Connectez-vous ou créez un compte pour commenter : ça ne prend que 2 secondes !", handleSubmitComment);
                 }
               }}
               placeholder="Ajouter un commentaire..."
               className="flex-1 bg-black/40 border border-white/10 rounded-lg h-9 px-3 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm"
             />
             <button
-              onClick={() => requireAuth(handleSubmitComment)}
+              onClick={() => requireAuth("Connectez-vous ou créez un compte pour envoyer votre commentaire : ça ne prend que 2 secondes !", handleSubmitComment)}
               disabled={submitting || !newComment.trim()}
               className="h-9 px-3 rounded-lg bg-primary/80 hover:bg-primary text-white transition-colors disabled:opacity-50"
             >
@@ -219,6 +234,20 @@ export default function EngagementBar({
           )}
         </div>
       )}
+
+      <AuthPromptModal
+        open={!!authPromptMessage}
+        onClose={() => setAuthPromptMessage(null)}
+        redirectTo={redirectTo}
+        message={authPromptMessage || undefined}
+      />
+
+      <ShareMenu
+        open={shareMenuOpen}
+        onClose={() => setShareMenuOpen(false)}
+        url={redirectTo}
+        text="Découvrez cette publication sur Art du Kivu"
+      />
     </div>
   );
 }
