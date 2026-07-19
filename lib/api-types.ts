@@ -246,6 +246,11 @@ export interface ApiCommunityPost {
   duration?: string;
   tags?: (string | { name?: string; label?: string })[];
   is_verified?: boolean;
+  // Not yet returned by the backend — proposed in
+  // docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2/§3.5 for challenge participations. Optional so
+  // existing talent/art/news posts (which never send these) keep working unchanged.
+  challenge?: { id?: number | string; slug?: string; title?: string } | string | null;
+  is_pinned_result?: boolean;
 }
 
 export interface ApiHeroBanner {

@@ -95,6 +95,7 @@ export default async function PodcastEpisodePage({ params }: Props) {
               id={episode.slug}
               initialLikeCount={episode.likeCount}
               initialCommentCount={episode.commentCount}
+              redirectTo={`/podcasts/${episode.slug}`}
             />
           </div>
           <EpisodeTabs episode={episode} />
@@ -258,6 +259,7 @@ function EpisodePlayerDesktop({ episode }: { episode: PodcastEpisode }) {
           id={episode.slug}
           initialLikeCount={episode.likeCount}
           initialCommentCount={episode.commentCount}
+          redirectTo={`/podcasts/${episode.slug}`}
         />
       </div>
     </div>

@@ -56,7 +56,6 @@ export interface ArtisteDetail {
   genres: string[];          // ["Afro-Pop", "Hip-Hop"]
   bio: string;
   coverImage: string;
-  bookingLabel?: string;     // texte du bouton CTA
   releases: Release[];
   videos: VideoItem[];
   gallery: GalleryPhoto[];

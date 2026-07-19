@@ -1,33 +1,44 @@
 "use client";
-import { useState } from "react";
+
+import { useFavoriteArtist } from "@/hooks/useFavoriteArtist";
+import AuthPromptModal from "@/components/ui/AuthPromptModal";
 
 interface Props {
-  bookingLabel?: string;
+  artistId: number | null | undefined;
+  artistSlug: string;
 }
 
-export default function ArtisteDetailCTA({ bookingLabel = "Book Artist" }: Props) {
-  const [liked, setLiked] = useState(false);
+export default function ArtisteDetailCTA({ artistId, artistSlug }: Props) {
+  const { favorited, loading, toggle, authPromptOpen, closeAuthPrompt } = useFavoriteArtist(artistId, artistSlug);
+
+  if (!artistId) return null;
 
   return (
-    <div className="flex items-center gap-4 mt-4">
-      <button className="flex-1 bg-primary hover:bg-primary-dark active:scale-95 transition-all duration-200 text-white font-display font-bold text-base h-12 rounded-xl flex items-center justify-center shadow-[0_4px_14px_rgba(163,78,41,0.4)]">
-        {bookingLabel}
-      </button>
+    <div className="mt-4">
       <button
-        onClick={() => setLiked((l) => !l)}
-        className={`size-12 flex items-center justify-center rounded-xl border transition-colors ${
-          liked
-            ? "bg-primary/20 border-primary text-primary"
-            : "bg-surface-dark border-white/10 text-white hover:bg-white/5"
+        onClick={toggle}
+        disabled={loading}
+        className={`w-full flex items-center justify-center gap-2 h-12 rounded-xl font-display font-bold text-sm transition-all duration-200 active:scale-95 ${
+          favorited
+            ? "bg-primary/15 border border-primary text-primary"
+            : "bg-primary hover:bg-primary-dark text-white shadow-[0_4px_14px_rgba(163,78,41,0.4)]"
         }`}
       >
         <span
-          className="material-symbols-outlined"
-          style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+          className="material-symbols-outlined text-lg"
+          style={{ fontVariationSettings: favorited ? "'FILL' 1" : "'FILL' 0" }}
         >
           favorite
         </span>
+        {favorited ? "Dans vos favoris" : "Ajouter aux favoris"}
       </button>
+
+      <AuthPromptModal
+        open={authPromptOpen}
+        onClose={closeAuthPrompt}
+        redirectTo={`/artistes/${artistSlug}`}
+        message="Connectez-vous ou créez un compte pour ajouter cet artiste à vos favoris — ça ne prend que 2 secondes !"
+      />
     </div>
   );
 }

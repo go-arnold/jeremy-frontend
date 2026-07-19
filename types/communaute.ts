@@ -51,6 +51,10 @@ export interface ApiChallenge {
   deadline: string;
   participant_count: number;
   is_active: boolean;
+  // Not yet returned by the backend — proposed in
+  // docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.3. Optional/undefined means "unknown", not "false" —
+  // treated as not-yet-participated until the backend actually sends this field.
+  has_participated?: boolean;
 }
 
 export interface ApiPollOption {

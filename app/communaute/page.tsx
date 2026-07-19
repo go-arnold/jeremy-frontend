@@ -6,13 +6,6 @@ import type { ApiChallenge, ApiPoll } from "@/types/communaute";
 import type { ApiCommunityPost } from "@/lib/api-types";
 import CommunautePageClient from "./CommunautePageClient";
 
-function buildEndpoint(filter: string, page: number): string {
-  const params = new URLSearchParams({ page: String(page), page_size: "15" });
-  if (filter === "goma" || filter === "bukavu") params.set("city", filter);
-  else if (filter !== "tous") params.set("post_type", filter);
-  return `/api/v1/community/posts/?${params.toString()}`;
-}
-
 type MappedPost = ReturnType<typeof mapApiPostToCommunityItem>;
 
 async function getInitialData() {
@@ -20,7 +13,11 @@ async function getInitialData() {
   let hasMore = false;
 
   try {
-    const data = await apiFetch<PaginatedResponse<ApiCommunityPost>>(buildEndpoint("tous", 1));
+    // Initial load is always the unfiltered "Tous" feed — CommunautePageClient's own
+    // buildEndpoint() takes over for every filter change after that.
+    const data = await apiFetch<PaginatedResponse<ApiCommunityPost>>(
+      `/api/v1/community/posts/?page=1&page_size=15`
+    );
     posts = data.results.map(mapApiPostToCommunityItem);
     hasMore = !!data.next;
   } catch (error) {

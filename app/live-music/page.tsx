@@ -107,6 +107,7 @@ export default async function Page() {
               id={slug}
               initialLikeCount={nowPlaying.likeCount}
               initialCommentCount={nowPlaying.commentCount}
+              redirectTo="/live-music"
             />
           </div>
 
@@ -159,6 +160,7 @@ export default async function Page() {
                   id={slug}
                   initialLikeCount={nowPlaying.likeCount}
                   initialCommentCount={nowPlaying.commentCount}
+                  redirectTo="/live-music"
                 />
               </div>
 

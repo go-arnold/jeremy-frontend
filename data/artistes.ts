@@ -57,7 +57,6 @@ export const artistesDetail: Record<string, ArtisteDetail> = {
     genres: ["Afro-Pop", "Hip-Hop"],
     bio: "King of King... A voice for the voiceless. Combining sharp lyricism with infectious Afro-Pop rhythms to tell the story of a generation.",
     coverImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuDR3mpSRGCjTgAm3PwTRE93JhNXXhbTjw9aVAqgPmS8HkEMvCwb1m-4oUNQBMrUh7x7T4ZEt72NkT3x77ksnQQGXVV-jg2so_GX3SGUVy7Agb-N0zhAaLwnKGbcunnzN43IvcxTWi5WTNmVJZTNxST0pR8qkLG9gnIj3VcKbuSWjOny_HJWn7baxPa5i85FrGsf5vsUsxgj7920HCwx3FmzzNaV0Y5iwawKRHjJuORHfr5eA_w8YgSfvDU_FuN8lf6OKADRqxlCd4c",
-    bookingLabel: "Book Artist",
     releases: [
       {
         id: "mongongo",

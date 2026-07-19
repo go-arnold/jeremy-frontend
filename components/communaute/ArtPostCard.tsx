@@ -69,6 +69,7 @@ export default function ArtPostCard({ post }: { post: ArtPostData }) {
         id={post.id}
         initialLikeCount={post.likes}
         initialCommentCount={post.comments}
+        redirectTo={`/communaute/${post.id}`}
       />
     </article>
   );

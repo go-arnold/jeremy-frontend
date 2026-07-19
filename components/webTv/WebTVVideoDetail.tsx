@@ -109,6 +109,7 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
         id={video.slug}
         initialLikeCount={video.likeCount}
         initialCommentCount={video.commentCount}
+        redirectTo={`/web-tv/${video.slug}`}
       />
 
       {video.isLive && <LiveChatPanel slug={video.slug} />}

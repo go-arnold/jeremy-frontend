@@ -1,134 +1,40 @@
 "use client";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import CircularProgress from "@/components/ui/CircularProgress";
-import { uploadToCloudinaryWithProgress } from "@/lib/cloudinaryUpload";
-
-// Limits
-const MAX_IMAGE_MB = 10;
-const MAX_VIDEO_MB = 100;
-const MAX_AUDIO_MB = 50;
-
-type FileCategory = "image" | "video" | "audio" | null;
-
-interface SelectedFile {
-  file: File;
-  category: FileCategory;
-  preview?: string;
-}
-
-function humanSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-}
-
-function validateFile(file: File, category: FileCategory): string | null {
-  const mb = file.size / (1024 * 1024);
-  if (category === "image" && mb > MAX_IMAGE_MB) return `Image trop lourde (max ${MAX_IMAGE_MB} Mo)`;
-  if (category === "video" && mb > MAX_VIDEO_MB) return `Vidéo trop lourde (max ${MAX_VIDEO_MB} Mo)`;
-  if (category === "audio" && mb > MAX_AUDIO_MB) return `Audio trop lourd (max ${MAX_AUDIO_MB} Mo)`;
-  return null;
-}
-
-function getContextForCategory(category: FileCategory): string {
-  if (category === "image") return "community_image";
-  if (category === "video") return "community_video";
-  if (category === "audio") return "community_song";
-  return "community_image";
-}
-
-function getMediaTypeForCategory(category: FileCategory): string {
-  if (category === "image") return "image";
-  if (category === "video") return "video";
-  if (category === "audio") return "song";
-  return "image";
-}
+import AuthPromptModal from "@/components/ui/AuthPromptModal";
+import { useAuth } from "@/providers/AuthProvider";
+import { useMediaSubmission, humanSize, MEDIA_LIMITS, type MediaCategory } from "@/hooks/useMediaSubmission";
 
 export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => void }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [selected, setSelected] = useState<SelectedFile | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [statusMsg, setStatusMsg] = useState("");
-  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info");
+  const { isAuthenticated } = useAuth();
+  const [authPrompt, setAuthPrompt] = useState(false);
+  const {
+    title, setTitle,
+    description, setDescription,
+    selected, selectFile, removeFile,
+    uploading, uploadProgress,
+    statusMsg, statusType,
+    submit,
+  } = useMediaSubmission({ endpoint: "/api/v1/community/posts/submit_talent/", onSubmitted });
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, category: FileCategory) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, category: MediaCategory) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const err = validateFile(file, category);
-    if (err) {
-      setStatusMsg(err);
-      setStatusType("error");
-      return;
-    }
-    let preview: string | undefined;
-    if (category === "image") preview = URL.createObjectURL(file);
-    setSelected({ file, category, preview });
-    setStatusMsg(`✓ ${file.name} (${humanSize(file.size)})`);
-    setStatusType("info");
+    selectFile(file, category);
     e.target.value = "";
   };
 
-  const removeFile = () => {
-    if (selected?.preview) URL.revokeObjectURL(selected.preview);
-    setSelected(null);
-    setStatusMsg("");
-  };
-
-  const handleSubmit = async () => {
-    if (!title.trim() || !description.trim() || !selected) {
-      setStatusMsg("Titre, description et média (photo, audio ou vidéo) sont tous obligatoires.");
-      setStatusType("error");
+  const handleSubmit = () => {
+    if (!isAuthenticated) {
+      setAuthPrompt(true);
       return;
     }
-    setUploading(true);
-    setUploadProgress(0);
-    setStatusMsg("");
-
-    try {
-      const context = getContextForCategory(selected.category);
-      const mediaType = getMediaTypeForCategory(selected.category);
-      const mediaUrl = await uploadToCloudinaryWithProgress(selected.file, context, setUploadProgress);
-
-      const payload = {
-        title: title.trim(),
-        content: description.trim(),
-        media: [{ type: mediaType, url: mediaUrl }],
-      };
-
-      const response = await fetch(
-        `/api/proxy?endpoint=${encodeURIComponent("/api/v1/community/posts/submit_talent/")}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || err.detail || `Erreur ${response.status}`);
-      }
-
-      setStatusMsg("🎉 Talent soumis avec succès !");
-      setStatusType("success");
-      setTitle("");
-      setDescription("");
-      removeFile();
-      onSubmitted?.();
-    } catch (err) {
-      console.error(err);
-      setStatusMsg((err instanceof Error ? err.message : null) || "Erreur lors de la soumission. Assurez-vous d'être connecté.");
-      setStatusType("error");
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
+    submit();
   };
 
   return (
@@ -138,8 +44,8 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Soumettre un Talent</h2>
-              <p className="text-gray-400 text-sm mt-1">Montre ton talent au Kivu</p>
+              <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Soumettre un Talent</h2>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">Montre ton talent au Kivu</p>
             </div>
             <span className="material-symbols-outlined text-primary" style={{ fontSize: "32px" }}>
               graphic_eq
@@ -148,7 +54,7 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
 
           <div className="flex flex-col gap-3">
             <input
-              className="w-full bg-black/40 border border-white/10 rounded-lg h-12 px-4 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
+              className="w-full bg-black/40 border border-white/10 rounded-lg h-11 sm:h-12 px-4 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
               placeholder="Titre du morceau / de la création"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -204,34 +110,34 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={uploading}
-                title={`Photo/Image (max ${MAX_IMAGE_MB} Mo)`}
-                className={`flex items-center justify-center h-12 w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                title={`Photo/Image (max ${MEDIA_LIMITS.MAX_IMAGE_MB} Mo)`}
+                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined">add_a_photo</span>
+                <span className="material-symbols-outlined text-lg sm:text-xl">add_a_photo</span>
               </button>
               <button
                 type="button"
                 onClick={() => videoInputRef.current?.click()}
                 disabled={uploading}
-                title={`Vidéo (max ${MAX_VIDEO_MB} Mo)`}
-                className={`flex items-center justify-center h-12 w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                title={`Vidéo (max ${MEDIA_LIMITS.MAX_VIDEO_MB} Mo)`}
+                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined">videocam</span>
+                <span className="material-symbols-outlined text-lg sm:text-xl">videocam</span>
               </button>
               <button
                 type="button"
                 onClick={() => audioInputRef.current?.click()}
                 disabled={uploading}
-                title={`Audio (max ${MAX_AUDIO_MB} Mo)`}
-                className={`flex items-center justify-center h-12 w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                title={`Audio (max ${MEDIA_LIMITS.MAX_AUDIO_MB} Mo)`}
+                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined">mic</span>
+                <span className="material-symbols-outlined text-lg sm:text-xl">mic</span>
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={uploading}
-                className="flex-1 h-12 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-base tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+                className="flex-1 h-11 sm:h-12 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-sm sm:text-base tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
               >
                 {uploading ? (
                   <CircularProgress percent={uploadProgress} size={28} strokeWidth={3} className="text-background-dark" />
@@ -245,7 +151,7 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
             </div>
 
             <p className="text-[10px] text-gray-600">
-              Image max {MAX_IMAGE_MB} Mo · Vidéo max {MAX_VIDEO_MB} Mo · Audio max {MAX_AUDIO_MB} Mo
+              Image max {MEDIA_LIMITS.MAX_IMAGE_MB} Mo · Vidéo max {MEDIA_LIMITS.MAX_VIDEO_MB} Mo · Audio max {MEDIA_LIMITS.MAX_AUDIO_MB} Mo
             </p>
 
             {statusMsg && (
@@ -256,6 +162,13 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
           </div>
         </div>
       </div>
+
+      <AuthPromptModal
+        open={authPrompt}
+        onClose={() => setAuthPrompt(false)}
+        redirectTo="/communaute"
+        message="Connectez-vous ou créez un compte pour soumettre votre talent : ça ne prend que 2 secondes !"
+      />
     </section>
   );
 }

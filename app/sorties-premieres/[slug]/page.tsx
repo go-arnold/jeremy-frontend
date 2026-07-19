@@ -144,6 +144,7 @@ export default async function ReleaseDetailPage({ params }: Props) {
                 id={release.slug || release.id || ""}
                 initialLikeCount={release.likeCount}
                 initialCommentCount={release.commentCount}
+                redirectTo={`/sorties-premieres/${release.slug || release.id || ""}`}
               />
             </div>
           </div>

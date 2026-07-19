@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 
 export interface FilterTab {
   id: string;

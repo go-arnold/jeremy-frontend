@@ -18,6 +18,9 @@ interface PostData {
   comments: number;
   caption: string;
   tags: string[];
+  isPinnedResult?: boolean;
+  isChallengeResponse?: boolean;
+  challengeTitle?: string;
 }
 
 export default function TalentPostCard({ post }: { post: PostData }) {
@@ -88,7 +91,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
     
     if (hasImage) {
       return (
-        <div className="relative aspect-[4/5] w-full bg-surface-dark rounded-xl overflow-hidden group" ref={imgContainerRef}>
+        <div className="relative aspect-[4/5] w-full bg-surface-dark rounded-xl overflow-hidden" ref={imgContainerRef}>
           {!imgLoaded && !mediaError && (
             <div className="absolute inset-0 flex items-center justify-center bg-surface-dark animate-pulse">
               <span className="material-symbols-outlined text-gray-600 text-4xl">image</span>
@@ -101,7 +104,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
               alt={post.title || post.caption || "Publication de la communauté"}
               fill
               sizes="(min-width: 1024px) 400px, 90vw"
-              className={`object-cover transition-opacity duration-300 ${imgLoaded ? "opacity-80" : "opacity-0"}`}
+              className={`object-cover transition-opacity duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}
               onError={() => setMediaError(true)}
             />
@@ -112,18 +115,6 @@ export default function TalentPostCard({ post }: { post: PostData }) {
                 <span className="material-symbols-outlined text-gray-600 text-4xl">broken_image</span>
                 <p className="text-gray-500 text-xs mt-1">Image indisponible</p>
               </div>
-            </div>
-          )}
-          {!mediaError && hasImage && !hasVideo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-all">
-              <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
-                <span className="material-symbols-outlined text-3xl ml-1">play_arrow</span>
-              </div>
-            </div>
-          )}
-          {post.duration && (
-            <div className="absolute bottom-4 right-4 bg-black/60 px-2 py-1 rounded text-xs text-white font-mono">
-              {post.duration}
             </div>
           )}
         </div>
@@ -143,6 +134,17 @@ export default function TalentPostCard({ post }: { post: PostData }) {
 
   return (
     <article className="flex flex-col gap-3">
+      {post.isPinnedResult ? (
+        <div className="flex items-center gap-1.5 text-accent-yellow text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+          <span className="material-symbols-outlined text-sm">push_pin</span>
+          Résultat épinglé{post.challengeTitle ? ` — ${post.challengeTitle}` : ""}
+        </div>
+      ) : post.isChallengeResponse ? (
+        <div className="flex items-center gap-1.5 text-accent-yellow text-[10px] sm:text-xs font-medium">
+          <span className="material-symbols-outlined text-xs">emoji_events</span>
+          Participation au défi{post.challengeTitle ? ` · ${post.challengeTitle}` : ""}
+        </div>
+      ) : null}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -184,6 +186,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
         id={post.id}
         initialLikeCount={post.likes}
         initialCommentCount={post.comments}
+        redirectTo={`/communaute/${post.id}`}
       />
     </article>
   );

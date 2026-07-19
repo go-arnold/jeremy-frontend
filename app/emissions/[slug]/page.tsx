@@ -148,6 +148,7 @@ export default async function EmissionDetailPage({ params }: Props) {
               id={emission.slug}
               initialLikeCount={emission.likeCount}
               initialCommentCount={emission.commentCount}
+              redirectTo={`/emissions/${emission.slug}`}
             />
           </div>
         </div>
