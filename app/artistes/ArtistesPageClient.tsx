@@ -102,11 +102,11 @@ export default function ArtistesPageClient({
 
       {/* MOBILE — en-tête */}
       <section className="lg:hidden px-4">
-        <div className="px-1 pt-2 pb-1">
-          <h2 className="text-2xl font-black leading-tight">
+        <div className="px-1 pt-7 pb-1">
+          <h2 className="text-xl font-black leading-tight">
             Découvrez les talents du Kivu
           </h2>
-          <p className="text-sm text-white/60 mt-2 mb-4">
+          <p className="text-xs text-white/60 mt-1.5 mb-3">
             Parcours rapides, profils complets et nouveautés.
           </p>
         </div>
