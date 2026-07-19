@@ -14,6 +14,7 @@ import RelatedEpisodes from "@/components/podcasts/RelatedEpisodes";
 import GuestFollowButton from "@/components/podcasts/GuestFollowButton";
 import EngagementBar from "@/components/ui/EngagementBar";
 import SharePodcastWidget from "@/components/podcasts/SharePodcastWidget";
+import ContentImage from "@/components/ui/ContentImage";
 
 export const dynamic = "force-dynamic";
 
@@ -165,10 +166,7 @@ function EpisodeCoverPanel({ episode }: { episode: PodcastEpisode }) {
 
       {/* Cover 4/3 paysage — titre + badge intégrés en overlay */}
       <div className="relative w-full rounded-t-2xl overflow-hidden" style={{ aspectRatio: "4/3" }}>
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${episode.coverImage}')` }}
-        />
+        <ContentImage src={episode.coverImage} alt={episode.title} className="absolute inset-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
         {/* Badge + numéro en haut à gauche */}
@@ -240,10 +238,9 @@ function EpisodePlayerDesktop({ episode }: { episode: PodcastEpisode }) {
     >
       {/* Titre mini en haut du player */}
       <div className="flex items-center gap-3 mb-6">
-        <div
-          className="w-12 h-12 rounded-xl bg-cover bg-center shrink-0"
-          style={{ backgroundImage: `url('${episode.coverImage}')` }}
-        />
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-surface-dark">
+          <ContentImage src={episode.coverImage} alt={episode.title} className="absolute inset-0" />
+        </div>
         <div>
           <p className="text-[#F0EDE8] font-bold text-sm line-clamp-1">{episode.title}</p>
           <p className="text-[#8A8178] text-xs">{episode.duration} • ÉP {episode.episodeNumber}</p>
@@ -267,57 +264,61 @@ function EpisodePlayerDesktop({ episode }: { episode: PodcastEpisode }) {
 }
 
 
-// ── Guest card sidebar ──────────────────────────────
+// ── Guest card sidebar — every guest, not just the first ────
 function GuestCardDesktop({ episode }: { episode: PodcastEpisode }) {
-  if (!episode.guest) return null;
+  const guests = episode.guests && episode.guests.length > 0 ? episode.guests : (episode.guest ? [episode.guest] : []);
+  if (guests.length === 0) return null;
 
   return (
     <div
-      className="rounded-2xl p-5"
+      className="rounded-2xl p-5 flex flex-col gap-5"
       style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
-        Invité
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178]">
+        {guests.length > 1 ? "Invités" : "Invité"}
       </p>
-      <div className="flex items-start gap-3">
-        <div
-          className="w-12 h-12 rounded-full bg-cover bg-center shrink-0 border-2 border-primary/20"
-          style={{ backgroundImage: `url('${episode.guest.avatar}')` }}
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[#F0EDE8] font-bold text-sm">{episode.guest.name}</p>
-              <p className="text-primary text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                {episode.guest.title}
+      {guests.map((guest, i) => (
+        <div key={`${guest.name}-${i}`} className={i > 0 ? "pt-5 border-t border-white/5" : ""}>
+          <div className="flex items-start gap-3">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-primary/20 bg-surface-dark">
+              <ContentImage src={guest.avatar} alt={guest.name} className="absolute inset-0" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[#F0EDE8] font-bold text-sm">{guest.name}</p>
+                  <p className="text-primary text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                    {guest.title}
+                  </p>
+                </div>
+                <GuestFollowButton guestName={guest.name} />
+              </div>
+              <p className="text-[#8A8178] text-xs mt-2 leading-relaxed line-clamp-3">
+                {guest.bio}
               </p>
             </div>
-            <GuestFollowButton guestName={episode.guest.name} />
           </div>
-          <p className="text-[#8A8178] text-xs mt-2 leading-relaxed line-clamp-3">
-            {episode.guest.bio}
-          </p>
-        </div>
-      </div>
-      {(episode.guest.website || episode.guest.twitter) && (
-        <div className="flex gap-4 mt-4 pt-4 border-t border-white/5">
-          {episode.guest.website && (
-            <a
-              href={episode.guest.website}
-              className="flex items-center gap-1.5 text-[#8A8178] hover:text-[#F0EDE8] text-xs transition"
-            >
-              <span className="material-symbols-outlined text-sm">language</span>
-              Site Web
-            </a>
-          )}
-          {episode.guest.twitter && (
-            <a href="#" className="flex items-center gap-1.5 text-[#8A8178] hover:text-[#F0EDE8] text-xs transition">
-              <span className="material-symbols-outlined text-sm">alternate_email</span>
-              {episode.guest.twitter}
-            </a>
+          {(guest.website || guest.twitter) && (
+            <div className="flex gap-4 mt-4 pt-4 border-t border-white/5">
+              {guest.website && (
+                <a
+                  href={guest.website}
+                  className="flex items-center gap-1.5 text-[#8A8178] hover:text-[#F0EDE8] text-xs transition"
+                >
+                  <span className="material-symbols-outlined text-sm">language</span>
+                  Site Web
+                </a>
+              )}
+              {guest.twitter && (
+                <a href="#" className="flex items-center gap-1.5 text-[#8A8178] hover:text-[#F0EDE8] text-xs transition">
+                  <span className="material-symbols-outlined text-sm">alternate_email</span>
+                  {guest.twitter}
+                </a>
+              )}
+            </div>
           )}
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -342,9 +343,10 @@ function RelatedEpisodesDesktop({ episodes }: { episodes?: RelatedEpisode[] }) {
           >
             {/* Vignette */}
             <div className="relative aspect-square overflow-hidden">
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                style={{ backgroundImage: `url('${ep.image}')` }}
+              <ContentImage
+                src={ep.image}
+                alt={ep.title}
+                className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
               {/* Durée */}

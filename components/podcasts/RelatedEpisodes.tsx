@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { RelatedEpisode } from "@/types/podcasts";
+import ContentImage from "@/components/ui/ContentImage";
 
 export default function RelatedEpisodes({ episodes }: { episodes: RelatedEpisode[] }) {
   if (!episodes?.length) return null;
@@ -18,10 +19,8 @@ export default function RelatedEpisodes({ episodes }: { episodes: RelatedEpisode
             href={`/podcasts/${ep.slug}`}
             className="w-40 shrink-0 group cursor-pointer"
           >
-            <div
-              className="aspect-square rounded-lg bg-surface-dark bg-cover bg-center relative overflow-hidden mb-2 border border-white/5"
-              style={{ backgroundImage: `url('${ep.image}')` }}
-            >
+            <div className="aspect-square rounded-lg bg-surface-dark relative overflow-hidden mb-2 border border-white/5">
+              <ContentImage src={ep.image} alt={ep.title} className="absolute inset-0" />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition duration-300" />
               <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                 {ep.duration}

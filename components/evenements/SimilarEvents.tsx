@@ -11,17 +11,17 @@ export default function SimilarEvents({ events = [] }: Props) {
 
   return (
     <section className="px-4 mt-6">
-      <h2 className="text-lg font-bold mb-3">Événements similaires</h2>
-      <div className="flex gap-4 overflow-x-auto hide-scrollbar">
+      <h2 className="text-base font-bold mb-2.5">Événements similaires</h2>
+      <div className="flex gap-3.5 overflow-x-auto hide-scrollbar">
         {events.map((event) => (
-          <Link key={event.id} href={`/evenements/${event.slug}`} className="w-40 shrink-0">
+          <Link key={event.id} href={`/evenements/${event.slug}`} className="w-36 shrink-0">
             <ContentImage
               src={event.image}
               alt={event.title}
-              className="h-40 rounded-xl"
+              className="h-36 rounded-xl"
             />
-            <p className="text-sm font-bold text-white mt-2">{event.title}</p>
-            <p className="text-xs text-slate-400">{event.date}</p>
+            <p className="text-xs font-bold text-white mt-2">{event.title}</p>
+            <p className="text-[10px] text-slate-400">{event.date}</p>
           </Link>
         ))}
       </div>

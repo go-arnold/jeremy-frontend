@@ -12,11 +12,11 @@ export default function EventInfoGrid({ event }: { event: EventDetail }) {
     <section className="px-4 mt-6">
       <div className="grid grid-cols-2 gap-3">
         {items.map(({ label, value }) => (
-          <div key={label} className="rounded-xl bg-[#12223ce6] border border-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-primary font-bold">
+          <div key={label} className="rounded-xl bg-[#12223ce6] border border-white/5 p-3.5">
+            <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
               {label}
             </p>
-            <p className="text-sm text-white font-bold mt-1">{value}</p>
+            <p className="text-xs text-white font-bold mt-1">{value}</p>
           </div>
         ))}
       </div>

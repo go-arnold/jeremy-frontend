@@ -1,5 +1,6 @@
-export type EventCategory =
-  | "Musique" | "Expo" | "Poésie" | "Atelier" | "Culture" | "Art" | "Danse";
+// The real EventSerializer sends freeform category strings (e.g. "spectacle") that don't match
+// this original closed set at all — widened to `string` rather than pretending it's an enum.
+export type EventCategory = string;
 
 export type EventCity = string;
 

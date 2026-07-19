@@ -66,6 +66,9 @@ export default function EngagementBar({
     commentsLoaded,
     loadingComments,
     loadComments,
+    commentsHasMore,
+    loadingMoreComments,
+    loadMoreComments,
     postComment,
     share,
     saved,
@@ -207,7 +210,7 @@ export default function EngagementBar({
               <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
           ) : comments.length > 0 ? (
-            <div className="flex flex-col gap-3 max-h-64 overflow-y-auto no-scrollbar">
+            <div className="flex flex-col gap-3">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2">
                   <div className="relative w-7 h-7 rounded-full bg-surface-dark border border-white/10 overflow-hidden flex-shrink-0">
@@ -228,6 +231,15 @@ export default function EngagementBar({
                   </div>
                 </div>
               ))}
+              {commentsHasMore && (
+                <button
+                  onClick={loadMoreComments}
+                  disabled={loadingMoreComments}
+                  className="self-center text-primary text-xs font-bold hover:underline disabled:opacity-50 mt-1"
+                >
+                  {loadingMoreComments ? "Chargement..." : "Voir plus de commentaires"}
+                </button>
+              )}
             </div>
           ) : (
             <p className="text-gray-500 text-xs text-center py-2">Aucun commentaire. Soyez le premier !</p>

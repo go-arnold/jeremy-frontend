@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { isValidImageSrc } from "@/lib/image-utils";
+import { isValidImageSrc, toSecureImageUrl } from "@/lib/image-utils";
 
 function PhotoPlaceholder() {
   return (
@@ -50,10 +50,22 @@ export default function ContentImage({
     setFailed(!isValidImageSrc(src));
   }
 
+  // Callers that need this wrapper to fill an ancestor pass their own `absolute inset-0` in
+  // `className` (e.g. an outer div with a fixed aspect-ratio). Forcing `relative` on top of that
+  // put two conflicting `position` utilities on the same element — Tailwind resolves that by CSS
+  // source order, not by class-attribute order, so which one actually won was undefined and
+  // frequently left this div with no explicit position *or* size: `inset-0` does nothing without
+  // `absolute`/`fixed`, and an absolutely-positioned `<Image fill>` child doesn't contribute to a
+  // parent's intrinsic size, so the wrapper collapsed to 0×0 and the image never appeared (and in
+  // some layouts, `absolute` still "won" but positioned relative to a distant ancestor instead of
+  // the intended one, escaping its box and overlapping unrelated UI). Only fall back to `relative`
+  // when the caller hasn't already supplied a position of their own.
+  const hasOwnPosition = /(^|\s)(absolute|fixed|relative|sticky)(\s|$)/.test(className);
+  const positionClass = hasOwnPosition ? "" : "relative";
   const wrapperClassName =
     variant === "responsive"
-      ? `relative w-full aspect-[4/3] overflow-hidden ${className}`
-      : `relative overflow-hidden ${className}`;
+      ? `${positionClass} w-full aspect-[4/3] overflow-hidden ${className}`.replace(/\s+/g, " ").trim()
+      : `${positionClass} overflow-hidden ${className}`.replace(/\s+/g, " ").trim();
 
   if (failed) {
     return (
@@ -66,7 +78,7 @@ export default function ContentImage({
   return (
     <div className={wrapperClassName}>
       <Image
-        src={src!}
+        src={toSecureImageUrl(src!)}
         alt={alt}
         fill
         sizes={sizes}

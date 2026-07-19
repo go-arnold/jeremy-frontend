@@ -84,7 +84,7 @@ export default async function EvenementDetailPage({ params }: Props) {
           <ShareEventWidget title={event.title} slug={event.slug} />
         </div>
         <SimilarEvents events={similar} />
-        <BookingWidget slug={event.slug} price={event.price} variant="mobile" />
+        <BookingWidget price={event.price} variant="mobile" />
       </main>
 
       {/* ══════════════════════════════════════
@@ -126,7 +126,6 @@ export default async function EvenementDetailPage({ params }: Props) {
 
               {/* Booking CTA */}
               <BookingWidget
-                slug={event.slug}
                 price={event.price}
                 date={event.date}
                 time={event.time}
@@ -239,6 +238,8 @@ function EventInfoGridDesktop({ event }: { event: EventDetail }) {
 
 // ── About desktop ───────────────────────────────────
 function EventAboutDesktop({ about }: { about: string }) {
+  if (!about.trim()) return null;
+
   return (
     <section>
       <h2 className="text-2xl font-black text-[#F0EDE8] mb-4">À propos</h2>
@@ -249,6 +250,8 @@ function EventAboutDesktop({ about }: { about: string }) {
 
 // ── Schedule desktop ────────────────────────────────
 function EventScheduleDesktop({ items }: { items: EventScheduleItem[] }) {
+  if (items.length === 0) return null;
+
   return (
     <section>
       <h2 className="text-2xl font-black text-[#F0EDE8] mb-5">Programme</h2>

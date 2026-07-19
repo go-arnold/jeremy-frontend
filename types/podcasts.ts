@@ -1,60 +1,25 @@
-export type PodcastCategory =
-  | "Tout"
-  | "Artistes"
-  | "Société"
-  | "Histoire"
-  | "Entrepreneuriat Créatif"
-  | "Environnement"
-  | "Économie"
-  | "Innovation"
-  | "Santé";
+// Real EpisodeListSerializer/EpisodeDetailSerializer send freeform category strings (series
+// title, e.g. "Voix du Kivu") that never matched this original closed set at all — widened to
+// `string` rather than pretending it's an enum (same fix as EventCategory).
+export type PodcastCategory = string;
 
-// ── /podcasts — épisodes liste ────────────────────────────────────────────────
-
-// Épisode hero "À la une" (grand format 16/10)
-export interface FeaturedEpisode {
+// ── /podcasts — liste d'épisodes ──────────────────────────────────────────────
+// Single shape shared by the featured card, the compact "Récents" preview (mobile carousel +
+// desktop sidebar) and the expanded/filtered list — these all render the same fields, so unlike
+// the four near-duplicate interfaces this replaces, there's no separate FeaturedEpisode/
+// SelectionEpisode/RecentEpisode/LatestPickEpisode with their own unsafe `as unknown as` bridging.
+export interface PodcastListItem {
   id: string;
   slug: string;
   title: string;
-  description: string;
   image: string;
+  category: PodcastCategory;
   duration: string;       // "52 min"
-}
-
-// Épisode "Sélection" (grand format plein largeur h-[300px])
-export interface SelectionEpisode {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  image: string;
-  category: PodcastCategory;
-  duration: string;
-  host: string;           // "Sarah M."
-}
-
-// Épisode "Récents" (liste avec vignette carrée + play button)
-export interface RecentEpisode {
-  id: string;
-  slug: string;
-  title: string;
-  guest: string;          // "Invité : Akram Idriss"
-  image: string;
-  category: PodcastCategory;
-  duration: string;       // "28 min"
-  language: string;       // "FR" | "Français"
-}
-
-// Épisode "Sélection récente" (layout horizontal avec add_circle)
-export interface LatestPickEpisode {
-  id: string;
-  slug: string;
-  title: string;
-  guest: string;          // "Invitée : Imani K. • Fondatrice de KivuTech"
-  image: string;
-  category: PodcastCategory;
-  duration: string;       // "45 min"
+  guestNames: string;     // joined guest names, "" if none listed
+  episodeNumber?: number;
+  seasonNumber?: number;
   publishedAt: string;    // "Il y a 2 jours"
+  isFeatured?: boolean;
 }
 
 // ── /podcasts/[slug] — épisode détail ────────────────────────────────────────
