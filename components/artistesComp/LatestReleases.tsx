@@ -1,68 +1,86 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Release } from "@/types/artistes";
+import ArtisteSectionEmptyState from "./ArtisteSectionEmptyState";
+
+const PAGE_SIZE = 4;
 
 interface Props {
   releases: Release[];
 }
 
 export default function LatestReleases({ releases }: Props) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visibleReleases = releases.slice(0, visibleCount);
+  const hasMore = visibleCount < releases.length;
+
   return (
-    <section className="flex flex-col">
-      <div className="flex items-center justify-between px-5 pb-4 pt-10">
-        <h3 className="font-display text-xl font-bold text-white tracking-tight">
-          Dernieres Sorties
+    <section className="flex flex-col px-5">
+      <div className="flex items-center justify-between pb-3 pt-8">
+        <h3 className="font-display text-lg font-bold text-white tracking-tight">
+          Dernières Sorties
         </h3>
-        <Link href="#" className="text-secondary-accent text-sm font-medium">
+        <Link href="/sorties-premieres" className="text-secondary-accent text-xs font-bold">
           Voir tout
         </Link>
       </div>
 
-      <div className="w-full overflow-x-auto no-scrollbar pb-4 pl-5">
-        <div className="flex gap-4 pr-5 min-w-max">
-          {releases.map((release) => (
-            <ReleaseCard key={release.id} release={release} />
-          ))}
-        </div>
-      </div>
+      {releases.length === 0 ? (
+        <ArtisteSectionEmptyState icon="album" message="Aucune sortie pour le moment. Revenez bientôt !" />
+      ) : (
+        <>
+          <div className="flex flex-col gap-2.5">
+            {visibleReleases.map((release) => (
+              <ReleaseRow key={release.id} release={release} />
+            ))}
+          </div>
+          {hasMore && (
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="mt-3 w-full h-10 rounded-xl border border-white/10 text-xs font-bold text-[#8A8178] hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Voir plus
+            </button>
+          )}
+        </>
+      )}
     </section>
   );
 }
 
-function ReleaseCard({ release }: { release: Release }) {
+function ReleaseRow({ release }: { release: Release }) {
   return (
-    <div className="group relative flex w-[85vw] md:w-[380px] bg-surface-dark rounded-xl overflow-hidden shadow-lg border border-white/5 hover:border-white/10 transition-colors">
-      {/* Pochette */}
-      <div
-        className="w-32 shrink-0 bg-cover bg-center"
-        style={{ backgroundImage: `url('${release.coverImage}')` }}
-      >
-        <div className="w-full h-full flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-all">
-          <span className="material-symbols-outlined text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg">
+    <Link
+      href={release.href}
+      className="group flex items-center gap-3 rounded-xl p-2 bg-surface-dark border border-white/5 hover:border-white/10 transition-colors"
+    >
+      <div className="relative size-16 shrink-0 rounded-lg overflow-hidden bg-black/30">
+        {release.coverImage && (
+          <Image src={release.coverImage} alt={release.title} fill sizes="64px" className="object-cover" />
+        )}
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+          <span className="material-symbols-outlined text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity">
             play_circle
           </span>
         </div>
       </div>
 
-      {/* Infos */}
-      <div className="flex flex-col justify-center p-4 flex-1 bg-[#12223ce6]">
-        <span className="text-secondary-accent text-xs font-bold tracking-wider mb-1">
+      <div className="flex-1 min-w-0">
+        <span className="text-secondary-accent text-[10px] font-bold tracking-wider">
           {release.year} • {release.type}
         </span>
-        <h4 className="font-display text-white text-lg font-bold leading-tight mb-1 truncate">
+        <h4 className="font-display text-white text-sm font-bold leading-tight truncate">
           {release.title}
         </h4>
-        <p className="text-gray-400 text-sm mb-3 truncate">
+        <p className="text-gray-400 text-xs truncate">
           {release.featuring ?? release.producer}
         </p>
-        <div className="flex items-center gap-3">
-          <button className="size-8 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-primary hover:text-white transition-colors">
-            <span className="material-symbols-outlined text-lg">play_arrow</span>
-          </button>
-          <button className="size-8 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors">
-            <span className="material-symbols-outlined text-lg">add</span>
-          </button>
-        </div>
       </div>
-    </div>
+
+      <span className="material-symbols-outlined text-[#8A8178] text-lg shrink-0">chevron_right</span>
+    </Link>
   );
 }
