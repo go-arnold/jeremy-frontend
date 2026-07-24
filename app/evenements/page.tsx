@@ -2,10 +2,21 @@ import { upcomingEvents as mockedUpcoming, eventCities as mockedCities } from "@
 import EventsPageClient from "@/components/evenements/EventsPageClient";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiEventToEvent } from "@/lib/mappers";
+import { fetchFeaturedEvent } from "@/lib/services/events";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface CityApiItem {
   name?: string;
+}
+
+async function getFeaturedEvent() {
+  try {
+    return await fetchFeaturedEvent();
+  } catch {
+    // No curated featured event (or the endpoint failed) — EventsPageClient falls back to its
+    // own `isFeatured`/first-result heuristic over the general list.
+    return null;
+  }
 }
 
 export default async function EvenementsPage() {
@@ -30,6 +41,8 @@ export default async function EvenementsPage() {
     cities = mockedCities;
   }
 
+  const featuredEvent = await getFeaturedEvent();
+
   if (events.length === 0) {
     return (
       <div className="pt-24 pb-16 px-4 max-w-7xl mx-auto w-full">
@@ -47,6 +60,7 @@ export default async function EvenementsPage() {
       cities={cities.length > 0 ? cities : mockedCities}
       initialEvents={events}
       initialHasMore={hasMore}
+      initialFeatured={featuredEvent}
     />
   );
 }

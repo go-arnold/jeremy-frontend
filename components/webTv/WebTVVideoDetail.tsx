@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import VideoPlayer from "@/components/media/VideoPlayer";
 import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
@@ -8,6 +8,7 @@ import EngagementBar from "@/components/ui/EngagementBar";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLiveRoom } from "@/hooks/useLiveRoom";
 import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+import { recordVideoView } from "@/lib/services/webtv";
 
 // Past this length, the description gets truncated on mobile with a "Voir plus" toggle instead
 // of pushing the player/engagement bar far below the fold.
@@ -47,6 +48,17 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
   const [descExpanded, setDescExpanded] = useState(false);
   useConsumptionHeartbeat(playing, "webtv", video.numericId, video.title, video.thumbnail);
 
+  // View-count increment — call once when playback actually starts, not on every play/pause
+  // toggle (both players' `onPlay` fire on every resume, not just the first play).
+  const hasRecordedViewRef = useRef(false);
+  const handlePlay = () => {
+    setPlaying(true);
+    if (!hasRecordedViewRef.current) {
+      hasRecordedViewRef.current = true;
+      recordVideoView(video.slug).catch(() => {});
+    }
+  };
+
   const isLongDescription = (video.description?.length || 0) > DESCRIPTION_TRUNCATE_LENGTH;
 
   return (
@@ -65,7 +77,7 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
           title={video.title}
           status="live"
           thumbnail={video.thumbnail}
-          onPlay={() => setPlaying(true)}
+          onPlay={handlePlay}
           onPause={() => setPlaying(false)}
           hideTitleBar
         />
@@ -74,7 +86,7 @@ export default function WebTVVideoDetail({ video }: { video: WebTVVideo }) {
           src={video.videoUrl || ""}
           title={video.title}
           thumbnail={video.thumbnail}
-          onPlay={() => setPlaying(true)}
+          onPlay={handlePlay}
           onPause={() => setPlaying(false)}
           hideTitleBar
         />

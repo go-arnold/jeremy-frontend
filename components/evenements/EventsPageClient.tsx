@@ -29,6 +29,10 @@ interface Props {
   cities: EventCity[];
   initialEvents: MappedEvent[];
   initialHasMore: boolean;
+  /** The backend's actual curated pick (`GET /events/featured/`) — preferred over the
+   * `isFeatured`/first-result heuristic below, which only sees whatever page of the general list
+   * is currently loaded. */
+  initialFeatured?: MappedEvent | null;
 }
 
 /** Distinct months actually present in the loaded events, sorted chronologically — drives
@@ -41,7 +45,7 @@ function useAvailableMonths(events: MappedEvent[]): MonthOption[] {
   }, [events]);
 }
 
-export default function EventsPageClient({ cities, initialEvents, initialHasMore }: Props) {
+export default function EventsPageClient({ cities, initialEvents, initialHasMore, initialFeatured }: Props) {
   const [activeCity, setActiveCity] = useState<EventCity>("Tous");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [showAllEvents, setShowAllEvents] = useState(false);
@@ -55,7 +59,7 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
   const desktopResultsRef = useRef<HTMLDivElement>(null);
 
   const months = useAvailableMonths(events);
-  const featured = events.find((e) => e.isFeatured) || events[0];
+  const featured = initialFeatured || events.find((e) => e.isFeatured) || events[0];
   const upcoming = events.filter((e) => e.id !== featured?.id);
 
   const loadMore = async (page: number) => {
