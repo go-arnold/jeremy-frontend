@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getArtisteDetail as getMockedArtisteDetail } from "@/data/artistes";
-import { apiFetch } from "@/lib/api-client";
-import { mapApiArtistDetailToArtisteDetail } from "@/lib/mappers";
-import type { ApiArtistDetail } from "@/lib/api-types";
+import { fetchArtist } from "@/lib/services/artists";
 
 import ArtisteDetailHero from "@/components/artistesComp/ArtisteDetailHero";
 import LatestReleases from "@/components/artistesComp/LatestReleases";
@@ -19,8 +17,7 @@ interface Props {
 
 async function getArtiste(slug: string) {
   try {
-    const data = await apiFetch<ApiArtistDetail>(`/api/v1/artists/${slug}/`);
-    return mapApiArtistDetailToArtisteDetail(data);
+    return await fetchArtist(slug);
   } catch (error) {
     console.error(`Failed to fetch artist ${slug}:`, error);
     return null;

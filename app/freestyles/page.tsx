@@ -1,9 +1,12 @@
 import { Suspense } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+import { mapApiVideoToWebTVVideo } from '@/lib/mappers';
+import ContentImage from '@/components/ui/ContentImage';
 import type { ApiVideo } from '@/lib/api-types';
+
+type WebTVVideo = ReturnType<typeof mapApiVideoToWebTVVideo>;
 
 async function getFreestyles() {
   try {
@@ -11,26 +14,24 @@ async function getFreestyles() {
       `/api/v1/webtv/videos/?category=freestyles&page_size=50`,
       { next: { revalidate: 3600 } }
     );
-    return res;
+    return { ...res, results: res.results.map(mapApiVideoToWebTVVideo) };
   } catch {
-    return { results: [] as ApiVideo[], count: 0 };
+    return { results: [] as WebTVVideo[], count: 0 };
   }
 }
 
-function FreestyleCard({ video }: { video: ApiVideo }) {
+function FreestyleCard({ video }: { video: WebTVVideo }) {
   return (
     <Link href={`/web-tv/${video.slug}`}>
       <div className="group cursor-pointer overflow-hidden rounded-xl">
         <div className="relative aspect-video bg-slate-900">
-          {video.thumbnail_url && (
-            <Image
-              src={video.thumbnail_url}
-              alt={video.title}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-cover group-hover:scale-105 transition-transform"
-            />
-          )}
+          <ContentImage
+            src={video.thumbnail}
+            alt={video.title}
+            className="absolute inset-0"
+            imageClassName="group-hover:scale-105 transition-transform"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
           {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
             <span className="material-symbols-outlined text-5xl text-white drop-shadow-lg">

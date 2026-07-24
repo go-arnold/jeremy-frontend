@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import GenreFilter from "@/components/artistesComp/GenreFilter";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiArtistToArtiste } from "@/lib/mappers";
+import { fetchArtists } from "@/lib/services/artists";
 import { artistes as mockedArtistes } from "@/data/artistes";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
 import type { Artiste, GenreItem } from "@/types/artistes";
-import type { ApiArtistList } from "@/lib/api-types";
 
 interface ArtistesPageClientProps {
   initialArtistes: Artiste[];
@@ -38,12 +36,8 @@ export default function ArtistesPageClient({
     setSelectedGenreSlug(genreSlug);
     setLoadingLoadingMore(true);
     try {
-      const url = genreSlug
-        ? `/api/v1/artists/?genre=${genreSlug}&page=1&page_size=15`
-        : `/api/v1/artists/?page=1&page_size=15`;
-      const data = await apiFetch<PaginatedResponse<ApiArtistList>>(url);
-      const mapped = data.results.map(mapApiArtistToArtiste);
-      setArtistes(mapped);
+      const data = await fetchArtists(1, 15, genreSlug || undefined);
+      setArtistes(data.results);
       setHasMore(!!data.next);
       setTotalArtistsCount(data.count);
 
@@ -75,12 +69,8 @@ export default function ArtistesPageClient({
   const loadMore = async (page: number) => {
     setLoadingLoadingMore(true);
     try {
-      const url = selectedGenreSlug
-        ? `/api/v1/artists/?genre=${selectedGenreSlug}&page=${page}&page_size=15`
-        : `/api/v1/artists/?page=${page}&page_size=15`;
-      const data = await apiFetch<PaginatedResponse<ApiArtistList>>(url);
-      const newArtistes = data.results.map(mapApiArtistToArtiste);
-      setArtistes((prev) => [...prev, ...newArtistes]);
+      const data = await fetchArtists(page, 15, selectedGenreSlug || undefined);
+      setArtistes((prev) => [...prev, ...data.results]);
       setHasMore(!!data.next);
       setTotalArtistsCount(data.count);
     } catch (error) {
