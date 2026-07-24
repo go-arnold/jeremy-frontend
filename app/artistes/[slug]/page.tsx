@@ -8,6 +8,7 @@ import LatestReleases from "@/components/artistesComp/LatestReleases";
 import KivuTV from "@/components/artistesComp/KivuTV";
 import PhotoGallery from "@/components/artistesComp/PhotoGallery";
 import ArtisteDetailCTA from "@/components/artistesComp/ArtisteDetailCTA";
+import EngagementBar from "@/components/ui/EngagementBar";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,17 @@ export default async function ArtisteDetailPage({ params }: Props) {
         <LatestReleases releases={artiste.releases} variant="mobile" />
         <KivuTV videos={artiste.videos} variant="mobile" />
         <PhotoGallery photos={artiste.gallery} variant="mobile" />
+
+        <div className="px-5 pt-2">
+          <EngagementBar
+            resourceType="artists"
+            id={artiste.id}
+            initialLikeCount={artiste.likeCount}
+            initialCommentCount={artiste.commentCount}
+            enableSave={false}
+            redirectTo={`/artistes/${artiste.id}`}
+          />
+        </div>
       </div>
 
       {/* ══════════════════════════════════════
@@ -96,6 +108,21 @@ export default async function ArtisteDetailPage({ params }: Props) {
             style={{ background: "rgba(18,34,60,0.7)", border: "1px solid rgba(230,48,18,0.15)" }}
           >
             <ArtisteDetailCTA artistId={artiste.artistId} artistSlug={artiste.id} />
+          </div>
+
+          {/* Engagement — aimer / commenter / partager */}
+          <div
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
+          >
+            <EngagementBar
+              resourceType="artists"
+              id={artiste.id}
+              initialLikeCount={artiste.likeCount}
+              initialCommentCount={artiste.commentCount}
+              enableSave={false}
+              redirectTo={`/artistes/${artiste.id}`}
+            />
           </div>
 
           {/* Stats */}

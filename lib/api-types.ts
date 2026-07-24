@@ -70,6 +70,10 @@ export interface ApiArtistDetail {
   releases?: ApiRelease[];
   videos?: ApiArtistVideo[];
   gallery?: ApiArtistPhoto[];
+  // Spec declares these `type: string` (unlike every other domain's like_count/comment_count,
+  // which are `number`) — coerced in the mapper rather than trusted as-is.
+  like_count?: string | number;
+  comment_count?: string | number;
 }
 
 export interface ApiCategory {

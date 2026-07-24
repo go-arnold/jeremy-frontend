@@ -2,6 +2,7 @@ import LivePlayer, { LivePlayerProvider } from "@/components/radio-en-direct/Liv
 import ProgramGrid from "@/components/radio-en-direct/ProgramGrid";
 import LiveChat from "@/components/radio-en-direct/LiveChat";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
+import EngagementBar from "@/components/ui/EngagementBar";
 import { membershipBanner as mockedBanner, programSlots as mockedSlots, liveShow as mockedShow } from "@/data/radio";
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiRadioToRadioProgram } from "@/lib/mappers";
@@ -108,6 +109,13 @@ export default async function RadioEnDirectPage() {
           ══════════════════════════════════════════ */}
           <div className="lg:hidden">
             <LivePlayer variant="mobile" />
+            <div className="px-4">
+              <EngagementBar
+                resourceType="radio/program"
+                id={liveShow.numericId ?? ""}
+                redirectTo="/radio-en-direct"
+              />
+            </div>
             <ProgramGrid slots={programSlots} />
             <MembershipBannerWidget banner={mockedBanner} />
           </div>
@@ -142,6 +150,16 @@ export default async function RadioEnDirectPage() {
 
               {/* ── Colonne droite : Programme + Chat ── */}
               <div className="flex flex-col gap-5 sticky top-24">
+                <div
+                  className="rounded-2xl p-5"
+                  style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
+                >
+                  <EngagementBar
+                    resourceType="radio/program"
+                    id={liveShow.numericId ?? ""}
+                    redirectTo="/radio-en-direct"
+                  />
+                </div>
                 <ProgramGrid slots={programSlots} />
                 <LiveChat messages={displayChat} />
               </div>
