@@ -20,6 +20,21 @@ export interface PodcastListItem {
   seasonNumber?: number;
   publishedAt: string;    // "Il y a 2 jours"
   isFeatured?: boolean;
+  /** Slug of the podcast show this episode belongs to — absent on older responses that only
+   * ever sent `series_title`, not a slug. */
+  seriesSlug?: string;
+}
+
+// ── /podcasts/shows/[slug] — podcast show (série) ────────────────────────────
+export interface PodcastShow {
+  id: string;
+  numericId?: number | null;
+  slug: string;
+  title: string;
+  description: string;
+  coverImage: string;
+  category: PodcastCategory;
+  episodeCount: number;
 }
 
 // ── /podcasts/[slug] — épisode détail ────────────────────────────────────────
@@ -68,4 +83,7 @@ export interface PodcastEpisode {
   guest: EpisodeGuest;
   guests?: EpisodeGuest[];
   relatedEpisodes: RelatedEpisode[];
+  /** Slug of the podcast show this episode belongs to — lets `subtitle` (the show name) link to
+   * `/podcasts/shows/[seriesSlug]` instead of being plain text. */
+  seriesSlug?: string;
 }

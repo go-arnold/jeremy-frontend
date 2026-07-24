@@ -186,9 +186,18 @@ function EpisodeCoverPanel({ episode }: { episode: PodcastEpisode }) {
           <h1 className="text-xl font-black leading-tight text-white tracking-tight">
             {episode.title}
             {episode.subtitle && (
-              <span className="block text-white/60 italic font-semibold text-base mt-0.5">
-                {episode.subtitle}
-              </span>
+              episode.seriesSlug ? (
+                <Link
+                  href={`/podcasts/shows/${episode.seriesSlug}`}
+                  className="block text-white/60 italic font-semibold text-base mt-0.5 hover:text-primary hover:underline transition-colors"
+                >
+                  {episode.subtitle}
+                </Link>
+              ) : (
+                <span className="block text-white/60 italic font-semibold text-base mt-0.5">
+                  {episode.subtitle}
+                </span>
+              )
             )}
           </h1>
           <div className="flex flex-wrap gap-1.5">

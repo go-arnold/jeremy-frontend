@@ -38,9 +38,18 @@ export default function EpisodeHero({ episode }: { episode: PodcastEpisode }) {
           {episode.subtitle && (
             <>
               <br />
-              <span className="text-white/70 italic font-semibold text-2xl">
-                {episode.subtitle}
-              </span>
+              {episode.seriesSlug ? (
+                <Link
+                  href={`/podcasts/shows/${episode.seriesSlug}`}
+                  className="text-white/70 italic font-semibold text-2xl hover:text-primary hover:underline transition-colors"
+                >
+                  {episode.subtitle}
+                </Link>
+              ) : (
+                <span className="text-white/70 italic font-semibold text-2xl">
+                  {episode.subtitle}
+                </span>
+              )}
             </>
           )}
         </h1>

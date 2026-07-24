@@ -170,13 +170,31 @@ export interface ApiEpisode {
   play_count?: number;
   published_at?: string;
   series_title?: string;
-  series?: { title?: string };
+  // `EpisodeList` sends this flat; `EpisodeDetail` only nests it under `series.slug` — both
+  // read here since a single merged type covers both shapes.
+  series_slug?: string;
+  series?: { title?: string; slug?: string; cover_url?: string };
   guests?: (string | ApiEpisodeGuest)[];
   audio_url?: string;
   transcript?: string;
   like_count?: number;
   comment_count?: number;
   is_featured?: boolean;
+}
+
+// ── GET /podcasts/, /podcasts/{slug}/ — podcast show ("series") ─────────────
+export interface ApiPodcastSeries {
+  id: number;
+  slug: string;
+  title: string;
+  description?: string;
+  cover_url?: string;
+  audio_url?: string;
+  duration?: string;
+  category?: string;
+  is_series?: boolean;
+  is_featured?: boolean;
+  episode_count?: number;
 }
 
 export interface ApiVideo {
