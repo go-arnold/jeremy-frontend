@@ -1,28 +1,72 @@
 "use client";
 
+import { createContext, useContext, type ReactNode } from "react";
 import type { LiveShow } from "@/types/radio";
 import LiveChat from "./LiveChat";
 import { useAudioLiveStream } from "@/hooks/useAudioLiveStream";
 import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+import { useLiveLoadingMessages } from "@/hooks/useLiveLoadingMessages";
 import { shareContent } from "@/lib/share";
 
-interface Props {
+interface LivePlayerState {
   show: LiveShow;
-  /** The page mounts one variant or the other behind a `lg:` breakpoint (see
-   * app/radio-en-direct/page.tsx) rather than toggling visibility on a single instance, because
-   * the desktop layout is a grid cell sized against a sidebar — it can't just be a CSS-hidden
-   * sibling of the mobile markup without breaking that grid sizing. Both variants therefore still
-   * run their own useAudioLiveStream/useConsumptionHeartbeat (pre-existing behavior, unchanged);
-   * merging into one file removes the duplicated JSX/logic source, not the dual mount. */
-  variant?: "mobile" | "desktop";
+  audioRef: ReturnType<typeof useAudioLiveStream>["audioRef"];
+  isLoading: boolean;
+  hasError: boolean;
+  isPlaying: boolean;
+  loadingMessage: string;
+  togglePlay: () => void;
+  setVolume: (v: number) => void;
+  retry: () => void;
 }
 
-export default function LivePlayer({ show, variant = "mobile" }: Props) {
+const LivePlayerContext = createContext<LivePlayerState | null>(null);
+
+function useLivePlayerState(): LivePlayerState {
+  const ctx = useContext(LivePlayerContext);
+  if (!ctx) throw new Error("LivePlayer must be rendered inside a LivePlayerProvider");
+  return ctx;
+}
+
+/**
+ * Owns the single HLS stream/audio element for the whole radio page — mount this ONCE, wrapping
+ * both the mobile and desktop layout blocks. Previously `app/radio-en-direct/page.tsx` mounted
+ * `<LivePlayer variant="mobile">` and `<LivePlayer variant="desktop">` as two separate component
+ * instances (one per breakpoint, CSS-hidden), each calling `useAudioLiveStream` itself — meaning
+ * two independent `<audio>` elements and two parallel HLS connections ran at once regardless of
+ * which one was actually visible. `LivePlayer` below is now a pure presentational reader of this
+ * context, safe to render as many times as there are visual slots (exactly one per breakpoint,
+ * same as before) without ever creating a second stream.
+ */
+export function LivePlayerProvider({ show, children }: { show: LiveShow; children: ReactNode }) {
   const { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry } = useAudioLiveStream(
     show.hlsUrl,
     show.isPlaying
   );
   useConsumptionHeartbeat(isPlaying, "radio", show.numericId, show.title, show.imageUrl);
+  const loadingMessage = useLiveLoadingMessages(isLoading && !hasError);
+
+  return (
+    <LivePlayerContext.Provider
+      value={{ show, audioRef, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry }}
+    >
+      <audio ref={audioRef} />
+      {children}
+    </LivePlayerContext.Provider>
+  );
+}
+
+interface Props {
+  /** The page mounts this once per breakpoint (see app/radio-en-direct/page.tsx) purely for
+   * layout — the desktop shape is a grid cell sized against a sidebar, the mobile shape is a
+   * simple stacked layout with the chat folded in below. Both read the same shared audio state
+   * from LivePlayerProvider, so there is only ever one real stream regardless of how many of
+   * these are mounted. */
+  variant?: "mobile" | "desktop";
+}
+
+export default function LivePlayer({ variant = "mobile" }: Props) {
+  const { show, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry } = useLivePlayerState();
 
   const handleShare = () => {
     shareContent({ title: show.title, url: "/radio-en-direct" }).catch(() => {});
@@ -34,8 +78,6 @@ export default function LivePlayer({ show, variant = "mobile" }: Props) {
         className="relative w-full rounded-2xl overflow-hidden shadow-2xl group"
         style={{ minHeight: "600px" }}
       >
-        <audio ref={audioRef} />
-
         {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -100,7 +142,7 @@ export default function LivePlayer({ show, variant = "mobile" }: Props) {
                       </button>
                     </>
                   ) : isLoading ? (
-                    "Connexion..."
+                    <span className="text-text-muted normal-case font-medium">{loadingMessage}</span>
                   ) : (
                     "Flux en direct"
                   )}
@@ -154,8 +196,6 @@ export default function LivePlayer({ show, variant = "mobile" }: Props) {
 
   return (
     <section className="px-4 mb-2">
-      <audio ref={audioRef} />
-
       <div className= "text-[#ffffff] font-black text-xl uppercase py-4 tracking-wider">
         <h1> RADIO EN DIRECT</h1>
       </div>
@@ -269,7 +309,7 @@ export default function LivePlayer({ show, variant = "mobile" }: Props) {
             {hasError ? (
               <span className="text-primary">Flux indisponible</span>
             ) : isLoading ? (
-              "Connexion..."
+              <span className="text-text-muted normal-case font-medium">{loadingMessage}</span>
             ) : (
               "Flux en direct"
             )}

@@ -1,4 +1,4 @@
-import LivePlayer from "@/components/radio-en-direct/LivePlayer";
+import LivePlayer, { LivePlayerProvider } from "@/components/radio-en-direct/LivePlayer";
 import ProgramGrid from "@/components/radio-en-direct/ProgramGrid";
 import LiveChat from "@/components/radio-en-direct/LiveChat";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
@@ -94,62 +94,64 @@ export default async function RadioEnDirectPage() {
 
   return (
     <div className="min-h-screen">
-      <main className="
-        /* Mobile : colonne unique, centré */
-        pt-20 max-w-md mx-auto px-0
+      <LivePlayerProvider show={toLiveShow(liveShow)}>
+        <main className="
+          /* Mobile : colonne unique, centré */
+          pt-20 max-w-md mx-auto px-0
 
-        /* Desktop : pleine largeur, max-w-7xl */
-        lg:max-w-7xl lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
-      ">
+          /* Desktop : pleine largeur, max-w-7xl */
+          lg:max-w-7xl lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
+        ">
 
-        {/* ══════════════════════════════════════════
-            MOBILE : empilement vertical (inchangé)
-        ══════════════════════════════════════════ */}
-        <div className="lg:hidden">
-          <LivePlayer show={toLiveShow(liveShow)} variant="mobile" />
-          <ProgramGrid slots={programSlots} />
-          <MembershipBannerWidget banner={mockedBanner} />
-        </div>
+          {/* ══════════════════════════════════════════
+              MOBILE : empilement vertical (inchangé)
+          ══════════════════════════════════════════ */}
+          <div className="lg:hidden">
+            <LivePlayer variant="mobile" />
+            <ProgramGrid slots={programSlots} />
+            <MembershipBannerWidget banner={mockedBanner} />
+          </div>
 
-        {/* ══════════════════════════════════════════
-            DESKTOP : layout 2 colonnes
-        ══════════════════════════════════════════ */}
-        <div className="hidden mt-10 lg:flex lg:flex-col lg:gap-6">
+          {/* ══════════════════════════════════════════
+              DESKTOP : layout 2 colonnes
+          ══════════════════════════════════════════ */}
+          <div className="hidden mt-10 lg:flex lg:flex-col lg:gap-6">
 
-          {/* Titre de page */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E63012] opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#E63012]" />
+            {/* Titre de page */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E63012] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#E63012]" />
+                </span>
+                <h1 className="text-3xl font-black tracking-tight text-[#F0EDE8] uppercase">
+                  Radio <span className="text-[#E63012]">En Direct</span>
+                </h1>
+              </div>
+              <div className="kivu-divider flex-1" />
+              <span className="text-[#8A8178] text-sm font-medium">
+                {liveShow.listenerCount} auditeurs en ligne
               </span>
-              <h1 className="text-3xl font-black tracking-tight text-[#F0EDE8] uppercase">
-                Radio <span className="text-[#E63012]">En Direct</span>
-              </h1>
             </div>
-            <div className="kivu-divider flex-1" />
-            <span className="text-[#8A8178] text-sm font-medium">
-              {liveShow.listenerCount} auditeurs en ligne
-            </span>
-          </div>
 
-          {/* ── Ligne principale : Player gauche + Sidebar droite ── */}
-          <div className="grid grid-cols-[1fr_400px] gap-6 items-start">
+            {/* ── Ligne principale : Player gauche + Sidebar droite ── */}
+            <div className="grid grid-cols-[1fr_400px] gap-6 items-start">
 
-            {/* ── Colonne gauche : LivePlayer ── */}
-            <LivePlayer show={toLiveShow(liveShow)} variant="desktop" />
+              {/* ── Colonne gauche : LivePlayer ── */}
+              <LivePlayer variant="desktop" />
 
-            {/* ── Colonne droite : Programme + Chat ── */}
-            <div className="flex flex-col gap-5 sticky top-24">
-              <ProgramGrid slots={programSlots} />
-              <LiveChat messages={displayChat} />
+              {/* ── Colonne droite : Programme + Chat ── */}
+              <div className="flex flex-col gap-5 sticky top-24">
+                <ProgramGrid slots={programSlots} />
+                <LiveChat messages={displayChat} />
+              </div>
             </div>
-          </div>
 
-          {/* ── Membership Banner pleine largeur ── */}
-          <MembershipBannerWidget banner={mockedBanner} />
-        </div>
-      </main>
+            {/* ── Membership Banner pleine largeur ── */}
+            <MembershipBannerWidget banner={mockedBanner} />
+          </div>
+        </main>
+      </LivePlayerProvider>
     </div>
   );
 }
