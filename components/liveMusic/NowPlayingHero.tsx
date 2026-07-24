@@ -1,20 +1,65 @@
 "use client";
 
+import { createContext, useContext, type ReactNode } from "react";
 import type { NowPlaying } from "@/types/liveMusic";
 import { useAudioLiveStream } from "@/hooks/useAudioLiveStream";
 import { useConsumptionHeartbeat } from "@/hooks/useConsumptionHeartbeat";
+import { useLiveLoadingMessages } from "@/hooks/useLiveLoadingMessages";
 
-export default function NowPlayingHero({ track }: { track: NowPlaying }) {
+interface NowPlayingHeroState {
+  track: NowPlaying;
+  audioRef: ReturnType<typeof useAudioLiveStream>["audioRef"];
+  isLoading: boolean;
+  hasError: boolean;
+  isPlaying: boolean;
+  loadingMessage: string;
+  togglePlay: () => void;
+  setVolume: (v: number) => void;
+  retry: () => void;
+}
+
+const NowPlayingHeroContext = createContext<NowPlayingHeroState | null>(null);
+
+function useNowPlayingHeroState(): NowPlayingHeroState {
+  const ctx = useContext(NowPlayingHeroContext);
+  if (!ctx) throw new Error("NowPlayingHero must be rendered inside a NowPlayingHeroProvider");
+  return ctx;
+}
+
+/**
+ * Owns the single HLS stream/audio element for the live-music page — mount this ONCE, wrapping
+ * both the mobile and desktop layout blocks. Previously `app/live-music/page.tsx` mounted
+ * `<NowPlayingHero>` twice (once inside a `lg:hidden` block, once inside a `hidden lg:block`
+ * block), each instance independently calling `useAudioLiveStream` — two `<audio>` elements and
+ * two parallel HLS connections regardless of breakpoint. `NowPlayingHero` below is now a pure
+ * presentational reader of this context, safe to render as many times as there are visual slots
+ * without ever creating a second stream — same pattern as LivePlayerProvider/LivePlayer in
+ * components/radio-en-direct/LivePlayer.tsx.
+ */
+export function NowPlayingHeroProvider({ track, children }: { track: NowPlaying; children: ReactNode }) {
   const { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry } = useAudioLiveStream(
     track.hlsUrl,
     track.isLive
   );
   useConsumptionHeartbeat(isPlaying, "live_music", track.numericId, track.title, track.coverImage);
+  const loadingMessage = useLiveLoadingMessages(isLoading && !hasError);
+
+  return (
+    <NowPlayingHeroContext.Provider
+      value={{ track, audioRef, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry }}
+    >
+      <audio ref={audioRef} />
+      {children}
+    </NowPlayingHeroContext.Provider>
+  );
+}
+
+export default function NowPlayingHero() {
+  const { track, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry } =
+    useNowPlayingHeroState();
 
   return (
     <section className="w-full px-6 lg:px-0 z-10 flex flex-col items-center lg:gap-6">
-      <audio ref={audioRef} />
-
       {/* Live badge */}
       <div className="flex items-center gap-2 mb-6 lg:mb-0 bg-black/40 border border-primary/30 rounded-full px-4 py-1.5 backdrop-blur-sm shadow-[0_0_15px_rgba(230,48,18,0.2)]">
         <span className="relative flex h-2.5 w-2.5">
@@ -100,6 +145,10 @@ export default function NowPlayingHero({ track }: { track: NowPlaying }) {
               </span>
             )}
           </button>
+        )}
+
+        {isLoading && !hasError && (
+          <p className="text-text-muted text-sm font-medium">{loadingMessage}</p>
         )}
 
         <div className="flex items-center gap-3 w-full px-2">

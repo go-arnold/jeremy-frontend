@@ -1,4 +1,4 @@
-import NowPlayingHero from "@/components/liveMusic/NowPlayingHero";
+import NowPlayingHero, { NowPlayingHeroProvider } from "@/components/liveMusic/NowPlayingHero";
 import LiveChat from "@/components/liveMusic/LiveChat";
 import ProgramSchedule from "@/components/liveMusic/ProgramSchedule";
 import EngagementBar from "@/components/ui/EngagementBar";
@@ -90,6 +90,7 @@ export default async function Page() {
 
   return (
     <div className="min-h-screen ">
+      <NowPlayingHeroProvider track={nowPlaying}>
       <main className="relative w-full">
 
         {/* ══════════════════════════════════════════
@@ -99,7 +100,7 @@ export default async function Page() {
           {/* Ambient glow */}
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-md h-[420px] bg-primary/10 blur-[120px] rounded-full pointer-events-none z-0 mix-blend-screen" />
 
-          <NowPlayingHero track={nowPlaying} />
+          <NowPlayingHero />
 
           <div className="px-6">
             <EngagementBar
@@ -154,7 +155,7 @@ export default async function Page() {
 
               {/* ── Col 1 : Now Playing ── */}
               <div className="sticky top-24 flex flex-col gap-6">
-                <NowPlayingHero track={nowPlaying} />
+                <NowPlayingHero />
                 <EngagementBar
                   resourceType="live_music/sessions"
                   id={slug}
@@ -178,6 +179,7 @@ export default async function Page() {
         </div>
 
       </main>
+      </NowPlayingHeroProvider>
     </div>
   );
 }

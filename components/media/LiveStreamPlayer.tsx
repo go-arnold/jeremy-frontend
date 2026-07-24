@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import type HlsType from 'hls.js';
+import { useLiveLoadingMessages } from '@/hooks/useLiveLoadingMessages';
 
 interface HlsErrorData {
   fatal: boolean;
@@ -220,6 +221,7 @@ export default function LiveStreamPlayer({
   };
 
   const isOffline = status === 'offline' || (!hlsUrl && status !== 'live');
+  const loadingMessage = useLiveLoadingMessages(isLoading && !isOffline && !hasError);
 
   return (
     <div
@@ -260,8 +262,9 @@ export default function LiveStreamPlayer({
 
         {/* Loading spinner */}
         {isLoading && !isOffline && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/50">
             <div className="w-12 h-12 border-4 border-white/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-text-muted text-sm font-medium">{loadingMessage}</p>
           </div>
         )}
 
