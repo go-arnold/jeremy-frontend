@@ -1,6 +1,6 @@
 import { Artiste, ArtisteDetail, Release, VideoItem, GalleryPhoto } from "@/types/artistes";
 import { BlogPost, BlogCard, BlogCategory, ArticleBlock, Comment } from "@/types/blog";
-import { PodcastEpisode, PodcastListItem } from "@/types/podcasts"
+import { PodcastEpisode, PodcastListItem, PodcastShow } from "@/types/podcasts"
 import type { HeroArticle, NewsArticle } from "@/types/magazine";
 import type { EmissionStatus } from "@/types/emissions";
 import type { EventDetail } from "@/types/evenements";
@@ -19,6 +19,7 @@ import type {
   ApiEventSchedule,
   ApiEpisode,
   ApiEpisodeGuest,
+  ApiPodcastSeries,
   ApiVideo,
   ApiRadioOrLiveProgram,
   ApiCommunityPost,
@@ -301,6 +302,7 @@ export function mapApiPodcastToEpisode(apiEpisode: ApiEpisode): PodcastListItem 
     episodeNumber: apiEpisode.episode_number,
     seasonNumber: apiEpisode.season_number,
     isFeatured: !!apiEpisode.is_featured,
+    seriesSlug: apiEpisode.series_slug || apiEpisode.series?.slug,
   };
 }
 
@@ -332,6 +334,20 @@ export function mapApiEpisodeToPodcastEpisode(apiEpisode: ApiEpisode): PodcastEp
     // No `related` field exists on EpisodeDetailSerializer at all — correctly always empty
     // until a "related episodes" backend feature exists (tracked as backlog in the PDF).
     relatedEpisodes: [],
+    seriesSlug: apiEpisode.series_slug || apiEpisode.series?.slug,
+  };
+}
+
+export function mapApiPodcastSeriesToPodcastShow(apiSeries: ApiPodcastSeries): PodcastShow {
+  return {
+    id: apiSeries.slug || apiSeries.id?.toString() || "",
+    numericId: apiSeries.id ?? null,
+    slug: apiSeries.slug,
+    title: apiSeries.title || "",
+    description: apiSeries.description || "",
+    coverImage: apiSeries.cover_url || "",
+    category: apiSeries.category || "Podcast",
+    episodeCount: apiSeries.episode_count || 0,
   };
 }
 
