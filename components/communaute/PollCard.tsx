@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ApiPoll } from "@/types/communaute";
+import type { ApiPoll } from "@/lib/api-types";
 import { useAuth } from "@/providers/AuthProvider";
 import { voteOnPoll } from "@/lib/services/community";
 import AuthPromptModal from "@/components/ui/AuthPromptModal";

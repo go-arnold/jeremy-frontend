@@ -66,21 +66,6 @@ export interface ProfileUpdatePayload {
 }
 
 // ── GET /users/{id}/activity/ ─────────────────────────────────────────────────
-export interface ApiActivityTarget {
-  kind: string;
-  id: number | null;
-  slug: string | null;
-  title: string;
-  cover_url: string;
-}
-
-export interface ApiActivityEntry {
-  action: "like" | "comment";
-  created_at: string;
-  excerpt?: string;
-  target: ApiActivityTarget;
-}
-
 export interface ActivityEntry {
   id: string;
   action: "like" | "comment";

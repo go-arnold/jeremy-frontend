@@ -1,11 +1,5 @@
-import type {
-  FilterTab,
-  TalentPost,
-  ArtPost,
-  FeedItem,
-  ApiChallenge,
-  ApiPoll,
-} from "@/types/communaute";
+import type { FilterTab, TalentPost, ArtPost, FeedItem } from "@/types/communaute";
+import type { ApiChallenge, ApiPoll } from "@/lib/api-types";
 
 export const filterTabs: FilterTab[] = [
   { id: "pour-toi", label: "Pour toi" },

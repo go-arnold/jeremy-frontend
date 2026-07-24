@@ -1,13 +1,4 @@
-// ── GET /gamification/badges/ — full catalog ─────────────────────────────────
-export interface ApiBadge {
-  id: number;
-  slug: string;
-  name: string;
-  description: string;
-  icon_url: string | null;
-  threshold_seconds: number;
-  order: number;
-}
+import type { ApiBadge } from "@/lib/api-types";
 
 // ── GET /gamification/users/{id}/badges/ — earned only ───────────────────────
 export interface ApiUserBadge {

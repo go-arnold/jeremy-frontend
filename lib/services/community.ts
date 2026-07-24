@@ -1,6 +1,5 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import type { ApiChallenge, ApiPoll } from "@/types/communaute";
-import type { ApiCommunityPost } from "@/lib/api-types";
+import type { ApiChallenge, ApiPoll, ApiCommunityPost } from "@/lib/api-types";
 
 export async function fetchChallenges(page = 1) {
   return apiFetch<PaginatedResponse<ApiChallenge>>(`/api/v1/community/challenges/?page=${page}`);

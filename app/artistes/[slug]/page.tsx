@@ -9,9 +9,6 @@ import ArtisteDetailHero from "@/components/artistesComp/ArtisteDetailHero";
 import LatestReleases from "@/components/artistesComp/LatestReleases";
 import KivuTV from "@/components/artistesComp/KivuTV";
 import PhotoGallery from "@/components/artistesComp/PhotoGallery";
-import LatestReleasesDesktop from "@/components/artistesComp/LatestReleasesDesktop";
-import VideosDesktop from "@/components/artistesComp/VideosDesktop";
-import PhotoGalleryDesktop from "@/components/artistesComp/PhotoGalleryDesktop";
 import ArtisteDetailCTA from "@/components/artistesComp/ArtisteDetailCTA";
 
 export const dynamic = "force-dynamic";
@@ -76,9 +73,9 @@ export default async function ArtisteDetailPage({ params }: Props) {
           MOBILE — empilement original
       ══════════════════════════════════════ */}
       <div className="lg:hidden relative z-10 flex flex-col gap-8 w-full max-w-3xl mx-auto md:px-4">
-        <LatestReleases releases={artiste.releases} />
-        <KivuTV videos={artiste.videos} />
-        <PhotoGallery photos={artiste.gallery} />
+        <LatestReleases releases={artiste.releases} variant="mobile" />
+        <KivuTV videos={artiste.videos} variant="mobile" />
+        <PhotoGallery photos={artiste.gallery} variant="mobile" />
       </div>
 
       {/* ══════════════════════════════════════
@@ -88,9 +85,9 @@ export default async function ArtisteDetailPage({ params }: Props) {
 
         {/* ── Colonne principale ── */}
         <div className="flex flex-col gap-10">
-          <LatestReleasesDesktop releases={artiste.releases} />
-          <VideosDesktop videos={artiste.videos} />
-          <PhotoGalleryDesktop photos={artiste.gallery} />
+          <LatestReleases releases={artiste.releases} variant="desktop" />
+          <KivuTV videos={artiste.videos} variant="desktop" />
+          <PhotoGallery photos={artiste.gallery} variant="desktop" />
         </div>
 
         {/* ── Sidebar sticky ── */}
