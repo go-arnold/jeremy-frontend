@@ -23,8 +23,6 @@ export async function fetchReleaseCalendar() {
   return data.map(mapApiReleaseToFeaturedRelease);
 }
 
-/** No `/sorties-premieres/[slug]` detail page exists yet — this is here so Step 3 can build
- * one without a further round-trip through the backend inventory. */
 export async function fetchRelease(slug: string) {
   const data = await apiFetch<ApiRelease>(`/api/v1/releases/${slug}/`);
   return mapApiReleaseToFeaturedRelease(data);

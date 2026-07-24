@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ApiChallenge } from "@/types/communaute";
+import type { ApiChallenge } from "@/lib/api-types";
 import { useAuth } from "@/providers/AuthProvider";
 import AuthPromptModal from "@/components/ui/AuthPromptModal";
 import ChallengeResponseForm from "./ChallengeResponseForm";

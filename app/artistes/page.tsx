@@ -1,18 +1,16 @@
 import { artistes as mockedArtistes, genres as mockedGenresStatic } from "@/data/artistes";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiArtistToArtiste } from "@/lib/mappers";
+import { fetchArtists, fetchArtistGenres } from "@/lib/services/artists";
 import ArtistesPageClient from "./ArtistesPageClient";
 import type { GenreItem } from "@/types/artistes";
-import type { ApiArtistList, ApiGenre } from "@/lib/api-types";
 
 async function getInitialData() {
   try {
     const [artistData, genreData] = await Promise.all([
-      apiFetch<PaginatedResponse<ApiArtistList>>("/api/v1/artists/?page_size=15"),
-      apiFetch<ApiGenre[] | PaginatedResponse<ApiGenre>>("/api/v1/artists/genres/"),
+      fetchArtists(1, 15),
+      fetchArtistGenres(),
     ]);
 
-    const artistes = artistData.results.map(mapApiArtistToArtiste);
+    const artistes = artistData.results;
     const hasMore = !!artistData.next;
     const totalArtistsCount = artistData.count;
 
@@ -29,9 +27,7 @@ async function getInitialData() {
     const countsResults = await Promise.all(
       mappedGenres.map(async (g) => {
         try {
-          const data = await apiFetch<PaginatedResponse<ApiArtistList>>(
-            `/api/v1/artists/?genre=${g.slug}&page_size=1`
-          );
+          const data = await fetchArtists(1, 1, g.slug);
           return { slug: g.slug, count: data.count };
         } catch {
           return { slug: g.slug, count: 0 };

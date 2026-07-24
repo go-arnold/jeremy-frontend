@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getArtisteDetail as getMockedArtisteDetail } from "@/data/artistes";
-import { apiFetch } from "@/lib/api-client";
-import { mapApiArtistDetailToArtisteDetail } from "@/lib/mappers";
-import type { ApiArtistDetail } from "@/lib/api-types";
+import { fetchArtist } from "@/lib/services/artists";
 
 import ArtisteDetailHero from "@/components/artistesComp/ArtisteDetailHero";
 import LatestReleases from "@/components/artistesComp/LatestReleases";
 import KivuTV from "@/components/artistesComp/KivuTV";
 import PhotoGallery from "@/components/artistesComp/PhotoGallery";
-import LatestReleasesDesktop from "@/components/artistesComp/LatestReleasesDesktop";
-import VideosDesktop from "@/components/artistesComp/VideosDesktop";
-import PhotoGalleryDesktop from "@/components/artistesComp/PhotoGalleryDesktop";
 import ArtisteDetailCTA from "@/components/artistesComp/ArtisteDetailCTA";
+import EngagementBar from "@/components/ui/EngagementBar";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +18,7 @@ interface Props {
 
 async function getArtiste(slug: string) {
   try {
-    const data = await apiFetch<ApiArtistDetail>(`/api/v1/artists/${slug}/`);
-    return mapApiArtistDetailToArtisteDetail(data);
+    return await fetchArtist(slug);
   } catch (error) {
     console.error(`Failed to fetch artist ${slug}:`, error);
     return null;
@@ -76,9 +71,20 @@ export default async function ArtisteDetailPage({ params }: Props) {
           MOBILE — empilement original
       ══════════════════════════════════════ */}
       <div className="lg:hidden relative z-10 flex flex-col gap-8 w-full max-w-3xl mx-auto md:px-4">
-        <LatestReleases releases={artiste.releases} />
-        <KivuTV videos={artiste.videos} />
-        <PhotoGallery photos={artiste.gallery} />
+        <LatestReleases releases={artiste.releases} variant="mobile" />
+        <KivuTV videos={artiste.videos} variant="mobile" />
+        <PhotoGallery photos={artiste.gallery} variant="mobile" />
+
+        <div className="px-5 pt-2">
+          <EngagementBar
+            resourceType="artists"
+            id={artiste.id}
+            initialLikeCount={artiste.likeCount}
+            initialCommentCount={artiste.commentCount}
+            enableSave={false}
+            redirectTo={`/artistes/${artiste.id}`}
+          />
+        </div>
       </div>
 
       {/* ══════════════════════════════════════
@@ -88,9 +94,9 @@ export default async function ArtisteDetailPage({ params }: Props) {
 
         {/* ── Colonne principale ── */}
         <div className="flex flex-col gap-10">
-          <LatestReleasesDesktop releases={artiste.releases} />
-          <VideosDesktop videos={artiste.videos} />
-          <PhotoGalleryDesktop photos={artiste.gallery} />
+          <LatestReleases releases={artiste.releases} variant="desktop" />
+          <KivuTV videos={artiste.videos} variant="desktop" />
+          <PhotoGallery photos={artiste.gallery} variant="desktop" />
         </div>
 
         {/* ── Sidebar sticky ── */}
@@ -102,6 +108,21 @@ export default async function ArtisteDetailPage({ params }: Props) {
             style={{ background: "rgba(18,34,60,0.7)", border: "1px solid rgba(230,48,18,0.15)" }}
           >
             <ArtisteDetailCTA artistId={artiste.artistId} artistSlug={artiste.id} />
+          </div>
+
+          {/* Engagement — aimer / commenter / partager */}
+          <div
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
+          >
+            <EngagementBar
+              resourceType="artists"
+              id={artiste.id}
+              initialLikeCount={artiste.likeCount}
+              initialCommentCount={artiste.commentCount}
+              enableSave={false}
+              redirectTo={`/artistes/${artiste.id}`}
+            />
           </div>
 
           {/* Stats */}

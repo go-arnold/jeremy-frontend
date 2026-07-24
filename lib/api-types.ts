@@ -70,6 +70,10 @@ export interface ApiArtistDetail {
   releases?: ApiRelease[];
   videos?: ApiArtistVideo[];
   gallery?: ApiArtistPhoto[];
+  // Spec declares these `type: string` (unlike every other domain's like_count/comment_count,
+  // which are `number`) — coerced in the mapper rather than trusted as-is.
+  like_count?: string | number;
+  comment_count?: string | number;
 }
 
 export interface ApiCategory {
@@ -306,7 +310,9 @@ export interface ApiBadge {
   id?: number | string;
   slug?: string;
   name?: string;
+  description?: string;
   icon_url?: string;
+  threshold_seconds?: number;
   order?: number;
 }
 
@@ -356,4 +362,38 @@ export interface ApiEmission {
   host_names?: string[];
   like_count?: number;
   comment_count?: number;
+}
+
+// ── Real API shapes (GET /community/challenges/, /community/polls/) ─────────
+export interface ApiChallenge {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  cover_url: string | null;
+  prize: string;
+  deadline: string;
+  participant_count: number;
+  is_active: boolean;
+  // Not yet returned by the backend — proposed in
+  // docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.3. Optional/undefined means "unknown", not "false" —
+  // treated as not-yet-participated until the backend actually sends this field.
+  has_participated?: boolean;
+}
+
+export interface ApiPollOption {
+  id: number;
+  text: string;
+  vote_count: number;
+  percentage: number;
+}
+
+export interface ApiPoll {
+  id: number;
+  question: string;
+  vote_count: number;
+  options: ApiPollOption[];
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
 }

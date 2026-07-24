@@ -15,6 +15,7 @@ import RelatedPosts     from "@/components/blog/RelatedPosts";
 import CommentsSection  from "@/components/blog/CommentsSection";
 import ArticleEngagementButtons from "@/components/blog/ArticleEngagementButtons";
 import ShareWidget from "@/components/blog/ShareWidget";
+import ContentImage from "@/components/ui/ContentImage";
 
 export const dynamic = "force-dynamic";
 
@@ -142,9 +143,11 @@ export default async function BlogPostPage({ params }: Props) {
                   className="group block rounded-2xl overflow-hidden"
                   style={{ border: "1px solid rgba(255,255,255,0.05)" }}
                 >
-                  <div
-                    className="w-full aspect-video bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                    style={{ backgroundImage: `url('${related[0].image}')` }}
+                  <ContentImage
+                    src={related[0].image}
+                    alt={related[0].title}
+                    className="w-full aspect-video transition-transform duration-500 group-hover:scale-105"
+                    sizes="320px"
                   />
                   <div className="p-4" style={{ background: "rgba(18,34,60,0.7)" }}>
                     <span className="text-[10px] font-black text-primary uppercase tracking-wider block mb-1">
@@ -176,9 +179,11 @@ function ArticleHeroDesktop({ post }: { post: BlogPost }) {
   return (
     <div className="relative w-full overflow-hidden mt-16" style={{ height: "75vh" }}>
       {/* Cover */}
-      <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
-        style={{ backgroundImage: `url('${post.coverImage}')` }}
+      <ContentImage
+        src={post.coverImage}
+        alt={post.title}
+        className="absolute inset-0 scale-105"
+        sizes="100vw"
       />
 
       {/* Gradients : bas + gauche */}
@@ -225,9 +230,11 @@ function ArticleHeroDesktop({ post }: { post: BlogPost }) {
             {/* Meta inline */}
             <div className="flex items-center gap-4 text-gray-300 text-sm">
               <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded-full bg-cover bg-center border-2 border-primary/50"
-                  style={{ backgroundImage: `url('${post.author.avatar}')` }}
+                <ContentImage
+                  src={post.author.avatar}
+                  alt={post.author.name}
+                  className="w-8 h-8 rounded-full border-2 border-primary/50"
+                  sizes="32px"
                 />
                 <span className="font-bold text-white">Par {post.author.name}</span>
               </div>
@@ -251,9 +258,11 @@ function ArticleMetaDesktop({ post }: { post: BlogPost }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-white/10 mb-3 mt-3">
       <div className="flex items-center gap-3">
-        <div
-          className="w-14 h-14 rounded-full bg-cover bg-center border-2 border-primary/30"
-          style={{ backgroundImage: `url('${post.author.avatar}')` }}
+        <ContentImage
+          src={post.author.avatar}
+          alt={post.author.name}
+          className="w-14 h-14 rounded-full border-2 border-primary/30"
+          sizes="56px"
         />
         <div>
           <span className="text-base font-bold text-white block">Par {post.author.name}</span>
@@ -288,9 +297,11 @@ function RelatedPostsDesktop({ posts }: { posts: BlogCard[] }) {
             className="group flex flex-col rounded-xl overflow-hidden border border-white/5 hover:border-primary/30 transition-all"
             style={{ background: "rgba(18,34,60,0.5)" }}
           >
-            <div
-              className="w-full aspect-video bg-cover bg-center transition-transform duration-500 group-hover:scale-105 overflow-hidden"
-              style={{ backgroundImage: `url('${post.image}')` }}
+            <ContentImage
+              src={post.image}
+              alt={post.title}
+              className="w-full aspect-video transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 1024px) 33vw, 300px"
             />
             <div className="p-4">
               <span className="text-[10px] font-black text-primary uppercase tracking-wider block mb-1">
@@ -314,9 +325,11 @@ function AuthorCard({ post }: { post: BlogPost }) {
       className="rounded-2xl p-5 flex flex-col items-center gap-3 text-center"
       style={{ background: "rgba(18,34,60,0.6)", border: "1px solid rgba(255,255,255,0.06)" }}
     >
-      <div
-        className="w-16 h-16 rounded-full bg-cover bg-center border-2 border-primary/40"
-        style={{ backgroundImage: `url('${post.author.avatar}')` }}
+      <ContentImage
+        src={post.author.avatar}
+        alt={post.author.name}
+        className="w-16 h-16 rounded-full border-2 border-primary/40"
+        sizes="64px"
       />
       <div>
         <p className="text-[#F0EDE8] font-bold text-base">{post.author.name}</p>

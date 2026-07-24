@@ -2,8 +2,7 @@ import { feedItems as mockedFeed, mockChallenges, mockPolls } from "@/data/commu
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiPostToCommunityItem } from "@/lib/mappers";
 import { fetchChallenges, fetchPolls } from "@/lib/services/community";
-import type { ApiChallenge, ApiPoll } from "@/types/communaute";
-import type { ApiCommunityPost } from "@/lib/api-types";
+import type { ApiChallenge, ApiPoll, ApiCommunityPost } from "@/lib/api-types";
 import CommunautePageClient from "./CommunautePageClient";
 
 type MappedPost = ReturnType<typeof mapApiPostToCommunityItem>;

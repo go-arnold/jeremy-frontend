@@ -138,7 +138,9 @@ export function mapApiArtistDetailToArtisteDetail(apiDetail: ApiArtistDetail): A
       id: p.id?.toString() || Math.random().toString(),
       src: p.image_url || "",
       alt: p.caption || apiDetail.name
-    })) || []
+    })) || [],
+    likeCount: Number(apiDetail.like_count) || 0,
+    commentCount: Number(apiDetail.comment_count) || 0,
   };
 }
 

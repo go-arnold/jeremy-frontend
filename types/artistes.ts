@@ -59,4 +59,6 @@ export interface ArtisteDetail {
   releases: Release[];
   videos: VideoItem[];
   gallery: GalleryPhoto[];
+  likeCount?: number;
+  commentCount?: number;
 }
