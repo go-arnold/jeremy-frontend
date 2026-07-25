@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Avatar from "@/components/ui/Avatar";
 import EngagementBar from "@/components/ui/EngagementBar";
+import { isValidImageSrc, toSecureImageUrl } from "@/lib/image-utils";
 
 interface PostData {
   id: string;
@@ -24,7 +25,12 @@ interface PostData {
 }
 
 export default function TalentPostCard({ post }: { post: PostData }) {
-  const [mediaError, setMediaError] = useState(false);
+  const coverSrc = post.coverImage || post.image || "";
+  // Some community posts come back with a bare, truncated image fragment (e.g.
+  // "artdukivu/seed/square/163") instead of a full URL — next/image throws a hard render error
+  // on that rather than firing onError like a normal failed load, so it's caught up front here
+  // and treated the same as an already-failed image (see lib/image-utils.ts isValidImageSrc).
+  const [mediaError, setMediaError] = useState(!isValidImageSrc(coverSrc));
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgInView, setImgInView] = useState(false);
@@ -51,7 +57,6 @@ export default function TalentPostCard({ post }: { post: PostData }) {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  const coverSrc = post.coverImage || post.image || "";
   const hasVideo = !!post.video;
   const hasAudio = !!post.audio;
   const hasImage = !!coverSrc;
@@ -60,7 +65,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
   const renderMedia = () => {
     if (hasVideo) {
       return (
-        <div className="relative w-full rounded-xl overflow-hidden bg-black" ref={imgContainerRef}>
+        <div className="relative w-full rounded-2xl overflow-hidden bg-black ring-1 ring-white/5" ref={imgContainerRef}>
           <video
             src={post.video || undefined}
             controls
@@ -74,7 +79,7 @@ export default function TalentPostCard({ post }: { post: PostData }) {
     
     if (hasAudio) {
       return (
-        <div className="relative w-full rounded-xl overflow-hidden bg-surface-dark" ref={imgContainerRef}>
+        <div className="relative w-full rounded-2xl overflow-hidden bg-surface-dark ring-1 ring-white/5" ref={imgContainerRef}>
           <div className="flex items-center gap-3 p-4 bg-black/30">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-2xl">music_note</span>
@@ -91,16 +96,16 @@ export default function TalentPostCard({ post }: { post: PostData }) {
     
     if (hasImage) {
       return (
-        <div className="relative aspect-[4/5] w-full bg-surface-dark rounded-xl overflow-hidden" ref={imgContainerRef}>
+        <div className="relative aspect-[4/5] w-full bg-surface-dark rounded-2xl overflow-hidden ring-1 ring-white/5" ref={imgContainerRef}>
           {!imgLoaded && !mediaError && (
             <div className="absolute inset-0 flex items-center justify-center bg-surface-dark animate-pulse">
               <span className="material-symbols-outlined text-gray-600 text-4xl">image</span>
             </div>
           )}
-          {imgInView && (
+          {imgInView && !mediaError && (
             <Image
               ref={imgRef}
-              src={coverSrc}
+              src={toSecureImageUrl(coverSrc)}
               alt={post.title || post.caption || "Publication de la communauté"}
               fill
               sizes="(min-width: 1024px) 400px, 90vw"
@@ -147,20 +152,20 @@ export default function TalentPostCard({ post }: { post: PostData }) {
       ) : null}
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <Avatar src={post.artist.avatar} alt={post.artist.username} size="md" className="border border-white/10" />
           <div className="flex flex-col">
-            <span className="text-white font-bold text-sm flex items-center gap-1">
+            <span className="text-white font-bold text-xs sm:text-sm flex items-center gap-1">
               {post.artist.username}
               {post.artist.isVerified && (
                 <span className="material-symbols-outlined text-primary text-sm">verified</span>
               )}
             </span>
-            <span className="text-gray-500 text-xs">{post.artist.location} • {post.timeAgo}</span>
+            <span className="text-gray-500 text-[10px] sm:text-xs">{post.artist.location} • {post.timeAgo}</span>
           </div>
         </div>
         <button className="text-gray-400 hover:text-white">
-          <span className="material-symbols-outlined">more_horiz</span>
+          <span className="material-symbols-outlined text-lg sm:text-xl">more_horiz</span>
         </button>
       </div>
 
@@ -168,11 +173,11 @@ export default function TalentPostCard({ post }: { post: PostData }) {
       {renderMedia()}
 
       {/* Title */}
-      {post.title && <p className="text-white font-semibold text-sm">{post.title}</p>}
+      {post.title && <p className="text-white font-semibold text-xs sm:text-sm">{post.title}</p>}
 
       {/* Caption */}
       {(post.caption || post.tags?.length > 0) && (
-        <p className="text-gray-200 text-sm leading-relaxed">
+        <p className="text-gray-200 text-xs sm:text-sm leading-relaxed">
           {post.caption}{" "}
           {post.tags?.map((tag) => (
             <span key={tag} className="text-primary">{tag} </span>

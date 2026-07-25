@@ -48,30 +48,30 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
   };
 
   return (
-    <article className="relative overflow-hidden rounded-xl bg-[#2a2a1a] border border-accent-yellow/30 p-4 sm:p-5">
-      <div className="relative z-10 flex flex-col gap-3">
+    <article className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#2a2a1a] to-[#1c1c12] border border-accent-yellow/30 p-3 sm:p-5 card-glow">
+      <div className="relative z-10 flex flex-col gap-2.5 sm:gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-accent-yellow text-[10px] font-black uppercase tracking-[0.2em]">
+            <p className="text-accent-yellow text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">
               {challengeTitle}
             </p>
-            <h3 className="text-base sm:text-lg font-black text-white mt-1">Je réponds au défi</h3>
+            <h3 className="text-sm sm:text-lg font-black text-white mt-1">Je réponds au défi</h3>
           </div>
           <button onClick={onCancel} disabled={uploading} className="text-gray-400 hover:text-white shrink-0 disabled:opacity-40">
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined text-lg sm:text-xl">close</span>
           </button>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
           <input
-            className="w-full bg-black/40 border border-white/10 rounded-lg h-11 px-4 text-white placeholder:text-gray-500 focus:border-accent-yellow focus:ring-1 focus:ring-accent-yellow outline-none transition-all text-sm"
+            className="w-full bg-black/40 border border-white/10 rounded-lg h-10 sm:h-11 px-4 text-white placeholder:text-gray-500 focus:border-accent-yellow focus:ring-1 focus:ring-accent-yellow outline-none transition-all text-xs sm:text-sm"
             placeholder="Titre de ta participation"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
 
           <textarea
-            className="w-full bg-black/40 border border-white/10 rounded-lg h-20 px-4 py-3 text-white placeholder:text-gray-500 focus:border-accent-yellow focus:ring-1 focus:ring-accent-yellow outline-none transition-all text-sm resize-none"
+            className="w-full bg-black/40 border border-white/10 rounded-lg h-16 sm:h-20 px-4 py-2.5 text-white placeholder:text-gray-500 focus:border-accent-yellow focus:ring-1 focus:ring-accent-yellow outline-none transition-all text-xs sm:text-sm resize-none"
             placeholder="Décris ta participation au défi"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -119,7 +119,7 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
               onClick={() => imageInputRef.current?.click()}
               disabled={uploading}
               title={`Photo/Image (max ${MEDIA_LIMITS.MAX_IMAGE_MB} Mo)`}
-              className={`flex items-center justify-center h-11 w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+              className={`flex items-center justify-center h-9 w-9 sm:h-11 sm:w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
             >
               <span className="material-symbols-outlined text-lg">add_a_photo</span>
             </button>
@@ -128,7 +128,7 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
               onClick={() => videoInputRef.current?.click()}
               disabled={uploading}
               title={`Vidéo (max ${MEDIA_LIMITS.MAX_VIDEO_MB} Mo)`}
-              className={`flex items-center justify-center h-11 w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+              className={`flex items-center justify-center h-9 w-9 sm:h-11 sm:w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
             >
               <span className="material-symbols-outlined text-lg">videocam</span>
             </button>
@@ -137,7 +137,7 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
               onClick={() => audioInputRef.current?.click()}
               disabled={uploading}
               title={`Audio (max ${MEDIA_LIMITS.MAX_AUDIO_MB} Mo)`}
-              className={`flex items-center justify-center h-11 w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+              className={`flex items-center justify-center h-9 w-9 sm:h-11 sm:w-12 rounded-lg bg-black/30 border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-accent-yellow text-accent-yellow" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
             >
               <span className="material-symbols-outlined text-lg">mic</span>
             </button>
@@ -145,7 +145,7 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
               type="button"
               onClick={handleSubmit}
               disabled={uploading}
-              className="flex-1 h-11 px-4 rounded-lg bg-accent-yellow hover:bg-yellow-400 text-black font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+              className="flex-1 h-9 sm:h-11 px-4 rounded-lg bg-accent-yellow hover:bg-yellow-400 text-black font-bold text-xs sm:text-sm tracking-wide transition-all hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-90"
             >
               {uploading ? (
                 <CircularProgress percent={uploadProgress} size={26} strokeWidth={3} className="text-black" />

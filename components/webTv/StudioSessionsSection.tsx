@@ -19,10 +19,11 @@ export default function StudioSessionsSection({ sessions, variant }: Props) {
       {/* ── En-tête : carrousel horizontal (mobile) ── */}
       {showMobile && (
       <div className={`flex items-center justify-between px-4 ${variant ? "" : "lg:hidden"}`}>
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">
+        <h2 className="flex items-center gap-1.5 text-white text-base font-bold tracking-tight">
+          <span className="material-symbols-outlined text-primary text-lg">graphic_eq</span>
           Studio Sessions
         </h2>
-        <a className="text-primary text-sm font-bold" href="/studio-sessions">
+        <a className="text-primary text-xs font-bold" href="/studio-sessions">
           Voir tout
         </a>
       </div>
@@ -43,15 +44,15 @@ export default function StudioSessionsSection({ sessions, variant }: Props) {
 
       {/* ── Mobile : carrousel horizontal ── */}
       {showMobile && (
-      <div className={`flex overflow-x-auto gap-4 px-4 pb-4 no-scrollbar snap-x snap-mandatory ${variant ? "" : "lg:hidden"}`}>
+      <div className={`flex overflow-x-auto gap-3 px-4 pb-4 no-scrollbar snap-x snap-mandatory ${variant ? "" : "lg:hidden"}`}>
         {sessions.map((session) => (
           <Link
             key={session.id}
             href={session.href || "#"}
-            className="snap-start shrink-0 w-64 flex flex-col px-3 gap-3 group cursor-pointer"
+            className="snap-start shrink-0 w-36 flex flex-col gap-1.5 group cursor-pointer"
           >
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-surface-dark ring-1 ring-white/5">
-              <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-surface-dark ring-1 ring-white/5 group-hover:ring-primary/30 transition-all">
+              <div className="absolute top-1.5 right-1.5 z-10 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
                 {session.duration}
               </div>
 
@@ -65,7 +66,7 @@ export default function StudioSessionsSection({ sessions, variant }: Props) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
                 <span
                   className="material-symbols-outlined text-white drop-shadow-lg"
-                  style={{ fontSize: "40px" }}
+                  style={{ fontSize: "26px" }}
                 >
                   play_circle
                 </span>
@@ -73,10 +74,10 @@ export default function StudioSessionsSection({ sessions, variant }: Props) {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <h4 className="text-white text-base font-bold leading-tight group-hover:text-primary transition-colors">
+              <h4 className="text-white text-xs font-bold leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                 {session.title}
               </h4>
-              <p className="text-gray-400 text-xs">
+              <p className="text-gray-400 text-[10px] truncate">
                 {session.author} • {session.publishedAt}
               </p>
             </div>

@@ -17,11 +17,11 @@ export default function FreestylesSection({ videos }: Props) {
     <section className="flex flex-col gap-4 px-4 lg:px-0">
       {/* Header — mobile */}
       <div className="flex items-center justify-between lg:hidden">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-accent-pink">mic_external_on</span>
-          <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Freestyles</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-accent-pink text-lg">mic_external_on</span>
+          <h2 className="text-white text-base font-bold tracking-tight">Freestyles</h2>
         </div>
-        <a className="text-primary text-sm font-bold" href="/freestyles">
+        <a className="text-primary text-xs font-bold" href="/freestyles">
           Voir tout
         </a>
       </div>
@@ -60,15 +60,15 @@ export default function FreestylesSection({ videos }: Props) {
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
 
-            <div className="absolute bottom-0 left-0 w-full p-3">
-              <h4 className="text-white text-sm font-bold leading-snug">{video.title}</h4>
-              <p className="text-gray-400 text-[10px]">{video.author}</p>
+            <div className="absolute bottom-0 left-0 w-full p-2 lg:p-3">
+              <h4 className="text-white text-xs lg:text-sm font-bold leading-snug line-clamp-1">{video.title}</h4>
+              <p className="text-gray-400 text-[9px] lg:text-[10px]">{video.author}</p>
             </div>
 
             {/* Play — toujours visible (icône obligatoire sur chaque vidéo) */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="size-10 lg:w-12 lg:h-12 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur lg:shadow-lg">
-                <span className="material-symbols-outlined text-xl lg:text-2xl">play_arrow</span>
+              <div className="size-8 lg:w-12 lg:h-12 rounded-full bg-primary/80 flex items-center justify-center text-white backdrop-blur lg:shadow-lg">
+                <span className="material-symbols-outlined text-base lg:text-2xl">play_arrow</span>
               </div>
             </div>
           </Link>

@@ -179,7 +179,14 @@ export default function CommunautePageClient({
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
 
       {/* MOBILE */}
-      <main className="lg:hidden flex-1 overflow-y-auto pb-24 no-scrollbar">
+      <main className="lg:hidden flex-1 overflow-y-auto pb-24 no-scrollbar kivu-texture">
+        <div className="px-4 pt-6 pb-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mb-1">Art du Kivu</p>
+          <h2 className="text-xl font-black leading-tight text-[#F0EDE8]">
+            La <span className="text-primary">Communauté</span>
+          </h2>
+          <p className="text-xs text-[#8A8178] mt-1">Talents, défis et créations du Kivu</p>
+        </div>
         <SubmitTalentCard onSubmitted={() => fetchPosts(activeFilter, 1, false)} />
         <div className="flex flex-col gap-6 px-4">
           <FilterTabs tabs={MOBILE_FILTER_TABS} active={activeFilter} onChange={handleFilterChange} />
@@ -243,7 +250,7 @@ export default function CommunautePageClient({
                     <div key={item.data.id || index}>
                       {renderPost(item)}
                       {index < displayedPosts.length - 1 && (
-                        <div className="h-px bg-white/5 w-full mt-6" />
+                        <div className="kivu-divider w-full mt-6" />
                       )}
                     </div>
                   ))}
@@ -301,8 +308,7 @@ export default function CommunautePageClient({
                   {displayedPosts.map((item, index) => (
                     <div
                       key={item.data.id || index}
-                      className="rounded-2xl overflow-hidden border border-white/5"
-                      style={{ background: "rgba(18,34,60,0.4)" }}
+                      className="rounded-2xl overflow-hidden border border-white/5 bg-surface-dark card-glow transition-shadow"
                     >
                       <div className="p-5">{renderPost(item)}</div>
                     </div>
@@ -376,9 +382,12 @@ function DesktopChallengesSection({
   const singleCard = !expanded && joinable.length <= 1 ? (joinable[0] || active[0]) : null;
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}>
+    <div className="rounded-2xl p-5 bg-surface-dark border border-white/5 border-t-2 border-t-accent-yellow card-glow">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178]">Défis</p>
+        <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178]">
+          <span className="material-symbols-outlined text-accent-yellow text-sm">emoji_events</span>
+          Défis
+        </p>
         {active.length > 1 && (
           <button onClick={() => setExpanded((v) => !v)} className="text-primary text-xs font-bold hover:underline">
             {expanded ? "Voir moins" : "Voir plus"}
@@ -462,13 +471,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
   };
 
   return (
-    <div
-      className="rounded-2xl p-5 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, rgba(18,34,60,0.9), rgba(13,23,47,0.8))",
-        border: "1px solid rgba(230,48,18,0.2)",
-      }}
-    >
+    <div className="rounded-2xl p-5 relative overflow-hidden bg-gradient-to-br from-surface-dark to-black border border-primary/20 card-glow">
       <div className="absolute -top-8 -right-8 w-28 h-28 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4">
@@ -599,19 +602,16 @@ function CommunityStatsWidget({
   ];
 
   return (
-    <div
-      className="rounded-2xl p-5"
-      style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
-    >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
+    <div className="rounded-2xl p-5 bg-surface-dark border border-white/5 border-t-2 border-t-accent-gold card-glow">
+      <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
+        <span className="material-symbols-outlined text-accent-gold text-sm">groups</span>
         Communauté
       </p>
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="flex flex-col items-center gap-1 p-3 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.03)" }}
+            className="flex flex-col items-center gap-1 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
           >
             <span className="material-symbols-outlined text-primary text-lg">{s.icon}</span>
             <span className="text-[#F0EDE8] font-black text-lg">{s.value}</span>
@@ -627,11 +627,9 @@ function CommunityStatsWidget({
 // chargés (voir computeTrending ci-dessus / docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §4). ──
 function TrendingWidget({ tags }: { tags: { label: string; count: number }[] }) {
   return (
-    <div
-      className="rounded-2xl p-5"
-      style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
-    >
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
+    <div className="rounded-2xl p-5 bg-surface-dark border border-white/5 border-t-2 border-t-primary card-glow">
+      <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#8A8178] mb-4">
+        <span className="material-symbols-outlined text-primary text-sm">trending_up</span>
         Tendances
       </p>
       {tags.length === 0 ? (
