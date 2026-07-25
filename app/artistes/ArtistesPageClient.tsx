@@ -103,7 +103,7 @@ export default function ArtistesPageClient({
       </section>
 
       {/* DESKTOP — en-tête */}
-      <div className="hidden lg:flex flex-col w-full max-w-[1600px] mx-auto px-8">
+      <div className="hidden lg:flex flex-col w-full mx-auto px-8">
         <div className="pt-2 pb-8 flex items-end justify-between border-b border-white/10 mb-8">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-primary mb-2">
@@ -138,7 +138,7 @@ export default function ArtistesPageClient({
       </div>
 
       {/* Filtre par genre + grille — rendu responsive unique (mobile dropdown / desktop sidebar) */}
-      <div className="px-4 lg:px-8 lg:max-w-[1600px] lg:mx-auto lg:pb-16 w-full">
+      <div className="px-4 lg:px-8 lg:mx-auto lg:pb-16 w-full">
         {showEmptyState ? (
           <EmptyState
             message="Pas d'artistes trouvés"

@@ -5,7 +5,7 @@ export default function ArticleBody({ blocks }: { blocks: ArticleBlock[] }) {
   let paragraphIndex = 0;
 
   return (
-    <article className="font-body text-lg leading-relaxed text-gray-300 space-y-6">
+    <article className="font-body text-lg leading-relaxed text-gray-300 space-y-6 max-w-3xl">
       {blocks.map((block, i) => {
         if (block.type === "html") {
           return (
