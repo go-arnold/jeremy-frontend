@@ -26,7 +26,27 @@ function toProgramSlot(program: Awaited<ReturnType<typeof fetchProgramme>>[numbe
     subtitle: program.presenter || program.host || program.description || "",
     icon: program.isLive ? "graphic_eq" : "schedule",
     status: program.status === "now" ? "on-air" : "upcoming",
+    dayOfWeek: program.dayOfWeek,
+    dayName: program.day,
   };
+}
+
+// Backend's `DayOfWeekEnum` is 0=Monday..6=Sunday; JS `Date.getDay()` is 0=Sunday..6=Saturday.
+function todayAsBackendDayOfWeek(): number {
+  return (new Date().getDay() + 6) % 7;
+}
+
+/** Splits the full programme into today's grid vs other days' — slots with no `dayOfWeek` at
+ * all (mocked fallback data) are treated as "today" so nothing silently disappears. */
+function splitByDay(slots: ProgramSlot[]): { today: ProgramSlot[]; upcoming: ProgramSlot[] } {
+  const todayNum = todayAsBackendDayOfWeek();
+  const today: ProgramSlot[] = [];
+  const upcoming: ProgramSlot[] = [];
+  for (const slot of slots) {
+    if (slot.dayOfWeek === undefined || slot.dayOfWeek === todayNum) today.push(slot);
+    else upcoming.push(slot);
+  }
+  return { today, upcoming };
 }
 
 async function getLiveChat(slug: string) {
@@ -41,6 +61,7 @@ export default async function Page() {
   const liveShow = await fetchCurrentSession();
   const programs = await getLivePrograms();
   const programSlots = programs.length > 0 ? programs.map(toProgramSlot) : mockedSlots;
+  const { today: todaySlots, upcoming: upcomingSlots } = splitByDay(programSlots);
 
   // If no live session is active, show an empty state
   if (!liveShow) {
@@ -57,11 +78,11 @@ export default async function Page() {
             <>
               {/* Mobile */}
               <div className="lg:hidden w-full px-4 mt-4 pb-10">
-                <ProgramSchedule slots={programSlots} variant="mobile" />
+                <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="mobile" />
               </div>
               {/* Desktop */}
               <div className="hidden lg:block w-full max-w-2xl mx-auto mt-4 pb-10">
-                <ProgramSchedule slots={programSlots} variant="desktop" />
+                <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="desktop" />
               </div>
             </>
           )}
@@ -118,7 +139,7 @@ export default async function Page() {
             </div>
             <LiveChat slug={slug} messages={displayChat} listenerCount={nowPlaying.listenerCount} />
             <div className="w-full h-px bg-white/5 my-2" />
-            <ProgramSchedule slots={programSlots} variant="mobile" />
+            <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="mobile" />
             <div className="h-10" />
           </div>
         </div>
@@ -167,7 +188,7 @@ export default async function Page() {
 
               {/* ── Col 2 : Programme ── */}
               <div>
-                <ProgramSchedule slots={programSlots} variant="desktop" />
+                <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="desktop" />
               </div>
 
               {/* ── Col 3 : Chat ── */}

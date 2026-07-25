@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchEmission } from "@/lib/services/emissions";
 import LiveStreamPlayer from "@/components/media/LiveStreamPlayer";
-import VideoPlayer from "@/components/media/VideoPlayer";
+import AudioPlayer from "@/components/media/AudioPlayer";
 import EngagementBar from "@/components/ui/EngagementBar";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-function formatScheduledAt(iso: string | null): string {
+function formatDateTime(iso: string | null): string {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -95,7 +96,7 @@ export default async function EmissionDetailPage({ params }: Props) {
                 <span className="material-symbols-outlined text-sm">schedule</span>
                 Programmé
               </span>
-              <p className="text-white text-lg font-bold">{formatScheduledAt(emission.scheduledAt)}</p>
+              <p className="text-white text-lg font-bold">{formatDateTime(emission.scheduledAt)}</p>
             </div>
           </div>
         ) : emission.status === "live" ? (
@@ -108,12 +109,44 @@ export default async function EmissionDetailPage({ params }: Props) {
             autoplay
             hideTitleBar
           />
+        ) : emission.videoUrl ? (
+          <div className="flex flex-col gap-4">
+            {/* Cover hero — signale qu'il s'agit d'un contenu audio (pas vidéo) */}
+            <div
+              className="relative w-full aspect-video rounded-2xl overflow-hidden"
+              style={{ background: "rgba(18,34,60,0.6)" }}
+            >
+              {emission.coverImage && (
+                <Image
+                  alt={emission.title}
+                  src={emission.coverImage}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  className="object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                <span className="material-symbols-outlined text-primary text-sm">headphones</span>
+                <span className="text-white text-[10px] font-black uppercase tracking-widest">
+                  Rediffusion audio
+                </span>
+              </div>
+            </div>
+
+            <AudioPlayer
+              src={emission.videoUrl}
+              title={emission.title}
+              artist={emission.hostNames.join(", ") || undefined}
+              duration={emission.durationMinutes ? `${emission.durationMinutes} min` : undefined}
+              thumbnail={emission.coverImage}
+            />
+          </div>
         ) : (
-          <VideoPlayer
-            src={emission.streamUrl}
-            title={emission.title}
-            thumbnail={emission.coverImage}
-            hideTitleBar
+          <EmptyState
+            icon="mic_off"
+            message="Émission non disponible"
+            description="Cette émission n'a pas encore de fichier audio disponible."
           />
         )}
 
@@ -127,17 +160,34 @@ export default async function EmissionDetailPage({ params }: Props) {
               {emission.description}
             </p>
           )}
-          <div className="flex items-center gap-4 text-[#8A8178] text-sm">
+
+          <div className="flex flex-wrap items-center gap-4 text-[#8A8178] text-sm">
             {emission.durationMinutes > 0 && (
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">schedule</span>
                 {emission.durationMinutes} min
               </span>
             )}
-            {emission.totalViews > 0 && (
-              <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">visibility</span>
+              {emission.totalViews} vue{emission.totalViews !== 1 ? "s" : ""} au total
+            </span>
+            {emission.isLive && (
+              <span className="flex items-center gap-1.5 text-primary font-bold">
                 <span className="material-symbols-outlined text-sm">visibility</span>
-                {emission.totalViews} vues
+                {emission.viewerCount} spectateur{emission.viewerCount !== 1 ? "s" : ""} en ce moment
+              </span>
+            )}
+            {emission.isLive && emission.scheduledAt && (
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">radio_button_checked</span>
+                En direct depuis {formatDateTime(emission.scheduledAt)}
+              </span>
+            )}
+            {emission.status === "recorded" && emission.endedAt && (
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">event_available</span>
+                Terminé le {formatDateTime(emission.endedAt)}
               </span>
             )}
           </div>

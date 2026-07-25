@@ -30,4 +30,9 @@ export type ProgramSlot = {
   subtitle: string;
   icon: string; // material symbol name
   status: ProgramStatus;
+  /** 0=Monday..6=Sunday (`DayOfWeekEnum`) — undefined on mocked/legacy data. */
+  dayOfWeek?: number;
+  /** Human-readable day name from the backend (`day_name`), e.g. "Lundi" — shown only for
+   * slots that aren't today's, in the "À venir" section. */
+  dayName?: string;
 };

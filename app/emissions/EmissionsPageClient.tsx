@@ -90,6 +90,16 @@ export default function EmissionsPageClient({
                 <p className="text-[#8A8178] text-sm">{live.hostNames.join(", ")}</p>
               )}
               <p className="text-[#F0EDE8]/70 text-sm line-clamp-2">{live.description}</p>
+              <div className="flex flex-wrap items-center gap-3 text-xs mt-1">
+                <span className="flex items-center gap-1 text-primary font-bold">
+                  <span className="material-symbols-outlined text-sm">visibility</span>
+                  {live.viewerCount} spectateur{live.viewerCount !== 1 ? "s" : ""}
+                </span>
+                <span className="flex items-center gap-1 text-[#8A8178]">
+                  <span className="material-symbols-outlined text-sm">visibility</span>
+                  {live.totalViews} vue{live.totalViews !== 1 ? "s" : ""} au total
+                </span>
+              </div>
             </div>
           </Link>
         )}

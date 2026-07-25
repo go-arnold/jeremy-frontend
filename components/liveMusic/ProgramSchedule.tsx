@@ -1,6 +1,6 @@
 import type { ProgramSlot } from "@/types/liveMusic";
 
-function ProgramSlotCardMobile({ slot }: { slot: ProgramSlot }) {
+function ProgramSlotCardMobile({ slot, showDay }: { slot: ProgramSlot; showDay?: boolean }) {
   const isOnAir = slot.status === "on-air";
 
   return (
@@ -11,7 +11,7 @@ function ProgramSlotCardMobile({ slot }: { slot: ProgramSlot }) {
             isOnAir ? "text-primary" : "text-white/60"
           }`}
         >
-          {slot.time}
+          {showDay && slot.dayName ? `${slot.dayName} · ${slot.time}` : slot.time}
         </span>
         <div className={`h-px flex-1 ${isOnAir ? "bg-primary opacity-50" : "bg-white/10"}`} />
       </div>
@@ -49,15 +49,15 @@ function ProgramSlotCardMobile({ slot }: { slot: ProgramSlot }) {
   );
 }
 
-function ProgramSlotCardDesktop({ slot }: { slot: ProgramSlot }) {
+function ProgramSlotCardDesktop({ slot, showDay }: { slot: ProgramSlot; showDay?: boolean }) {
   const isOnAir = slot.status === "on-air";
 
   return (
     <div>
       {/* Timeline marker */}
       <div className="flex items-center gap-3 mb-2">
-        <span className={`font-mono text-sm font-bold min-w-[48px] ${isOnAir ? "text-primary" : "text-white/40"}`}>
-          {slot.time}
+        <span className={`font-mono text-sm font-bold ${isOnAir ? "text-primary" : "text-white/40"} ${showDay && slot.dayName ? "" : "min-w-[48px]"}`}>
+          {showDay && slot.dayName ? `${slot.dayName} · ${slot.time}` : slot.time}
         </span>
         {isOnAir && (
           <span className="flex h-2 w-2 relative shrink-0">
@@ -130,7 +130,11 @@ function ProgramSlotCardDesktop({ slot }: { slot: ProgramSlot }) {
 }
 
 interface ProgramScheduleProps {
-  slots: ProgramSlot[];
+  /** Today's slots — rendered under "Grille du jour", no day label needed. */
+  todaySlots: ProgramSlot[];
+  /** Other days' slots — rendered under a separate "À venir" section, each showing its day name.
+   * Optional/defaults to empty so existing single-list callers keep compiling. */
+  upcomingSlots?: ProgramSlot[];
   /** The page already branches its overall layout between a mobile flow and a desktop 3-column
    * grid (structurally different, not just this component) — when the caller sits inside one of
    * those branches it can render only the matching half via this prop. Omitted = self-selecting
@@ -138,7 +142,7 @@ interface ProgramScheduleProps {
   variant?: "mobile" | "desktop";
 }
 
-export default function ProgramSchedule({ slots, variant }: ProgramScheduleProps) {
+export default function ProgramSchedule({ todaySlots, upcomingSlots = [], variant }: ProgramScheduleProps) {
   const showMobile = variant !== "desktop";
   const showDesktop = variant !== "mobile";
 
@@ -147,48 +151,91 @@ export default function ProgramSchedule({ slots, variant }: ProgramScheduleProps
       {/* ── Mobile ── */}
       {showMobile && (
         <div className={variant ? "pt-6 pb-4" : "pt-6 pb-4 lg:hidden"}>
-          <div className="px-6 mb-4 flex justify-between items-end">
-            <div>
-              <h3 className="text-lg font-bold text-white uppercase tracking-wide">Programme</h3>
-              <p className="text-text-secondary text-xs mt-1">Grille du jour</p>
-            </div>
-            <button className="text-accent-blue text-xs font-bold hover:text-white transition-colors">
-              Voir la grille complète
-            </button>
-          </div>
+          {todaySlots.length > 0 && (
+            <>
+              <div className="px-6 mb-4 flex justify-between items-end">
+                <div>
+                  <h3 className="text-lg font-bold text-white uppercase tracking-wide">Programme</h3>
+                  <p className="text-text-secondary text-xs mt-1">Grille du jour</p>
+                </div>
+                <button className="text-accent-blue text-xs font-bold hover:text-white transition-colors">
+                  Voir la grille complète
+                </button>
+              </div>
 
-          <div className="grid gap-4 px-6 pb-4">
-            {slots.map((slot) => (
-              <ProgramSlotCardMobile key={slot.id} slot={slot} />
-            ))}
-          </div>
+              <div className="grid gap-4 px-6 pb-4">
+                {todaySlots.map((slot) => (
+                  <ProgramSlotCardMobile key={slot.id} slot={slot} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {upcomingSlots.length > 0 && (
+            <>
+              <div className="px-6 mb-4 mt-2">
+                <h3 className="text-lg font-bold text-white uppercase tracking-wide">À venir</h3>
+              </div>
+              <div className="grid gap-4 px-6 pb-4">
+                {upcomingSlots.map((slot) => (
+                  <ProgramSlotCardMobile key={slot.id} slot={slot} showDay />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* ── Desktop ── */}
       {showDesktop && (
-        <div
-          className={variant ? "rounded-2xl p-6" : "hidden lg:block rounded-2xl p-6"}
-          style={{ background: "rgba(18,34,60,0.6)", border: "1px solid rgba(230,48,18,0.1)" }}
-        >
-          <div className="flex justify-between items-end mb-6">
-            <div>
-              <h3 className="text-lg font-black text-white uppercase tracking-wide flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-xl">schedule</span>
-                Programme
-              </h3>
-              <p className="text-[#8A8178] text-xs mt-1">Grille du jour</p>
-            </div>
-            <button className="text-primary text-xs font-bold hover:text-white transition-colors">
-              Voir la grille complète
-            </button>
-          </div>
+        <div className="flex flex-col gap-6">
+          {todaySlots.length > 0 && (
+            <div
+              className={variant ? "rounded-2xl p-6" : "hidden lg:block rounded-2xl p-6"}
+              style={{ background: "rgba(18,34,60,0.6)", border: "1px solid rgba(230,48,18,0.1)" }}
+            >
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h3 className="text-lg font-black text-white uppercase tracking-wide flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-xl">schedule</span>
+                    Programme
+                  </h3>
+                  <p className="text-[#8A8178] text-xs mt-1">Grille du jour</p>
+                </div>
+                <button className="text-primary text-xs font-bold hover:text-white transition-colors">
+                  Voir la grille complète
+                </button>
+              </div>
 
-          <div className="flex flex-col gap-4">
-            {slots.map((slot) => (
-              <ProgramSlotCardDesktop key={slot.id} slot={slot} />
-            ))}
-          </div>
+              <div className="flex flex-col gap-4">
+                {todaySlots.map((slot) => (
+                  <ProgramSlotCardDesktop key={slot.id} slot={slot} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {upcomingSlots.length > 0 && (
+            <div
+              className={variant ? "rounded-2xl p-6" : "hidden lg:block rounded-2xl p-6"}
+              style={{ background: "rgba(18,34,60,0.4)", border: "1px solid rgba(255,255,255,0.05)" }}
+            >
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h3 className="text-lg font-black text-white uppercase tracking-wide flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#8A8178] text-xl">event_upcoming</span>
+                    À venir
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {upcomingSlots.map((slot) => (
+                  <ProgramSlotCardDesktop key={slot.id} slot={slot} showDay />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>
