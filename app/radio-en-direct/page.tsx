@@ -72,7 +72,7 @@ export default async function RadioEnDirectPage() {
   if (!liveShow) {
     return (
       <div className="min-h-screen">
-        <main className="pt-20 max-w-7xl mx-auto px-4 lg:px-8 pb-16 flex flex-col items-center">
+        <main className="pt-20 max-w-[1600px] mx-auto px-4 lg:px-8 pb-16 flex flex-col items-center">
           <EmptyState
             icon="radio"
             message="Aucune émission en direct"
@@ -103,8 +103,8 @@ export default async function RadioEnDirectPage() {
           /* Mobile : colonne unique, centré */
           pt-20 max-w-md mx-auto px-0
 
-          /* Desktop : pleine largeur, max-w-7xl */
-          lg:max-w-7xl lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
+          /* Desktop : pleine largeur, max-w-[1600px] */
+          lg:max-w-[1600px] lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
         ">
 
           {/* ══════════════════════════════════════════
