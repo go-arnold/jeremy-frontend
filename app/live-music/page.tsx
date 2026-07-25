@@ -2,7 +2,9 @@ import NowPlayingHero, { NowPlayingHeroProvider } from "@/components/liveMusic/N
 import LiveChat from "@/components/liveMusic/LiveChat";
 import ProgramSchedule from "@/components/liveMusic/ProgramSchedule";
 import EngagementBar from "@/components/ui/EngagementBar";
-import { fetchCurrentSession, fetchProgramme, fetchLiveMusicChat } from "@/lib/services/liveMusic";
+import ReplayPlayer from "@/components/media/ReplayPlayer";
+import { fetchLiveMusicSessions, fetchProgramme, fetchLiveMusicChat } from "@/lib/services/liveMusic";
+import { pickFeaturedByTimestamp } from "@/lib/mappers";
 import EmptyState from "@/components/ui/EmptyState";
 import { programSlots as mockedSlots, chatMessages as mockedChat } from "@/data/liveMusic";
 import type { ProgramSlot } from "@/types/liveMusic";
@@ -60,14 +62,41 @@ async function getLiveChat(slug: string) {
   }
 }
 
+async function getLiveMusicSessions() {
+  try {
+    return await fetchLiveMusicSessions();
+  } catch {
+    return [];
+  }
+}
+
 export default async function Page() {
-  const liveShow = await fetchCurrentSession();
+  const sessions = await getLiveMusicSessions();
   const programs = await getLivePrograms();
   const programSlots = programs.length > 0 ? programs.map(toProgramSlot) : mockedSlots;
   const { today: todaySlots, upcoming: upcomingSlots } = splitByDay(programSlots);
 
-  // If no live session is active, show an empty state
-  if (!liveShow) {
+  // The session to feature: the most-recently-gone-live one if any are currently live,
+  // otherwise the most recently-ended one — never just whatever `/sessions/current/` happens to
+  // return, which doesn't guarantee it already picked the right one when several sessions share
+  // the same status at once.
+  const featured = pickFeaturedByTimestamp(sessions);
+
+  const scheduleBlock = programSlots.length > 0 && (
+    <>
+      {/* Mobile */}
+      <div className="lg:hidden w-full px-4 mt-4 pb-10">
+        <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="mobile" />
+      </div>
+      {/* Desktop */}
+      <div className="hidden lg:block w-full max-w-2xl mx-auto mt-4 pb-10">
+        <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="desktop" />
+      </div>
+    </>
+  );
+
+  // Nothing has ever gone live — true empty state
+  if (!featured) {
     return (
       <div className="min-h-screen">
         <main className="relative w-full flex flex-col items-center justify-center min-h-[80vh]">
@@ -76,24 +105,33 @@ export default async function Page() {
             message="Aucune session live en ce moment"
             description="Il n'y a pas de musique en direct actuellement. Revenez plus tard ou consultez le programme ci-dessous."
           />
-          {/* Still show the programme schedule even if no live */}
-          {programSlots.length > 0 && (
-            <>
-              {/* Mobile */}
-              <div className="lg:hidden w-full px-4 mt-4 pb-10">
-                <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="mobile" />
-              </div>
-              {/* Desktop */}
-              <div className="hidden lg:block w-full max-w-2xl mx-auto mt-4 pb-10">
-                <ProgramSchedule todaySlots={todaySlots} upcomingSlots={upcomingSlots} variant="desktop" />
-              </div>
-            </>
-          )}
+          {scheduleBlock}
         </main>
       </div>
     );
   }
 
+  // Nothing live right now, but the most recent session has ended and was recorded — feature it
+  // as a replay instead of a blank empty state.
+  if (!featured.isLive) {
+    return (
+      <div className="min-h-screen">
+        <main className="relative w-full flex flex-col items-center pt-16 pb-10 px-4">
+          <div className="w-full max-w-2xl">
+            <ReplayPlayer
+              title={featured.title}
+              host={featured.presenter || featured.host || "Art du Kivu"}
+              coverImage={featured.image || ""}
+              audioUrl={featured.audioUrl}
+            />
+          </div>
+          {scheduleBlock}
+        </main>
+      </div>
+    );
+  }
+
+  const liveShow = featured;
   // Fetch live chat using the session slug/id
   const slug = liveShow.id || "";
   const chatMessages = await getLiveChat(slug);
@@ -155,7 +193,7 @@ export default async function Page() {
           {/* Ambient glow desktop */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px]  bg-primary/8 blur-[140px] rounded-full pointer-events-none z-0" />
 
-          <div className="relative z-10 mx-auto px-8 pt-10">
+          <div className="relative z-10 max-w-[1800px] mx-auto px-8 pt-10">
 
             {/* Page title */}
             <div className="flex items-center gap-4 mb-10">

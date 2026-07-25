@@ -30,7 +30,7 @@ interface Props {
 export default function ContentCarousel({ cards }: Props) {
   return (
     <section className="mt-8 lg:mt-12">
-      <div className="flex items-center justify-between px-4 mb-4 lg:px-8 lg:mx-auto">
+      <div className="flex items-center justify-between px-4 mb-4 lg:px-8 lg:max-w-[1800px] lg:mx-auto">
         <h3 className="text-base lg:text-xl font-bold tracking-tight uppercase border-l-4 border-[#E63012] pl-3 text-[#F0EDE8]">
           Contenus à la Une
         </h3>
@@ -62,7 +62,7 @@ export default function ContentCarousel({ cards }: Props) {
       </div>
 
       {/* ── DESKTOP : grille 4 colonnes ── */}
-      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-5 lg:px-8 lg:mx-auto">
+      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-5 lg:px-8 lg:max-w-[1800px] lg:mx-auto">
         {cards.map((card) => (
           <div
             key={card.id}

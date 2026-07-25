@@ -43,7 +43,7 @@ export default function EmissionsPageClient({
 
   return (
     <div className="min-h-screen pb-16">
-      <div className="mx-auto px-4 lg:px-8 pt-8 lg:pt-16">
+      <div className="max-w-[1800px] mx-auto px-4 lg:px-8 pt-8 lg:pt-16">
         <div className="mb-8">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-primary mb-2">
             Art du Kivu

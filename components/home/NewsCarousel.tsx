@@ -63,7 +63,7 @@ export default function NewsCarousel({ cards }: Props) {
 
   return (
     <section className="mt-4 flex flex-col gap-4 lg:mt-8">
-      <div className="flex items-center justify-between px-6 lg:px-8 lg:mx-auto lg:w-full">
+      <div className="flex items-center justify-between px-6 lg:px-8 lg:max-w-[1800px] lg:mx-auto lg:w-full">
         <h2 className="text-2xl font-bold tracking-tight text-[#F0EDE8]">À la Une</h2>
         <div className="kivu-divider w-12" />
       </div>
@@ -77,7 +77,7 @@ export default function NewsCarousel({ cards }: Props) {
 
       {/* ── DESKTOP : grille éditoriale ── */}
       {/* Première carte large, puis les autres en 2 colonnes */}
-      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:px-8 lg:mx-auto lg:w-full">
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:px-8 lg:max-w-[1800px] lg:mx-auto lg:w-full">
         {/* Featured — 2/3 de largeur */}
         {first && (
           <div className="lg:col-span-2">

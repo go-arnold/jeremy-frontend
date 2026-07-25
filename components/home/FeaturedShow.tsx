@@ -13,7 +13,7 @@ export default function FeaturedShowSection({ data }: Props) {
       <div className="
         relative overflow-hidden group card-glow rounded-2xl
         h-[480px]
-        lg:h-[560px] lg:mx-auto
+        lg:h-[560px] lg:max-w-[1800px] lg:mx-auto
       ">
         {/* Background */}
         <div

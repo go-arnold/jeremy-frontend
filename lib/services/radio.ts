@@ -12,8 +12,11 @@ export async function fetchCurrentProgram() {
 }
 
 export async function fetchProgramSchedule() {
+  // The full weekly schedule is ~63 slots (7 days × ~9/day) — without an explicit page_size the
+  // default pagination only returns the first ~20, which can silently miss the actual live/ended
+  // slot (it could be on any day of the week) when picking the program to feature.
   const data = await apiFetch<PaginatedResponse<ApiRadioProgram> | ApiRadioProgram[]>(
-    "/api/v1/radio/program/"
+    "/api/v1/radio/program/?page_size=100"
   );
   const results = Array.isArray(data) ? data : data.results || [];
   return results.map(mapApiRadioToRadioProgram);

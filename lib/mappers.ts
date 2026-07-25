@@ -453,12 +453,91 @@ export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
     isLive: apiProgram.status === 'live',
     listenerCount: apiProgram.listener_count || apiProgram.online_followers || 0,
     status: (apiProgram.status === 'live' ? 'now' : (apiProgram.status === 'upcoming' ? 'next' : 'later')) as 'now' | 'next' | 'later',
+    // Raw backend value ("live"/"ended"/"upcoming"/"scheduled") — the simplified `status` above
+    // collapses "ended" into "later", indistinguishable from a slot that hasn't happened yet.
+    // Needed to find replayable ("ended") slots specifically — see pickFeaturedByWeeklySchedule/
+    // pickFeaturedByTimestamp below.
+    rawStatus: apiProgram.status || "",
+    // The recorded replay's actual playable file (radio: audio_url; only present once
+    // recording_status is "ready").
+    audioUrl: apiProgram.audio_url || "",
+    recordingStatus: apiProgram.recording_status || "",
+    // Only present on MusicLiveSession (live-music) — radio has no absolute timestamps, only the
+    // recurring weekly day_of_week/start_time/end_time above.
+    scheduledAt: apiProgram.scheduled_at || null,
+    liveStartedAt: apiProgram.live_started_at || null,
     // Only present on MusicLiveSessionSerializer (Live Music) — RadioProgram has no
     // EngagementActionsMixin/like-comment support server-side, so these default to 0 there.
     likeCount: apiProgram.like_count || 0,
     commentCount: apiProgram.comment_count || 0,
     messages: []
   };
+}
+
+type WeeklyScheduleItem = {
+  isLive: boolean;
+  rawStatus?: string;
+  dayOfWeek?: number;
+  endTime?: string;
+};
+
+/**
+ * Picks "the program to feature" for radio: the currently-live one if any, otherwise the most
+ * recently-*ended* one (so its recording can be offered as a replay) — never just "whatever
+ * `/radio/current/` happens to return", which has been observed returning an `"upcoming"` slot
+ * instead of an actually-live one. Radio's schedule is a recurring weekly grid (day_of_week +
+ * start/end time, no absolute timestamps), so "most recent" is computed by walking backward from
+ * now through the 7-day cycle to find the `"ended"` slot whose end time is closest in the past.
+ */
+export function pickFeaturedByWeeklySchedule<T extends WeeklyScheduleItem>(programs: T[]): T | null {
+  const live = programs.find((p) => p.isLive);
+  if (live) return live;
+
+  const now = new Date();
+  const nowDayOfWeek = (now.getDay() + 6) % 7; // JS Sunday=0 → backend Monday=0
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let best: T | null = null;
+  let bestMinutesAgo = Infinity;
+  for (const p of programs) {
+    if (p.rawStatus !== "ended" || p.dayOfWeek === undefined || !p.endTime) continue;
+    const [h, m] = p.endTime.split(":").map(Number);
+    let daysAgo = nowDayOfWeek - p.dayOfWeek;
+    if (daysAgo < 0) daysAgo += 7;
+    let minutesAgo = daysAgo * 1440 + (nowMinutes - (h * 60 + m));
+    if (minutesAgo < 0) minutesAgo += 7 * 1440;
+    if (minutesAgo < bestMinutesAgo) {
+      bestMinutesAgo = minutesAgo;
+      best = p;
+    }
+  }
+  return best;
+}
+
+type TimestampedItem = {
+  isLive: boolean;
+  rawStatus?: string;
+  liveStartedAt?: string | null;
+  scheduledAt?: string | null;
+};
+
+function recencyTimestamp(item: TimestampedItem): number {
+  const raw = item.liveStartedAt || item.scheduledAt;
+  return raw ? new Date(raw).getTime() : 0;
+}
+
+/**
+ * Picks "the session to feature" for live-music: the most-recently-gone-live session if one (or
+ * several) are currently live, otherwise the most recently-ended one — ranked by `liveStartedAt`
+ * (falling back to `scheduledAt` when absent) rather than trusting a singular "current" endpoint,
+ * which doesn't guarantee it already picked the right one when several sessions share the same
+ * status at once.
+ */
+export function pickFeaturedByTimestamp<T extends TimestampedItem>(programs: T[]): T | null {
+  const live = programs.filter((p) => p.isLive);
+  const pool = live.length > 0 ? live : programs.filter((p) => p.rawStatus === "ended");
+  if (pool.length === 0) return null;
+  return pool.reduce((a, b) => (recencyTimestamp(b) > recencyTimestamp(a) ? b : a));
 }
 
 const EMPTY_COMMUNITY_POST_DATA = {

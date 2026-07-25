@@ -248,6 +248,15 @@ export interface ApiRadioOrLiveProgram {
   online_followers?: number;
   like_count?: number;
   comment_count?: number;
+  // The recorded replay's actual playable file once `status` is `"ended"` and `recording_status`
+  // is `"ready"` — present on both `RadioProgram` and `MusicLiveSession`.
+  audio_url?: string;
+  recording_status?: string;
+  // Only present on `MusicLiveSession` (live-music) — absolute timestamps, unlike radio's
+  // recurring weekly `day_of_week`/`start_time`/`end_time`. Used to find "the most recently
+  // gone live" session when several share `status: "live"`/`"ended"` at once.
+  scheduled_at?: string | null;
+  live_started_at?: string | null;
 }
 
 export interface ApiCommunityMediaItem {
