@@ -91,7 +91,7 @@ export default function HeroSection({ article }: Props) {
 
         {/* Contenu — colonne gauche */}
         <div className="absolute inset-0 flex items-end">
-          <div className="max-w-[1600px] mx-auto px-8 pb-16 w-full">
+          <div className="mx-auto px-8 pb-16 w-full">
             <div className="max-w-[55%] flex flex-col gap-5">
 
               {/* Tag + temps */}

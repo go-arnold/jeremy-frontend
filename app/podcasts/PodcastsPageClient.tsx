@@ -145,7 +145,7 @@ export default function PodcastsPageClient({
       {/* DESKTOP */}
       <main className="hidden lg:flex flex-col pb-16">
 
-        <div className="max-w-[1600px] mx-auto px-8 w-full">
+        <div className="mx-auto px-8 w-full">
           <div className="flex items-end justify-between py-10 border-b border-white/10 mb-8">
             <div>
               <h1 className="text-4xl font-black text-[#F0EDE8] leading-tight">
@@ -163,7 +163,7 @@ export default function PodcastsPageClient({
           </div>
         </div>
 
-        <div className="max-w-[1600px] mx-auto px-8 w-full flex flex-col gap-12">
+        <div className="mx-auto px-8 w-full flex flex-col gap-12">
           <div className="grid grid-cols-[11fr_9fr] gap-8 items-start">
             {featuredEpisode && <FeaturedEpisodeDesktop episode={featuredEpisode} />}
 

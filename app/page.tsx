@@ -103,8 +103,8 @@ export default async function HomePage() {
       <HeroSection data={heroData} />
 
       {/*
-        Sections internes : centrées avec max-w-[1600px] sur desktop
-        Chaque composant gère son propre lg:max-w-[1600px] lg:mx-auto lg:px-8
+        Sections internes : pleine largeur sur desktop (juste px-8 de marge)
+        Chaque composant gère son propre lg:mx-auto lg:px-8
       */}
 
 
@@ -115,7 +115,7 @@ export default async function HomePage() {
       {/* ── Hits + Top 10 côte à côte sur desktop ── */}
       <div className="
         mt-10 px-4
-        lg:px-8 lg:max-w-[1600px] lg:mx-auto lg:w-full
+        lg:px-8 lg:mx-auto lg:w-full
         lg:grid lg:grid-cols-[1fr_360px] lg:gap-10 lg:items-start
       ">
         <section>

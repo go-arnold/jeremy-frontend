@@ -96,7 +96,7 @@ export default async function EvenementDetailPage({ params }: Props) {
         <EventHeroDesktop event={event} />
 
         {/* Corps : article + sidebar */}
-        <div className="max-w-[1600px] mx-auto px-8 w-full mt-10 pb-20">
+        <div className="mx-auto px-8 w-full mt-10 pb-20">
           <div className="grid grid-cols-[1fr_360px] gap-10 items-start">
 
             {/* ── Colonne principale ── */}
@@ -183,7 +183,7 @@ function EventHeroDesktop({ event }: { event: EventDetail }) {
 
       {/* Contenu bas */}
       <div className="absolute bottom-0 left-0 right-0">
-        <div className="max-w-[1600px] mx-auto px-8 pb-12">
+        <div className="mx-auto px-8 pb-12">
           <div className="max-w-[60%] flex flex-col gap-4">
             {/* Catégorie */}
             <span className="text-xs font-black text-primary uppercase tracking-widest">
@@ -243,7 +243,7 @@ function EventAboutDesktop({ about }: { about: string }) {
   return (
     <section>
       <h2 className="text-2xl font-black text-[#F0EDE8] mb-4">À propos</h2>
-      <p className="text-[#8A8178] leading-relaxed text-base">{about}</p>
+      <p className="text-[#8A8178] leading-relaxed text-base max-w-3xl">{about}</p>
     </section>
   );
 }

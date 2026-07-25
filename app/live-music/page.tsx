@@ -155,7 +155,7 @@ export default async function Page() {
           {/* Ambient glow desktop */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px]  bg-primary/8 blur-[140px] rounded-full pointer-events-none z-0" />
 
-          <div className="relative z-10 max-w-[1600px] mx-auto px-8 pt-10">
+          <div className="relative z-10 mx-auto px-8 pt-10">
 
             {/* Page title */}
             <div className="flex items-center gap-4 mb-10">

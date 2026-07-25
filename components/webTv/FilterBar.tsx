@@ -81,7 +81,7 @@ export default function FilterBar({ tabs }: Props) {
       </div>
 
       {/* ── DESKTOP : tabs pleine largeur centrées ── */}
-      <div className="hidden lg:flex items-center max-w-[1600px] mx-auto px-8">
+      <div className="hidden lg:flex items-center mx-auto px-8">
         {tabs.map((tab) => {
           const isActive = tab.label === activeLabel;
           return (

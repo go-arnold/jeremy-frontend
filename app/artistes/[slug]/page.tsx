@@ -90,7 +90,7 @@ export default async function ArtisteDetailPage({ params }: Props) {
       {/* ══════════════════════════════════════
           DESKTOP — 2 colonnes
       ══════════════════════════════════════ */}
-      <div className="hidden lg:grid lg:grid-cols-[1fr_300px] lg:gap-8 lg:max-w-[1600px] lg:mx-auto lg:px-8 lg:mt-10 relative z-10">
+      <div className="hidden lg:grid lg:grid-cols-[1fr_300px] lg:gap-8 lg:mx-auto lg:px-8 lg:mt-10 relative z-10">
 
         {/* ── Colonne principale ── */}
         <div className="flex flex-col gap-10">

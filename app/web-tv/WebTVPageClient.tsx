@@ -131,7 +131,7 @@ export default function WebTVPageClient({
           </main>
 
           {/* DESKTOP */}
-          <main className="hidden lg:flex lg:flex-col mt-20 gap-10 pb-16 pt-6 max-w-[1600px] mx-auto w-full px-8">
+          <main className="hidden lg:flex lg:flex-col mt-20 gap-10 pb-16 pt-6 mx-auto w-full px-8">
             <div id="top" className={`grid grid-cols-[3fr_2fr] gap-6 items-start ${SCROLL_MT}`}>
               <LiveVideosCarousel videos={heroVideos} variant="desktop" />
               <div id="studio-sessions" className={SCROLL_MT}>
