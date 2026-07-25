@@ -7,6 +7,9 @@ import EmptyState from "@/components/ui/EmptyState";
 import { programSlots as mockedSlots, chatMessages as mockedChat } from "@/data/liveMusic";
 import type { ProgramSlot } from "@/types/liveMusic";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 async function getLivePrograms() {
   try {
     return await fetchProgramme();

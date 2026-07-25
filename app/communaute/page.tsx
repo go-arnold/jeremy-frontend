@@ -5,6 +5,9 @@ import { fetchChallenges, fetchPolls } from "@/lib/services/community";
 import type { ApiChallenge, ApiPoll, ApiCommunityPost } from "@/lib/api-types";
 import CommunautePageClient from "./CommunautePageClient";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 type MappedPost = ReturnType<typeof mapApiPostToCommunityItem>;
 
 async function getInitialData() {

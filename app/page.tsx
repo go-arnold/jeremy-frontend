@@ -33,11 +33,19 @@ import {
   magazineArticles as mockedMagazine,
 } from "@/data/home";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever (this page had no
+// revalidation window at all before, so content added via the backend admin never showed up in
+// production without a full redeploy).
+export const revalidate = 60;
+
 async function getHomeData() {
   try {
-    // According to YAML, /api/v1/home/ returns aggregated payload
-    // Cache for 15 minutes (home content updates regularly)
-    const data = await apiFetch<ApiHomeData>("/api/v1/home/", {}, 900000);
+    // According to YAML, /api/v1/home/ returns aggregated payload.
+    // No explicit cacheTime override — uses apiFetch's own default (60s), matching this page's
+    // `revalidate = 60` above. The previous 15-minute override here defeated the point of ISR:
+    // the page would "revalidate" every 60s but keep serving this same in-memory response for
+    // up to 15 minutes regardless.
+    const data = await apiFetch<ApiHomeData>("/api/v1/home/");
     return data;
   } catch (error) {
     console.error("Failed to fetch home data:", error);

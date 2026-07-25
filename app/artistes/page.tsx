@@ -3,6 +3,9 @@ import { fetchArtists, fetchArtistGenres } from "@/lib/services/artists";
 import ArtistesPageClient from "./ArtistesPageClient";
 import type { GenreItem } from "@/types/artistes";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 async function getInitialData() {
   try {
     const [artistData, genreData] = await Promise.all([

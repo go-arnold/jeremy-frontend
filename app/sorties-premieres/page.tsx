@@ -9,6 +9,9 @@ import SortiesPremieresPageClient from "./SortiesPremieresPageClient";
 import type { ApiRelease } from "@/lib/api-types";
 import type { FeaturedRelease, ReleaseFormat } from "@/types/sortiesPremieres";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 function buildReleasesUrl(format: ReleaseFormat, page: number) {
   const params = new URLSearchParams({ page: String(page), page_size: "15" });
   if (format !== "all") params.set("format", format);

@@ -11,6 +11,9 @@ import EmptyState from "@/components/ui/EmptyState";
 import type { ApiRadioOrLiveProgram } from "@/lib/api-types";
 import type { LiveShow } from "@/types/radio";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 async function getCurrentRadio() {
   try {
     const data = await apiFetch<ApiRadioOrLiveProgram>("/api/v1/radio/current/");

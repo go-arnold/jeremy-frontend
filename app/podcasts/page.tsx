@@ -8,6 +8,9 @@ import PodcastsPageClient from "./PodcastsPageClient";
 import type { ApiEpisode } from "@/lib/api-types";
 import type { PodcastListItem } from "@/types/podcasts";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 interface ApiPodcastCategory {
   id?: string | number;
   label?: string;

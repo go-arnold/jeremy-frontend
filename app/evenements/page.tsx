@@ -5,6 +5,9 @@ import { mapApiEventToEvent } from "@/lib/mappers";
 import { fetchFeaturedEvent } from "@/lib/services/events";
 import EmptyState from "@/components/ui/EmptyState";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 interface CityApiItem {
   name?: string;
 }
