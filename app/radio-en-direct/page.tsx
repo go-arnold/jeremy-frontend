@@ -1,36 +1,23 @@
 import LivePlayer, { LivePlayerProvider } from "@/components/radio-en-direct/LivePlayer";
+import ReplayPlayer from "@/components/media/ReplayPlayer";
 import ProgramGrid from "@/components/radio-en-direct/ProgramGrid";
 import LiveChat from "@/components/radio-en-direct/LiveChat";
 import MembershipBannerWidget from "@/components/radio-en-direct/MembershipBannerWidget";
 import EngagementBar from "@/components/ui/EngagementBar";
 import { membershipBanner as mockedBanner, programSlots as mockedSlots, liveShow as mockedShow } from "@/data/radio";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiRadioToRadioProgram } from "@/lib/mappers";
-import { fetchRadioChat } from "@/lib/services/radio";
+import { fetchProgramSchedule, fetchRadioChat } from "@/lib/services/radio";
+import { pickFeaturedByWeeklySchedule } from "@/lib/mappers";
 import EmptyState from "@/components/ui/EmptyState";
-import type { ApiRadioOrLiveProgram } from "@/lib/api-types";
 import type { LiveShow } from "@/types/radio";
 
 // ISR — refetches at most every 60s instead of freezing at build time forever.
 export const revalidate = 60;
 
-async function getCurrentRadio() {
-  try {
-    const data = await apiFetch<ApiRadioOrLiveProgram>("/api/v1/radio/current/");
-    return mapApiRadioToRadioProgram(data);
-  } catch {
-    // No live radio — return null to show empty state
-    return null;
-  }
-}
+type RadioProgram = Awaited<ReturnType<typeof fetchProgramSchedule>>[number];
 
 async function getRadioPrograms() {
   try {
-    const data = await apiFetch<PaginatedResponse<ApiRadioOrLiveProgram> | ApiRadioOrLiveProgram[]>(
-      "/api/v1/radio/program/"
-    );
-    const programs = Array.isArray(data) ? data : data.results;
-    return Array.isArray(programs) ? programs.map(mapApiRadioToRadioProgram) : [];
+    return await fetchProgramSchedule();
   } catch {
     return [];
   }
@@ -39,7 +26,7 @@ async function getRadioPrograms() {
 // LiveShow (LivePlayer's prop type) diverges from the shared radio/live-music mapper shape on a
 // few fields (listenerCount as a formatted string, isPlaying vs isLive, imageUrl vs image) —
 // adapt rather than cast past the mismatch.
-function toLiveShow(program: NonNullable<Awaited<ReturnType<typeof getCurrentRadio>>>): LiveShow {
+function toLiveShow(program: RadioProgram): LiveShow {
   return {
     slug: program.slug,
     numericId: program.numericId,
@@ -64,15 +51,19 @@ async function getRadioChat() {
 }
 
 export default async function RadioEnDirectPage() {
-  const liveShow = await getCurrentRadio();
   const programs = await getRadioPrograms();
   const programSlots = programs.length > 0 ? programs : mockedSlots;
+  // The program to feature/play: the currently-live one, or — since radio records every
+  // program — the most-recently-*ended* one so its recording can be offered as a replay via
+  // `audioUrl`. Never just whatever `/radio/current/` happens to return (observed returning an
+  // "upcoming" slot instead of an actually-live one).
+  const featured = pickFeaturedByWeeklySchedule(programs);
 
-  // If no live radio is active, show an empty state
-  if (!liveShow) {
+  // Nothing live and nothing recently ended — show an empty state
+  if (!featured) {
     return (
       <div className="min-h-screen">
-        <main className="pt-20 mx-auto px-4 lg:px-8 pb-16 flex flex-col items-center">
+        <main className="pt-20 max-w-[1800px] mx-auto px-4 lg:px-8 pb-16 flex flex-col items-center">
           <EmptyState
             icon="radio"
             message="Aucune émission en direct"
@@ -96,15 +87,60 @@ export default async function RadioEnDirectPage() {
   const chatMessages = await getRadioChat();
   const displayChat = chatMessages.length > 0 ? chatMessages : (mockedShow.messages || []);
 
+  // Nothing live right now, but the most recent program has ended and was recorded — feature it
+  // as a replay instead of the live HLS player.
+  if (!featured.isLive) {
+    return (
+      <div className="min-h-screen">
+        <main className="pt-20 max-w-[1800px] mx-auto px-4 lg:px-8 pb-16">
+          <div className="flex items-center gap-4 mb-6 lg:mb-10">
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-[#F0EDE8] uppercase">
+              Radio <span className="text-primary">En Direct</span>
+            </h1>
+            <div className="kivu-divider flex-1" />
+            <span className="text-[#8A8178] text-xs lg:text-sm font-medium">Rediffusion</span>
+          </div>
+
+          <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
+            <ReplayPlayer
+              title={featured.title}
+              host={featured.host || featured.presenter || "Art du Kivu"}
+              coverImage={featured.image || ""}
+              audioUrl={featured.audioUrl}
+              dayName={featured.day}
+              endTime={featured.endTime}
+            />
+
+            <div className="flex flex-col gap-5">
+              <div className="rounded-2xl p-5 bg-surface-dark border border-white/5">
+                <EngagementBar
+                  resourceType="radio/program"
+                  id={featured.numericId ?? ""}
+                  redirectTo="/radio-en-direct"
+                />
+              </div>
+              <ProgramGrid slots={programSlots} />
+              <LiveChat messages={displayChat} />
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <MembershipBannerWidget banner={mockedBanner} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
-      <LivePlayerProvider show={toLiveShow(liveShow)}>
+      <LivePlayerProvider show={toLiveShow(featured)}>
         <main className="
           /* Mobile : colonne unique, centré */
           pt-20 max-w-md mx-auto px-0
 
-          /* Desktop : pleine largeur */
-          lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
+          /* Desktop : pleine largeur, plafonnée pour ne pas s'étirer à l'infini sur très grand écran */
+          lg:max-w-[1800px] lg:mx-auto lg:pt-10 lg:pb-16 lg:px-8
         ">
 
           {/* ══════════════════════════════════════════
@@ -115,7 +151,7 @@ export default async function RadioEnDirectPage() {
             <div className="px-4">
               <EngagementBar
                 resourceType="radio/program"
-                id={liveShow.numericId ?? ""}
+                id={featured.numericId ?? ""}
                 redirectTo="/radio-en-direct"
               />
             </div>
@@ -141,7 +177,7 @@ export default async function RadioEnDirectPage() {
               </div>
               <div className="kivu-divider flex-1" />
               <span className="text-[#8A8178] text-sm font-medium">
-                {liveShow.listenerCount} auditeurs en ligne
+                {featured.listenerCount} auditeurs en ligne
               </span>
             </div>
 
@@ -153,13 +189,10 @@ export default async function RadioEnDirectPage() {
 
               {/* ── Colonne droite : Programme + Chat ── */}
               <div className="flex flex-col gap-5 sticky top-24">
-                <div
-                  className="rounded-2xl p-5"
-                  style={{ background: "rgba(18,34,60,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
+                <div className="rounded-2xl p-5 bg-surface-dark border border-white/5">
                   <EngagementBar
                     resourceType="radio/program"
-                    id={liveShow.numericId ?? ""}
+                    id={featured.numericId ?? ""}
                     redirectTo="/radio-en-direct"
                   />
                 </div>

@@ -11,9 +11,23 @@ export async function fetchCurrentSession() {
   }
 }
 
-export async function fetchProgramme() {
+/** Full sessions list (live + ended + scheduled) — used to find "the most recently gone live"
+ * session via pickFeaturedByTimestamp (lib/mappers.ts) rather than trusting `/sessions/current/`
+ * alone, which doesn't guarantee it already picked the right one when several sessions share
+ * `status: "live"`/`"ended"` at once. */
+export async function fetchLiveMusicSessions() {
   const data = await apiFetch<PaginatedResponse<ApiRadioProgram> | ApiRadioProgram[]>(
-    "/api/v1/live_music/programme/"
+    "/api/v1/live_music/sessions/?page_size=50"
+  );
+  const results = Array.isArray(data) ? data : data.results || [];
+  return results.map(mapApiRadioToRadioProgram);
+}
+
+export async function fetchProgramme() {
+  // ~28 slots across the week — without an explicit page_size the default pagination only
+  // returns the first page, silently dropping some days from the displayed schedule grid.
+  const data = await apiFetch<PaginatedResponse<ApiRadioProgram> | ApiRadioProgram[]>(
+    "/api/v1/live_music/programme/?page_size=50"
   );
   const results = Array.isArray(data) ? data : data.results || [];
   return results.map(mapApiRadioToRadioProgram);

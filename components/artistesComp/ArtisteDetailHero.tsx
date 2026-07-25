@@ -39,7 +39,7 @@ export default function ArtisteDetailHero({ artiste }: Props) {
       </div>
 
       {/* ── Barre du haut : retour + partage ── */}
-      <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between p-4 pt-14 lg:pt-6 lg:px-8 lg:mx-auto lg:left-0 lg:right-0">
+      <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between p-4 pt-14 lg:pt-6 lg:px-8 lg:max-w-[1800px] lg:mx-auto lg:left-0 lg:right-0">
         <Link
           href="/artistes"
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/30 backdrop-blur-md text-white hover:bg-white/10 transition-colors"
@@ -86,7 +86,7 @@ export default function ArtisteDetailHero({ artiste }: Props) {
 
       {/* DESKTOP — texte dans colonne gauche */}
       <div className="hidden lg:block relative z-10 w-full">
-        <div className="mx-auto px-8 pb-14">
+        <div className="max-w-[1800px] mx-auto px-8 pb-14">
           <div className="max-w-[52%] flex flex-col gap-4">
 
             {/* Genres + localisation */}

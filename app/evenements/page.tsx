@@ -48,7 +48,7 @@ export default async function EvenementsPage() {
 
   if (events.length === 0) {
     return (
-      <div className="pt-24 pb-16 px-4 mx-auto w-full">
+      <div className="pt-24 pb-16 px-4 max-w-[1800px] mx-auto w-full">
         <EmptyState
           message="Pas d'événements à l'horizon"
           description="La scène culturelle du Kivu reprend son souffle. De nouveaux événements seront annoncés très prochainement."

@@ -103,7 +103,7 @@ export default async function BlogPostPage({ params }: Props) {
         <ArticleHeroDesktop post={post} />
 
         {/* Corps : article + sidebar */}
-        <div className="mx-auto px-8 w-full mt-12 pb-20">
+        <div className="max-w-[1800px] mx-auto px-8 w-full mt-12 pb-20">
           <div className="grid grid-cols-[1fr_320px] gap-12 items-start">
 
             {/* ── Article principal ── */}
@@ -207,7 +207,7 @@ function ArticleHeroDesktop({ post }: { post: BlogPost }) {
 
       {/* Contenu bas */}
       <div className="absolute bottom-0 left-0 right-0">
-        <div className="mx-auto px-8 pb-12">
+        <div className="max-w-[1800px] mx-auto px-8 pb-12">
           <div className="max-w-[65%] flex flex-col gap-4">
 
             {/* Catégories */}

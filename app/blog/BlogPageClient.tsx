@@ -112,7 +112,7 @@ export default function BlogPageClient({
               active={activeCategory}
               onCategoryChange={loadCategory}
             />
-            <div className="mx-auto px-8">
+            <div className="max-w-[1800px] mx-auto px-8">
               <VoirPlusPagination
                 key={`desktop-${activeCategory}`}
                 onLoadMore={loadMore}

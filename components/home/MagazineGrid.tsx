@@ -12,7 +12,7 @@ export default function MagazineGrid({ articles }: Props) {
   const secondary = articles.filter((a) => !a.featured);
 
   return (
-    <section className="mt-10 px-4 lg:px-8 lg:mx-auto lg:w-full">
+    <section className="mt-10 px-4 lg:px-8 lg:max-w-[1800px] lg:mx-auto lg:w-full">
       <div className="flex justify-between items-end mb-6">
         <h3 className="text-xl font-bold tracking-tight uppercase border-l-4 border-[#ff2d2d] pl-3 text-[#F0EDE8]">
           Magazine Culturel
