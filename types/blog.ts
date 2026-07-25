@@ -1,12 +1,5 @@
-export type BlogCategory =
-  | "Tous"
-  | "Culture"
-  | "Société"
-  | "Mode"
-  | "Musique"
-  | "Arts Visuels"
-  | "Littérature"
-  | "Danse";
+// API categories are backend-defined and not a stable enum on the frontend.
+export type BlogCategory = string;
 
 // ── /blog — carte dans la grille ───
 export interface BlogCard {
@@ -34,7 +27,8 @@ export interface Author {
 export type ArticleBlock =
   | { type: "paragraph"; content: string }
   | { type: "quote";     content: string }
-  | { type: "figure";    image: string; caption?: string };
+  | { type: "figure";    image: string; caption?: string }
+  | { type: "html";      content: string };
 
 export interface Comment {
   id: string;

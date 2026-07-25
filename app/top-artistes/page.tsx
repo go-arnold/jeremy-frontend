@@ -1,45 +1,21 @@
-import { Suspense } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import Link from "next/link";
 
-import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+import ContentImage from "@/components/ui/ContentImage";
+import { fetchTopArtists } from "@/lib/services/rankings";
+import type { TopArtistItem } from "@/types/rankings";
 
-// Fields as actually read below — kept as-is (not reconciled against ApiArtistList's real
-// `photo_url` field name) to avoid changing runtime behavior while just removing `any`.
-interface TopArtist {
-  id: number;
-  slug: string;
-  name: string;
-  avatar_url?: string;
-  bio?: string;
-}
-
-async function getTopArtists() {
-  try {
-    const res = await apiFetch<PaginatedResponse<TopArtist>>(
-      `/api/v1/artists/?is_featured=true&page_size=50`,
-      { next: { revalidate: 3600 } }
-    );
-    return res;
-  } catch {
-    return { results: [] as TopArtist[], count: 0 };
-  }
-}
-
-function ArtistCard({ artist }: { artist: TopArtist }) {
+function ArtistCard({ artist }: { artist: TopArtistItem }) {
   return (
-    <Link href={`/artistes/${artist.slug}`}>
+    <Link href={artist.href}>
       <div className="group cursor-pointer text-center">
         <div className="relative mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
-          {artist.avatar_url && (
-            <Image
-              src={artist.avatar_url}
-              alt={artist.name}
-              fill
-              sizes="192px"
-              className="object-cover group-hover:scale-110 transition-transform"
-            />
-          )}
+          <ContentImage
+            src={artist.image}
+            alt={artist.name}
+            className="absolute inset-0"
+            imageClassName="group-hover:scale-110 transition-transform"
+            sizes="192px"
+          />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
             <span className="material-symbols-outlined text-5xl text-white opacity-0 group-hover:opacity-100">
               person
@@ -58,7 +34,12 @@ export const metadata = {
 };
 
 export default async function TopArtistesPage() {
-  const data = await getTopArtists();
+  let artists: TopArtistItem[] = [];
+  try {
+    artists = await fetchTopArtists();
+  } catch {
+    artists = [];
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 to-black pt-32 pb-20">
@@ -70,12 +51,10 @@ export default async function TopArtistesPage() {
         <h1 className="text-5xl font-bold text-white mb-4">Top Artistes</h1>
         <p className="text-white/60 mb-12">Découvrez nos meilleurs artistes en mettant en avant.</p>
 
-        {data.results?.length > 0 ? (
+        {artists.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {data.results.map((artist) => (
-              <Suspense key={artist.id} fallback={<div className="bg-slate-800 rounded-full h-48 w-48 mx-auto animate-pulse" />}>
-                <ArtistCard artist={artist} />
-              </Suspense>
+            {artists.map((artist) => (
+              <ArtistCard key={artist.id} artist={artist} />
             ))}
           </div>
         ) : (

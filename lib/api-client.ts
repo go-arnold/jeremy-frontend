@@ -94,7 +94,7 @@ export async function apiFetch<T>(
   const cacheKey = getCacheKey(endpoint, options);
   
   // Vérifier la cache serveur (côté serveur uniquement, pas pour les mutations)
-  if (!isClient && !options.method || options.method === 'GET') {
+  if (!isClient && (!options.method || options.method === 'GET')) {
     const cached = responseCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < (cacheTime || CACHE_TTL)) {
       return cached.data as T;

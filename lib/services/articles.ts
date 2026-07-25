@@ -1,6 +1,7 @@
 import { apiFetch, PaginatedResponse } from "@/lib/api-client";
 import { mapApiBlogToBlogCard, mapApiArticleToBlogPost } from "@/lib/mappers";
 import type { ApiArticleList, ApiArticleDetail } from "@/lib/api-types";
+import type { BlogCard, BlogCategory } from "@/types/blog";
 
 export async function fetchArticles(page = 1, pageSize = 15, category?: string) {
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
@@ -10,12 +11,21 @@ export async function fetchArticles(page = 1, pageSize = 15, category?: string) 
 }
 
 export async function fetchArticleCategories() {
-  return apiFetch<{ id: string; name: string; slug: string }[]>("/api/v1/articles/categories/");
+  const data = await apiFetch<
+    { id: string; name: string; slug: string }[] |
+    PaginatedResponse<{ id: string; name: string; slug: string }>
+  >("/api/v1/articles/categories/");
+  return Array.isArray(data) ? data : data.results || [];
 }
 
 export async function fetchArticle(slug: string) {
   const data = await apiFetch<ApiArticleDetail>(`/api/v1/articles/${slug}/`);
   return mapApiArticleToBlogPost(data);
+}
+
+export async function fetchRelatedArticles(currentSlug: string, category?: BlogCategory, limit = 3): Promise<BlogCard[]> {
+  const data = await fetchArticles(1, Math.max(limit + 1, 4), category || undefined);
+  return data.results.filter((post) => post.slug !== currentSlug).slice(0, limit);
 }
 
 /** Articles have their own bespoke like/comment system (`apps.articles`, NOT the generic

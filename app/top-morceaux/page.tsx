@@ -1,35 +1,12 @@
-import { Suspense } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import Link from "next/link";
 
-import { apiFetch, PaginatedResponse } from '@/lib/api-client';
+import ContentImage from "@/components/ui/ContentImage";
+import { fetchTopReleases } from "@/lib/services/rankings";
+import type { TopReleaseItem } from "@/types/rankings";
 
-// Fields as actually read below — kept as-is (not reconciled against ApiRelease's real
-// `cover_url`/`artist_name` field names) to avoid changing runtime behavior while just removing `any`.
-interface TopRelease {
-  id: number;
-  slug: string;
-  title: string;
-  cover_image?: string;
-  artist_names?: string[];
-  listen_count?: number;
-}
-
-async function getTopReleases() {
-  try {
-    const res = await apiFetch<PaginatedResponse<TopRelease>>(
-      `/api/v1/releases/?ordering=-listen_count&page_size=100`,
-      { next: { revalidate: 3600 } }
-    );
-    return res;
-  } catch {
-    return { results: [] as TopRelease[], count: 0 };
-  }
-}
-
-function ReleaseCard({ release, index }: { release: TopRelease; index: number }) {
+function ReleaseCard({ release, index }: { release: TopReleaseItem; index: number }) {
   return (
-    <Link href={`/sorties-premieres/${release.slug}`}>
+    <Link href={release.href}>
       <div className="group cursor-pointer">
         <div className="flex items-start gap-4">
           <div className="text-3xl font-bold text-primary w-12 pt-2 text-right">
@@ -37,15 +14,13 @@ function ReleaseCard({ release, index }: { release: TopRelease; index: number })
           </div>
           <div className="flex-1">
             <div className="relative aspect-square overflow-hidden rounded-lg mb-3 bg-slate-900">
-              {release.cover_image && (
-                <Image
-                  src={release.cover_image}
-                  alt={release.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  className="object-cover group-hover:scale-105 transition-transform"
-                />
-              )}
+              <ContentImage
+                src={release.image}
+                alt={release.title}
+                className="absolute inset-0"
+                imageClassName="group-hover:scale-105 transition-transform"
+                sizes="(max-width: 768px) 100vw, 640px"
+              />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                 <span className="material-symbols-outlined text-4xl text-white opacity-0 group-hover:opacity-100">
                   play_circle
@@ -53,9 +28,9 @@ function ReleaseCard({ release, index }: { release: TopRelease; index: number })
               </div>
             </div>
             <h3 className="text-white font-bold line-clamp-2">{release.title}</h3>
-            <p className="text-white/60 text-sm mt-1">{release.artist_names?.join(', ') || 'Artiste inconnu'}</p>
+            <p className="text-white/60 text-sm mt-1">{release.artists}</p>
             <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
-              <span>{release.listen_count?.toLocaleString('fr-FR')} écoutes</span>
+              <span>{release.listens.toLocaleString("fr-FR")} écoutes</span>
             </div>
           </div>
         </div>
@@ -69,7 +44,12 @@ export const metadata = {
 };
 
 export default async function TopMorceauxPage() {
-  const data = await getTopReleases();
+  let releases: TopReleaseItem[] = [];
+  try {
+    releases = await fetchTopReleases();
+  } catch {
+    releases = [];
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 to-black pt-32 pb-20">
@@ -81,12 +61,10 @@ export default async function TopMorceauxPage() {
         <h1 className="text-5xl font-bold text-white mb-4">Top Morceaux</h1>
         <p className="text-white/60 mb-12">Les morceaux les plus écoutés sur Art du Kivu.</p>
 
-        {data.results?.length > 0 ? (
+        {releases.length > 0 ? (
           <div className="space-y-6 max-w-3xl">
-            {data.results.map((release, index) => (
-              <Suspense key={release.id} fallback={<div className="bg-slate-800 rounded-lg h-24 animate-pulse" />}>
-                <ReleaseCard release={release} index={index} />
-              </Suspense>
+            {releases.map((release, index) => (
+              <ReleaseCard key={release.id} release={release} index={index} />
             ))}
           </div>
         ) : (
