@@ -18,6 +18,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardStats'
+              examples:
+                StatistiquesDuTableauDeBord:
+                  value:
+                    counts:
+                      artists: 128
+                      articles: 340
+                      events: 24
+                      podcast_episodes: 512
+                    totals:
+                      article_views: 98234
+                      webtv_views: 45210
+                      podcast_plays: 61234
+                    top_articles:
+                    - title: La scène musicale de Goma en 2026
+                      view_count: 4210
+                    top_webtv_videos:
+                    - title: 'Freestyle #12'
+                      view_count: 3820
+                    top_podcast_episodes:
+                    - title: Épisode 12
+                      play_count: 2110
+                  summary: Statistiques du tableau de bord
           description: ''
   /api/v1/articles/:
     get:
@@ -73,6 +95,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ArticleWriteRequest'
+            examples:
+              ArticleAvecCatégorieParSlug:
+                value:
+                  title: La scène musicale de Goma en 2026
+                  excerpt: Un tour d'horizon des artistes montants.
+                  content: <p>Contenu complet de l'article...</p>
+                  featured_image: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/articles/covers/goma.jpg
+                  category: arts-visuels
+                  article_type: blog
+                  status: draft
+                summary: Article avec catégorie par slug
+              ArticleProgrammé(sansCatégorie):
+                value:
+                  title: Édition spéciale
+                  content: <p>...</p>
+                  status: draft
+                  scheduled_at: '2026-08-15T08:00:00Z'
+                summary: Reste en draft jusqu'à ce que scheduled_at soit passé (publication
+                  auto).
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ArticleWriteRequest'
@@ -164,6 +205,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedArticleWriteRequest'
+            examples:
+              ChangerDeCatégorie:
+                value:
+                  category: musique
+                summary: Changer de catégorie
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedArticleWriteRequest'
@@ -239,6 +285,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ArticleListRequest'
+            examples:
+              NouveauCommentaire:
+                value:
+                  content: Excellent article !
+                summary: Nouveau commentaire
+              RéponseÀUnCommentaire:
+                value:
+                  content: Je suis d'accord.
+                  parent_id: 42
+                summary: Réponse à un commentaire
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ArticleListRequest'
@@ -394,6 +450,98 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArticleList'
           description: ''
+    post:
+      operationId: articles_categories_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      tags:
+      - Articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleListRequest'
+            examples:
+              NouvelleCatégorie:
+                value:
+                  name: Cinéma
+                  color: secondary
+                summary: Nouvelle catégorie
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleList'
+          description: ''
+  /api/v1/articles/categories/{category_id}/:
+    patch:
+      operationId: articles_categories_partial_update
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - Articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleListRequest'
+            examples:
+              Renommer:
+                value:
+                  name: Cinéma & Audiovisuel
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleListRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleList'
+          description: ''
+    delete:
+      operationId: articles_categories_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - Articles
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/articles/tags/:
     get:
       operationId: articles_tags_list
@@ -620,6 +768,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ArtistWriteRequest'
+            examples:
+              NouvelArtisteAvecGenres:
+                value:
+                  name: Aline Mwamba
+                  bio: Chanteuse et compositrice originaire de Goma.
+                  city: Goma
+                  country: Congo (DRC)
+                  photo: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/artists/photos/aline.jpg
+                  genres:
+                  - 1
+                  - 2
+                  is_featured: false
+                summary: Nouvel artiste avec genres
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ArtistWriteRequest'
@@ -711,6 +872,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedArtistWriteRequest'
+            examples:
+              ChangerLesGenres:
+                value:
+                  genres:
+                  - 1
+                  - 3
+                summary: Changer les genres
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedArtistWriteRequest'
@@ -732,6 +900,89 @@ paths:
         Adds the stricter `upload` throttle scope on top of the default ones for create/update
         actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
       parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/artists/{slug}/comments/:
+    get:
+      operationId: artists_comments_retrieve
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    post:
+      operationId: artists_comments_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+  /api/v1/artists/{slug}/comments/{comment_id}/:
+    delete:
+      operationId: artists_comments_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
       - in: path
         name: slug
         schema:
@@ -767,6 +1018,151 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArtistList'
           description: ''
+    post:
+      operationId: artists_gallery_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+            examples:
+              NouvellePhoto:
+                value:
+                  image: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/artists/gallery/photo1.jpg
+                  caption: En studio, juillet 2026
+                  order: 1
+                summary: Nouvelle photo
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+  /api/v1/artists/{slug}/gallery/{photo_id}/:
+    patch:
+      operationId: artists_gallery_partial_update
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: photo_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+            examples:
+              CorrigerLaLégende:
+                value:
+                  caption: Backstage, concert de Goma
+                summary: Corriger la légende
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    delete:
+      operationId: artists_gallery_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: photo_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/artists/{slug}/like/:
+    post:
+      operationId: artists_like_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
   /api/v1/artists/{slug}/releases/:
     get:
       operationId: artists_releases_retrieve
@@ -783,6 +1179,208 @@ paths:
       - Artists
       security:
       - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    post:
+      operationId: artists_releases_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+            examples:
+              NouvelleSortie:
+                value:
+                  title: Nouvel Album
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/releases/covers/album.jpg
+                  release_date: '2026-09-01'
+                  format: album
+                  streaming_links:
+                    spotify: https://open.spotify.com/album/xyz
+                summary: Nouvelle sortie
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+  /api/v1/artists/{slug}/releases/{release_id}/:
+    patch:
+      operationId: artists_releases_partial_update
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: release_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+            examples:
+              CorrigerLeTitre:
+                value:
+                  title: Nouvel Album (Édition Deluxe)
+                summary: Corriger le titre
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    delete:
+      operationId: artists_releases_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: release_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/artists/{slug}/save/:
+    post:
+      operationId: artists_save_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    delete:
+      operationId: artists_save_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/artists/{slug}/share/:
+    post:
+      operationId: artists_share_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -813,6 +1411,117 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArtistList'
           description: ''
+    post:
+      operationId: artists_videos_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+            examples:
+              NouvelleVidéo:
+                value:
+                  title: Clip officiel — Nouvel Album
+                  thumbnail: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/artists/videos/thumb.jpg
+                  video_url: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                  duration: '3:45'
+                summary: Nouvelle vidéo
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtistListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+  /api/v1/artists/{slug}/videos/{video_id}/:
+    patch:
+      operationId: artists_videos_partial_update
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: video_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - Artists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+            examples:
+              CorrigerLaDurée:
+                value:
+                  duration: '4:02'
+                summary: Corriger la durée
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistListRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistList'
+          description: ''
+    delete:
+      operationId: artists_videos_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: video_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - Artists
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/artists/bulk_create/:
     post:
       operationId: artists_bulk_create_create
@@ -1014,7 +1723,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+          description: ''
     post:
       operationId: auth_logout_create
       description: |-
@@ -1029,7 +1742,16 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              examples:
+                DéconnexionRéussie:
+                  value:
+                    detail: Déconnexion réussie.
+                  summary: Déconnexion réussie
+          description: ''
   /api/v1/auth/me/:
     get:
       operationId: auth_me_retrieve
@@ -1299,6 +2021,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ChallengeRequest'
+            examples:
+              NouveauDéfi:
+                value:
+                  title: 'Défi du mois : reprise acoustique'
+                  description: Proposez votre reprise acoustique préférée.
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/community/challenges/cover.jpg
+                  prize: Mise en avant sur la page d'accueil
+                  deadline: '2026-09-01T00:00:00Z'
+                summary: Nouveau défi
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ChallengeRequest'
@@ -1459,6 +2190,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/Challenge'
           description: ''
+  /api/v1/community/challenges/{slug}/participate/:
+    post:
+      operationId: community_challenges_participate_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Community
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+            examples:
+              RéponseAuDéfi:
+                value:
+                  title: Ma reprise acoustique
+                  content: Voici ma participation !
+                  media:
+                  - type: image
+                    url: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/sample.jpg
+                summary: Réponse au défi
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Challenge'
+          description: ''
+  /api/v1/community/challenges/{slug}/publish_result/:
+    post:
+      operationId: community_challenges_publish_result_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Community
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+            examples:
+              RésultatÉpinglé:
+                value:
+                  title: Et le gagnant est...
+                  content: Merci à tous les participants !
+                  media:
+                  - type: image
+                    url: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/sample.jpg
+                summary: Résultat épinglé
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Challenge'
+          description: ''
   /api/v1/community/challenges/bulk_create/:
     post:
       operationId: community_challenges_bulk_create_create
@@ -1595,6 +2414,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PollWriteRequest'
+            examples:
+              NouveauSondage:
+                value:
+                  question: Quel est votre genre musical préféré ?
+                  options:
+                  - text: Afrobeat
+                  - text: Rumba
+                  - text: Hip-hop
+                  expires_at: '2026-08-15T00:00:00Z'
+                summary: Nouveau sondage
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PollWriteRequest'
@@ -1729,6 +2558,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PollRequest'
+            examples:
+              VoterPourUneOption:
+                value:
+                  option_id: 3
+                summary: Voter pour une option
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PollRequest'
@@ -1832,6 +2666,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CommunityPostWriteRequest'
+            examples:
+              NouveauPost:
+                value:
+                  title: Mon nouveau titre
+                  content: Regardez ce que j'ai créé !
+                  media:
+                  - type: image
+                    url: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/sample.jpg
+                  post_type: art
+                summary: Nouveau post
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CommunityPostWriteRequest'
@@ -1876,6 +2720,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommunityPost'
+          description: ''
+    patch:
+      operationId: community_posts_partial_update
+      description: |-
+        Adds like/comments/share/save actions to a ModelViewSet.
+
+        Set `enable_save = False` on the ViewSet for content that is inherently
+        live (emissions, live_music sessions, radio programs) — that content can
+        be commented on and shared, but never saved for later.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) community
+          post.
+        required: true
+      tags:
+      - Community
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommunityPostWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommunityPostWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommunityPostWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPostWrite'
           description: ''
     delete:
       operationId: community_posts_destroy
@@ -2190,6 +3072,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CommunityPostRequest'
+            examples:
+              SoumissionDeTalent:
+                value:
+                  title: Ma nouvelle chanson
+                  content: Enregistrée ce week-end.
+                  media:
+                  - type: image
+                    url: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/sample.jpg
+                summary: Soumission de talent
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CommunityPostRequest'
@@ -2260,6 +3151,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmissionWriteRequest'
+            examples:
+              NouvelleÉmission:
+                value:
+                  title: Débat spécial élections
+                  description: Un débat en direct avec des invités.
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/emissions/covers/debat.jpg
+                  scheduled_at: '2026-08-20T19:00:00Z'
+                  duration_minutes: 90
+                  hosts:
+                  - 4
+                  - 9
+                summary: Nouvelle émission
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/EmissionWriteRequest'
@@ -2501,6 +3404,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmissionList'
+              examples:
+                DiffusionTerminée:
+                  value:
+                    status: recorded
+                  summary: Diffusion terminée
           description: ''
   /api/v1/emissions/{slug}/go_live/:
     post:
@@ -2536,6 +3444,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmissionList'
+              examples:
+                DiffusionDémarrée:
+                  value:
+                    status: live
+                    rtmp_server_url: rtmp://art-du-kivu-api.kelor.tech:1935/live
+                    stream_key: audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718
+                    playback_hls_url: https://art-du-kivu-api.kelor.tech/live-hls/processed/audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718/index.m3u8
+                  summary: Diffusion démarrée
+                  description: stream_key change à chaque appel — jamais réutilisé
+                    d'une diffusion à l'autre.
           description: ''
   /api/v1/emissions/{slug}/like/:
     post:
@@ -2819,6 +3737,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventWriteRequest'
+            examples:
+              NouvelÉvénement:
+                value:
+                  title: Festival Karl Gant
+                  description: Le plus grand festival de musique du Kivu.
+                  image: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/events/covers/festival.jpg
+                  date: '2026-10-10T18:00:00Z'
+                  venue_name: Stade de l'Unité
+                  city: 1
+                  category: festival
+                  status: upcoming
+                  ticket_price: '10000'
+                  max_capacity: 5000
+                summary: Nouvel événement
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/EventWriteRequest'
@@ -3101,7 +4033,7 @@ paths:
           description: ''
   /api/v1/gamification/badges/:
     get:
-      operationId: gamification_badges_retrieve
+      operationId: gamification_badges_list
       tags:
       - Gamification
       security:
@@ -3109,7 +4041,13 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Badge'
+          description: ''
   /api/v1/gamification/consumption/:
     post:
       operationId: gamification_consumption_create
@@ -3119,24 +4057,53 @@ paths:
         user just unlocked.
       tags:
       - Gamification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumptionRecordRequest'
+            examples:
+              ProgressionD'écoute:
+                value:
+                  content_type: podcast
+                  object_id: 42
+                  seconds: 30
+                summary: Progression d'écoute
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConsumptionRecordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConsumptionRecordRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumptionResponse'
+          description: ''
   /api/v1/gamification/media-ranking/:
     get:
-      operationId: gamification_media_ranking_retrieve
+      operationId: gamification_media_ranking_list
       tags:
       - Gamification
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaRankingItem'
+          description: ''
   /api/v1/gamification/users/{user_id}/badges/:
     get:
-      operationId: gamification_users_badges_retrieve
+      operationId: gamification_users_badges_list
       description: Public — badges are meant to be shown off on a profile, not kept
         private.
       parameters:
@@ -3152,7 +4119,13 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserBadge'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -3163,7 +4136,16 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+              examples:
+                EnLigne:
+                  value:
+                    status: ok
+                  summary: En ligne
+          description: ''
   /api/v1/home/:
     get:
       operationId: home_retrieve
@@ -3175,7 +4157,74 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                PayloadAccueil:
+                  value:
+                    banner:
+                      image_url: null
+                      title: Bienvenue sur Art du Kivu
+                      subtitle: ''
+                      cta_label: ''
+                      cta_url: ''
+                    a_la_une:
+                      artist_of_month: null
+                      featured_podcast: null
+                      featured_event: null
+                    hits_du_mois: []
+                    magazine:
+                      hero: null
+                      articles: []
+                  summary: Payload accueil
+          description: ''
+  /api/v1/home/banner/:
+    get:
+      operationId: home_banner_retrieve
+      description: |-
+        Singleton homepage banner — configurable from the admin without a DB shell session
+        (BACKEND-GAPS-COMPLET.md §5 "Bannière home").
+      tags:
+      - Home
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeBanner'
+          description: ''
+    patch:
+      operationId: home_banner_partial_update
+      description: |-
+        Singleton homepage banner — configurable from the admin without a DB shell session
+        (BACKEND-GAPS-COMPLET.md §5 "Bannière home").
+      tags:
+      - Home
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHomeBannerWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHomeBannerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHomeBannerWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeBanner'
+          description: ''
   /api/v1/live_music/programme/:
     get:
       operationId: live_music_programme_list
@@ -3224,6 +4273,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MusicLiveSlotWriteRequest'
+            examples:
+              NouveauCréneau:
+                value:
+                  title: Créneau vendredi soir
+                  artist: 4
+                  day_of_week: 5
+                  start_time: '20:00:00'
+                  end_time: '22:00:00'
+                summary: Nouveau créneau
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MusicLiveSlotWriteRequest'
@@ -3404,6 +4462,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MusicLiveSessionWriteRequest'
+            examples:
+              NouvelleSessionLive:
+                value:
+                  title: Session acoustique en direct
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/live_music/covers/session.jpg
+                  artists:
+                  - 4
+                  - 9
+                summary: Nouvelle session live
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/MusicLiveSessionWriteRequest'
@@ -3761,6 +4828,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MusicLiveSession'
+              examples:
+                DiffusionTerminée:
+                  value:
+                    status: ended
+                  summary: Diffusion terminée
           description: ''
   /api/v1/live_music/sessions/{slug}/go_live/:
     post:
@@ -3799,6 +4871,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MusicLiveSession'
+              examples:
+                DiffusionDémarrée:
+                  value:
+                    status: live
+                    rtmp_server_url: rtmp://art-du-kivu-api.kelor.tech:1935/live
+                    stream_key: audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718
+                    playback_hls_url: https://art-du-kivu-api.kelor.tech/live-hls/processed/audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718/index.m3u8
+                  summary: Diffusion démarrée
+                  description: stream_key change à chaque appel — jamais réutilisé
+                    d'une diffusion à l'autre.
           description: ''
   /api/v1/live_music/sessions/{slug}/like/:
     post:
@@ -3991,11 +5073,42 @@ paths:
         this API. See apps.media_uploads.services.UPLOAD_CONTEXTS for the allowed contexts.
       tags:
       - Media
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadSignatureRequestRequest'
+            examples:
+              Contexte:
+                value:
+                  context: artist_gallery_photo
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UploadSignatureRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadSignatureRequestRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSignatureResponse'
+              examples:
+                ParamètresSignés:
+                  value:
+                    signature: 9c1f8e2a...
+                    timestamp: 1721581234
+                    api_key: '123456789012345'
+                    cloud_name: artdukivu
+                    folder: artists/gallery
+                    resource_type: image
+                    upload_url: https://api.cloudinary.com/v1_1/artdukivu/image/upload
+                  summary: Paramètres signés
+          description: ''
   /api/v1/newsletter/campaigns/:
     get:
       operationId: newsletter_campaigns_list
@@ -4044,6 +5157,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewsletterWriteRequest'
+            examples:
+              NouvelleNewsletter:
+                value:
+                  subject: Nouveautés du mois
+                  body_html: <p>Voici les sorties de ce mois-ci...</p>
+                summary: Nouvelle newsletter
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/NewsletterWriteRequest'
@@ -4210,18 +5329,43 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailResponse'
+          description: ''
   /api/v1/newsletter/subscribe/:
     post:
       operationId: newsletter_subscribe_create
       tags:
       - Newsletter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+            examples:
+              NouvelleInscription:
+                value:
+                  email: lecteur@example.com
+                summary: Nouvelle inscription
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+        required: true
       security:
       - jwtAuth: []
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailResponse'
+          description: ''
   /api/v1/newsletter/subscribers/:
     get:
       operationId: newsletter_subscribers_list
@@ -4307,7 +5451,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailResponse'
+          description: ''
   /api/v1/podcasts/:
     get:
       operationId: podcasts_list
@@ -4362,6 +5510,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PodcastSeriesWriteRequest'
+            examples:
+              PodcastAutonome(sansÉpisode):
+                value:
+                  title: Débat du vendredi
+                  description: Un podcast unique, pas encore une série.
+                  audio_file: https://res.cloudinary.com/artdukivu/video/upload/v1721581234/podcasts/audio/debat.mp3
+                  category: talk
+                summary: Podcast autonome (sans épisode)
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PodcastSeriesWriteRequest'
@@ -4453,6 +5609,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedPodcastSeriesWriteRequest'
+            examples:
+              MettreÀJourLaCatégorie:
+                value:
+                  category: culture
+                summary: Mettre à jour la catégorie
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedPodcastSeriesWriteRequest'
@@ -4612,6 +5773,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PodcastSeriesList'
+              examples:
+                CatégoriesDisponibles:
+                  value:
+                  - id: talk
+                    label: Talk
+                  - id: culture
+                    label: Culture
+                  summary: Catégories disponibles
           description: ''
   /api/v1/podcasts/episodes/:
     get:
@@ -4667,6 +5836,21 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EpisodeWriteRequest'
+            examples:
+              ÉpisodeAvecInvitésMixtes(artiste+Libre):
+                value:
+                  series: 4
+                  title: Épisode 12 — La scène urbaine à Goma
+                  description: Discussion avec des artistes locaux.
+                  audio_file: https://res.cloudinary.com/artdukivu/video/upload/v1721581234/podcasts/audio/ep12.mp3
+                  episode_number: 12
+                  season_number: 1
+                  guests:
+                  - name: Aline Mwamba
+                    artist_id: 12
+                  - name: Invité surprise
+                  published_at: '2026-08-01T18:00:00Z'
+                summary: Épisode avec invités mixtes (artiste + libre)
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/EpisodeWriteRequest'
@@ -4758,6 +5942,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedEpisodeWriteRequest'
+            examples:
+              MettreÀJourLesInvités:
+                value:
+                  guests:
+                  - name: Nouvel invité
+                    artist_id: null
+                    user_id: 8
+                summary: Mettre à jour les invités
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedEpisodeWriteRequest'
@@ -5169,6 +6361,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RadioChatRequest'
+            examples:
+              NouveauMessage:
+                value:
+                  content: Super émission aujourd'hui !
+                summary: Nouveau message
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/RadioChatRequest'
@@ -5233,7 +6430,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+          description: ''
   /api/v1/radio/program/:
     get:
       operationId: radio_program_list
@@ -5288,6 +6489,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RadioProgramWriteRequest'
+            examples:
+              NouvelleÉmissionRadio:
+                value:
+                  title: Matinale du Kivu
+                  description: L'actualité et la musique pour bien démarrer la journée.
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/radio/covers/matinale.jpg
+                  start_time: 07:00:00
+                  end_time: 09:00:00
+                  day_of_week: 0
+                  presenter: Jean-Marc
+                summary: Nouvelle émission radio
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/RadioProgramWriteRequest'
@@ -5416,6 +6628,92 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/radio/program/{id}/comments/:
+    get:
+      operationId: radio_program_comments_retrieve
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+          description: ''
+    post:
+      operationId: radio_program_comments_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+          description: ''
+  /api/v1/radio/program/{id}/comments/{comment_id}/:
+    delete:
+      operationId: radio_program_comments_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/radio/program/{id}/end_live/:
     post:
       operationId: radio_program_end_live_create
@@ -5451,6 +6749,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RadioProgram'
+              examples:
+                DiffusionTerminée:
+                  value:
+                    status: ended
+                  summary: Diffusion terminée
           description: ''
   /api/v1/radio/program/{id}/go_live/:
     post:
@@ -5481,6 +6784,144 @@ paths:
         required: true
       security:
       - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+              examples:
+                DiffusionDémarrée:
+                  value:
+                    status: live
+                    rtmp_server_url: rtmp://art-du-kivu-api.kelor.tech:1935/live
+                    stream_key: audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718
+                    playback_hls_url: https://art-du-kivu-api.kelor.tech/live-hls/processed/audio_3f9a1c2b7e4d5f60a1b2c3d4e5f60718/index.m3u8
+                  summary: Diffusion démarrée
+                  description: stream_key change à chaque appel — jamais réutilisé
+                    d'une diffusion à l'autre.
+          description: ''
+  /api/v1/radio/program/{id}/like/:
+    post:
+      operationId: radio_program_like_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+          description: ''
+  /api/v1/radio/program/{id}/save/:
+    post:
+      operationId: radio_program_save_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadioProgram'
+          description: ''
+    delete:
+      operationId: radio_program_save_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/radio/program/{id}/share/:
+    post:
+      operationId: radio_program_share_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un(une) valeur entière unique identifiant ce(cette) radio program.
+        required: true
+      tags:
+      - Radio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RadioProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -5629,6 +7070,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReleaseWriteRequest'
+            examples:
+              NouvelleSortieMusicale:
+                value:
+                  artist: 4
+                  title: Kivu Nights (Single)
+                  cover: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/releases/covers/kivu-nights.jpg
+                  release_date: '2026-09-15'
+                  format: single
+                  is_featured: true
+                  streaming_links:
+                    spotify: https://open.spotify.com/track/xyz
+                summary: Nouvelle sortie musicale
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ReleaseWriteRequest'
@@ -6114,6 +7567,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
+              examples:
+                RésultatsMixtes:
+                  value:
+                    count: 2
+                    page: 1
+                    page_size: 20
+                    results:
+                    - type: artists
+                      id: 4
+                      slug: aline-mwamba
+                      title: Aline Mwamba
+                      image_url: https://res.cloudinary.com/artdukivu/image/upload/v1/artists/photos/aline.jpg
+                      score: 8.2
+                    - type: articles
+                      id: 12
+                      slug: scene-goma-2026
+                      title: La scène musicale de Goma en 2026
+                      image_url: null
+                      score: 5.1
+                  summary: Résultats mixtes
           description: ''
   /api/v1/users/:
     get:
@@ -6156,6 +7629,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: users_create
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAdminCreateRequest'
+            examples:
+              CréerUnUtilisateur(admin):
+                value:
+                  email: nouveau@artdukivu.com
+                  username: nouveau_membre
+                  password: UnMotDePasseSolide123
+                  role: editor
+                summary: Créer un utilisateur (admin)
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserAdminCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAdminCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAdmin'
           description: ''
   /api/v1/users/{id}/:
     get:
@@ -6213,6 +7722,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAdmin'
           description: ''
+    delete:
+      operationId: users_destroy
+      description: |-
+        Adds the stricter `upload` throttle scope on top of the default ones for create/update
+        actions — for ViewSets whose write serializer accepts a CloudinaryField (image/audio/video).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/users/{id}/activity/:
     get:
       operationId: users_activity_list
@@ -6305,6 +7832,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FavoriteToggleRequest'
+            examples:
+              Ajouter/retirerUnFavori:
+                value:
+                  artist_id: 12
+                summary: Ajouter/retirer un favori
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/FavoriteToggleRequest'
@@ -6506,6 +8038,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/VideoWriteRequest'
+            examples:
+              VidéoPlayout(fichierExistant):
+                value:
+                  title: 'Freestyle #12 — Studio Goma'
+                  description: Session freestyle enregistrée en studio.
+                  thumbnail: https://res.cloudinary.com/artdukivu/image/upload/v1721581234/webtv/thumbnails/fs12.jpg
+                  video_url: https://res.cloudinary.com/artdukivu/video/upload/v1721581234/webtv/videos/fs12.mp4
+                  category: freestyles
+                  broadcast_mode: playout
+                  artists:
+                  - 4
+                  published_at: '2026-08-05T12:00:00Z'
+                summary: Vidéo playout (fichier existant)
+              VidéoCaméra(direct,SansFichier):
+                value:
+                  title: Concert en direct — Place de l'Indépendance
+                  category: concerts
+                  broadcast_mode: camera
+                  published_at: '2026-08-05T20:00:00Z'
+                summary: Vidéo caméra (direct, sans fichier)
+                description: video_url n'est pas requis en mode caméra — la diffusion
+                  se fait via playback_hls_url après go_live.
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/VideoWriteRequest'
@@ -6830,6 +8384,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoList'
+              examples:
+                DiffusionTerminée:
+                  value:
+                    is_live: false
+                  summary: Diffusion terminée
           description: ''
   /api/v1/webtv/videos/{slug}/go_live/:
     post:
@@ -6865,6 +8424,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoList'
+              examples:
+                DiffusionDémarrée:
+                  value:
+                    is_live: true
+                    rtmp_server_url: rtmp://art-du-kivu-api.kelor.tech:1935/live
+                    stream_key: video_3f9a1c2b7e4d5f60a1b2c3d4e5f60718
+                    playback_hls_url: https://art-du-kivu-api.kelor.tech/live-hls/processed/video_3f9a1c2b7e4d5f60a1b2c3d4e5f60718/index.m3u8
+                  summary: Diffusion démarrée
           description: ''
   /api/v1/webtv/videos/{slug}/like/:
     post:
@@ -7374,7 +8941,6 @@ components:
           type: string
         featured_image:
           type: string
-          nullable: true
         category:
           type: integer
           nullable: true
@@ -7421,8 +8987,6 @@ components:
           minLength: 1
         featured_image:
           type: string
-          minLength: 1
-          nullable: true
         category:
           type: integer
           nullable: true
@@ -7492,6 +9056,12 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        like_count:
+          type: string
+          readOnly: true
+        comment_count:
+          type: string
+          readOnly: true
         releases:
           type: array
           items:
@@ -7512,11 +9082,13 @@ components:
           format: date-time
           readOnly: true
       required:
+      - comment_count
       - cover_url
       - created_at
       - gallery
       - genres
       - id
+      - like_count
       - name
       - photo_url
       - releases
@@ -7608,7 +9180,7 @@ components:
         video_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -7645,10 +9217,8 @@ components:
           maxLength: 100
         photo:
           type: string
-          nullable: true
         cover_image:
           type: string
-          nullable: true
         genres:
           type: array
           items:
@@ -7681,12 +9251,8 @@ components:
           maxLength: 100
         photo:
           type: string
-          minLength: 1
-          nullable: true
         cover_image:
           type: string
-          minLength: 1
-          nullable: true
         genres:
           type: array
           items:
@@ -7710,6 +9276,45 @@ components:
       - avatar_url
       - id
       - username
+    Badge:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        icon_url:
+          type: string
+          readOnly: true
+        threshold_seconds:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - icon_url
+      - id
+      - name
+      - slug
+    BroadcastModeEnum:
+      enum:
+      - playout
+      - camera
+      type: string
+      description: |-
+        * `playout` - Playout
+        * `camera` - Caméra
     BulkDeleteRequest:
       type: object
       properties:
@@ -7755,7 +9360,6 @@ components:
       required:
       - id
       - name
-      - slug
     Category052Enum:
       enum:
       - freestyles
@@ -7819,7 +9423,6 @@ components:
           maxLength: 30
       required:
       - name
-      - slug
     Challenge:
       type: object
       properties:
@@ -7850,10 +9453,14 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        has_participated:
+          type: string
+          readOnly: true
       required:
       - cover_url
       - deadline
       - description
+      - has_participated
       - id
       - slug
       - title
@@ -7959,6 +9566,11 @@ components:
         media: {}
         post_type:
           $ref: '#/components/schemas/PostTypeEnum'
+        challenge:
+          type: string
+          readOnly: true
+        is_pinned_result:
+          type: boolean
         like_count:
           type: integer
           readOnly: true
@@ -7972,6 +9584,7 @@ components:
       required:
       - author_avatar
       - author_name
+      - challenge
       - comment_count
       - content
       - created_at
@@ -7991,12 +9604,17 @@ components:
         media: {}
         post_type:
           $ref: '#/components/schemas/PostTypeEnum'
+        is_pinned_result:
+          type: boolean
       required:
       - content
       - post_type
     CommunityPostWrite:
       type: object
       properties:
+        title:
+          type: string
+          maxLength: 200
         content:
           type: string
           maxLength: 2000
@@ -8009,6 +9627,9 @@ components:
     CommunityPostWriteRequest:
       type: object
       properties:
+        title:
+          type: string
+          maxLength: 200
         content:
           type: string
           minLength: 1
@@ -8019,14 +9640,51 @@ components:
       required:
       - content
       - post_type
-    ContentTypeEnum:
+    ConsumptionRecordContentTypeEnum:
       enum:
       - radio
       - podcast
+      - webtv
+      - live_music
+      - release
       type: string
       description: |-
         * `radio` - Radio
         * `podcast` - Podcast
+        * `webtv` - Web TV
+        * `live_music` - Live Music
+        * `release` - Release
+    ConsumptionRecordRequest:
+      type: object
+      properties:
+        content_type:
+          $ref: '#/components/schemas/ConsumptionRecordContentTypeEnum'
+        object_id:
+          type: integer
+          minimum: 1
+        seconds:
+          type: integer
+          maximum: 3600
+          minimum: 1
+        title:
+          type: string
+          maxLength: 300
+        cover_url:
+          type: string
+          format: uri
+      required:
+      - content_type
+      - object_id
+      - seconds
+    ConsumptionResponse:
+      type: object
+      properties:
+        newly_earned_badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Badge'
+      required:
+      - newly_earned_badges
     DashboardCounts:
       type: object
       properties:
@@ -8132,6 +9790,13 @@ components:
         * `4` - Friday
         * `5` - Saturday
         * `6` - Sunday
+    DetailResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
     EmissionDetail:
       type: object
       properties:
@@ -8153,13 +9818,21 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         playback_hls_url:
           type: string
           format: uri
           maxLength: 200
+        video_url:
+          type: string
+          format: uri
+          readOnly: true
         status:
           $ref: '#/components/schemas/Status9c3Enum'
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         scheduled_at:
           type: string
           format: date-time
@@ -8196,8 +9869,10 @@ components:
       - host_names
       - id
       - like_count
+      - recording_status
       - slug
       - title
+      - video_url
     EmissionList:
       type: object
       properties:
@@ -8216,6 +9891,10 @@ components:
           readOnly: true
         status:
           $ref: '#/components/schemas/Status9c3Enum'
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         scheduled_at:
           type: string
           format: date-time
@@ -8235,6 +9914,7 @@ components:
       required:
       - cover_url
       - id
+      - recording_status
       - slug
       - title
     EmissionListRequest:
@@ -8284,11 +9964,10 @@ components:
           type: string
         cover:
           type: string
-          nullable: true
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         status:
           $ref: '#/components/schemas/Status9c3Enum'
         scheduled_at:
@@ -8321,12 +10000,10 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         status:
           $ref: '#/components/schemas/Status9c3Enum'
         scheduled_at:
@@ -8375,7 +10052,11 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
-        guests: {}
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guest'
+          readOnly: true
         transcript:
           type: string
         play_count:
@@ -8384,6 +10065,8 @@ components:
           minimum: 0
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -8401,6 +10084,7 @@ components:
       - audio_url
       - comment_count
       - cover_url
+      - guests
       - id
       - like_count
       - published_at
@@ -8425,6 +10109,9 @@ components:
         cover_url:
           type: string
           readOnly: true
+        audio_url:
+          type: string
+          readOnly: true
         duration:
           type: string
           maxLength: 10
@@ -8442,6 +10129,8 @@ components:
           minimum: 0
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -8451,8 +10140,15 @@ components:
         series_slug:
           type: string
           readOnly: true
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guest'
+          readOnly: true
       required:
+      - audio_url
       - cover_url
+      - guests
       - id
       - published_at
       - series_slug
@@ -8490,6 +10186,8 @@ components:
           minimum: 0
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -8513,14 +10211,12 @@ components:
           type: string
         cover:
           type: string
-          nullable: true
         audio_file:
           type: string
-          nullable: true
         audio_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -8532,11 +10228,16 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
-        guests: {}
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guest'
         transcript:
           type: string
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -8562,16 +10263,12 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         audio_file:
           type: string
-          minLength: 1
-          nullable: true
         audio_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -8583,11 +10280,16 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
-        guests: {}
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuestRequest'
         transcript:
           type: string
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -8820,7 +10522,6 @@ components:
           type: string
         image:
           type: string
-          nullable: true
         date:
           type: string
           format: date-time
@@ -8884,8 +10585,6 @@ components:
           minLength: 1
         image:
           type: string
-          minLength: 1
-          nullable: true
         date:
           type: string
           format: date-time
@@ -8990,6 +10689,69 @@ components:
       - id
       - name
       - slug
+    Guest:
+      type: object
+      description: |-
+        A podcast guest: always has a display `name` ("jina") regardless of whether they're
+        linked to an existing Artist, an existing User, or neither (pure freeform mention).
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        artist_id:
+          type: integer
+          nullable: true
+        user_id:
+          type: integer
+          nullable: true
+      required:
+      - name
+    GuestRequest:
+      type: object
+      description: |-
+        A podcast guest: always has a display `name` ("jina") regardless of whether they're
+        linked to an existing Artist, an existing User, or neither (pure freeform mention).
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        artist_id:
+          type: integer
+          nullable: true
+        user_id:
+          type: integer
+          nullable: true
+      required:
+      - name
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+      - status
+    HomeBanner:
+      type: object
+      properties:
+        image_url:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          format: uri
+          maxLength: 500
+      required:
+      - image_url
     ListenHistory:
       type: object
       properties:
@@ -8997,7 +10759,7 @@ components:
           type: integer
           readOnly: true
         content_type:
-          $ref: '#/components/schemas/ContentTypeEnum'
+          $ref: '#/components/schemas/ListenHistoryContentTypeEnum'
         content_id:
           type: integer
           maximum: 2147483647
@@ -9026,6 +10788,14 @@ components:
       - id
       - listened_at
       - title
+    ListenHistoryContentTypeEnum:
+      enum:
+      - radio
+      - podcast
+      type: string
+      description: |-
+        * `radio` - Radio
+        * `podcast` - Podcast
     Login:
       type: object
       properties:
@@ -9051,6 +10821,32 @@ components:
           minLength: 1
       required:
       - password
+    LogoutResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    MediaRankingItem:
+      type: object
+      properties:
+        content_type:
+          type: string
+        object_id:
+          type: integer
+        title:
+          type: string
+        cover_url:
+          type: string
+        total_seconds:
+          type: integer
+      required:
+      - content_type
+      - cover_url
+      - object_id
+      - title
+      - total_seconds
     MusicLiveSession:
       type: object
       properties:
@@ -9080,6 +10876,14 @@ components:
           type: string
           format: uri
           maxLength: 200
+        audio_url:
+          type: string
+          format: uri
+          readOnly: true
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         online_followers:
           type: string
           readOnly: true
@@ -9099,12 +10903,14 @@ components:
           readOnly: true
       required:
       - artist_names
+      - audio_url
       - comment_count
       - cover_url
       - created_at
       - id
       - like_count
       - online_followers
+      - recording_status
       - slug
       - title
     MusicLiveSessionRequest:
@@ -9148,7 +10954,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          nullable: true
         artists:
           type: array
           items:
@@ -9175,8 +10980,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          minLength: 1
-          nullable: true
         artists:
           type: array
           items:
@@ -9238,7 +11041,6 @@ components:
           maxLength: 200
         cover:
           type: string
-          nullable: true
         artist:
           type: integer
           nullable: true
@@ -9270,8 +11072,6 @@ components:
           maxLength: 200
         cover:
           type: string
-          minLength: 1
-          nullable: true
         artist:
           type: integer
           nullable: true
@@ -9806,6 +11606,38 @@ components:
           minLength: 1
       required:
       - email
+    PatchedArticleListRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 300
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 320
+          pattern: ^[-a-zA-Z0-9_]+$
+        excerpt:
+          type: string
+        read_time:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        view_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        like_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_featured:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
     PatchedArticleWriteRequest:
       type: object
       properties:
@@ -9825,8 +11657,6 @@ components:
           minLength: 1
         featured_image:
           type: string
-          minLength: 1
-          nullable: true
         category:
           type: integer
           nullable: true
@@ -9851,6 +11681,24 @@ components:
           type: string
           format: date-time
           nullable: true
+    PatchedArtistListRequest:
+      type: object
+      description: Lightweight serializer for list endpoints.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 220
+          pattern: ^[-a-zA-Z0-9_]+$
+        city:
+          type: string
+          maxLength: 100
+        is_featured:
+          type: boolean
     PatchedArtistWriteRequest:
       type: object
       properties:
@@ -9874,12 +11722,8 @@ components:
           maxLength: 100
         photo:
           type: string
-          minLength: 1
-          nullable: true
         cover_image:
           type: string
-          minLength: 1
-          nullable: true
         genres:
           type: array
           items:
@@ -9914,6 +11758,19 @@ components:
           minimum: 0
         is_active:
           type: boolean
+    PatchedCommunityPostWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        media: {}
+        post_type:
+          $ref: '#/components/schemas/PostTypeEnum'
     PatchedEmissionWriteRequest:
       type: object
       properties:
@@ -9930,12 +11787,10 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         status:
           $ref: '#/components/schemas/Status9c3Enum'
         scheduled_at:
@@ -9968,16 +11823,12 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         audio_file:
           type: string
-          minLength: 1
-          nullable: true
         audio_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -9989,11 +11840,16 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
-        guests: {}
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuestRequest'
         transcript:
           type: string
         is_featured:
           type: boolean
+        status:
+          $ref: '#/components/schemas/Status68aEnum'
         published_at:
           type: string
           format: date-time
@@ -10014,8 +11870,6 @@ components:
           minLength: 1
         image:
           type: string
-          minLength: 1
-          nullable: true
         date:
           type: string
           format: date-time
@@ -10057,6 +11911,24 @@ components:
           type: array
           items:
             type: integer
+    PatchedHomeBannerWriteRequest:
+      type: object
+      properties:
+        image:
+          type: string
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          format: uri
+          maxLength: 500
     PatchedMusicLiveSessionWriteRequest:
       type: object
       properties:
@@ -10071,8 +11943,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          minLength: 1
-          nullable: true
         artists:
           type: array
           items:
@@ -10092,8 +11962,6 @@ components:
           maxLength: 200
         cover:
           type: string
-          minLength: 1
-          nullable: true
         artist:
           type: integer
           nullable: true
@@ -10138,8 +12006,15 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
+        audio_file:
+          type: string
+        audio_url:
+          type: string
+          format: uri
+          maxLength: 500
+        duration:
+          type: string
+          maxLength: 10
         category:
           $ref: '#/components/schemas/CategoryC28Enum'
         is_featured:
@@ -10178,8 +12053,6 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         start_time:
           type: string
           format: time
@@ -10199,7 +12072,7 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
     PatchedReleaseWriteRequest:
       type: object
       properties:
@@ -10216,8 +12089,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          minLength: 1
-          nullable: true
         release_date:
           type: string
           format: date
@@ -10233,7 +12104,7 @@ components:
         preview_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
     PatchedTagRequest:
       type: object
       properties:
@@ -10297,11 +12168,9 @@ components:
           maxLength: 200
         avatar:
           type: string
-          format: uri
           writeOnly: true
         cover_image:
           type: string
-          format: uri
           writeOnly: true
     PatchedVideoWriteRequest:
       type: object
@@ -10319,13 +12188,10 @@ components:
           type: string
         thumbnail:
           type: string
-          minLength: 1
-          nullable: true
         video_url:
           type: string
           format: uri
-          minLength: 1
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -10335,6 +12201,8 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
         location:
           type: string
           maxLength: 100
@@ -10363,8 +12231,16 @@ components:
         cover_url:
           type: string
           readOnly: true
+        audio_url:
+          type: string
+          readOnly: true
+        duration:
+          type: string
+          maxLength: 10
         category:
           $ref: '#/components/schemas/CategoryC28Enum'
+        is_series:
+          type: boolean
         is_featured:
           type: boolean
         episode_count:
@@ -10372,6 +12248,7 @@ components:
           maximum: 32767
           minimum: 0
       required:
+      - audio_url
       - category
       - cover_url
       - id
@@ -10391,8 +12268,13 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         description:
           type: string
+        duration:
+          type: string
+          maxLength: 10
         category:
           $ref: '#/components/schemas/CategoryC28Enum'
+        is_series:
+          type: boolean
         is_featured:
           type: boolean
         episode_count:
@@ -10417,7 +12299,15 @@ components:
           type: string
         cover:
           type: string
-          nullable: true
+        audio_file:
+          type: string
+        audio_url:
+          type: string
+          format: uri
+          maxLength: 500
+        duration:
+          type: string
+          maxLength: 10
         category:
           $ref: '#/components/schemas/CategoryC28Enum'
         is_featured:
@@ -10441,8 +12331,15 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
+        audio_file:
+          type: string
+        audio_url:
+          type: string
+          format: uri
+          maxLength: 500
+        duration:
+          type: string
+          maxLength: 10
         category:
           $ref: '#/components/schemas/CategoryC28Enum'
         is_featured:
@@ -10574,11 +12471,13 @@ components:
       - talent
       - art
       - news
+      - challenge_response
       type: string
       description: |-
         * `talent` - Talent
         * `art` - Art
         * `news` - News
+        * `challenge_response` - Challenge Response
     ProfileTarget:
       type: object
       properties:
@@ -10674,20 +12573,30 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         playback_hls_url:
           type: string
           format: uri
           maxLength: 200
+        audio_url:
+          type: string
+          format: uri
+          readOnly: true
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         listener_count:
           type: integer
           maximum: 2147483647
           minimum: 0
       required:
+      - audio_url
       - cover_url
       - day_name
       - end_time
       - id
+      - recording_status
       - slug
       - start_time
       - title
@@ -10724,7 +12633,7 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         playback_hls_url:
           type: string
           format: uri
@@ -10752,7 +12661,6 @@ components:
           type: string
         cover:
           type: string
-          nullable: true
         start_time:
           type: string
           format: time
@@ -10772,7 +12680,7 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
       required:
       - end_time
       - start_time
@@ -10793,8 +12701,6 @@ components:
           type: string
         cover:
           type: string
-          minLength: 1
-          nullable: true
         start_time:
           type: string
           format: time
@@ -10814,11 +12720,23 @@ components:
         stream_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
       required:
       - end_time
       - start_time
       - title
+    RecordingStatusEnum:
+      enum:
+      - none
+      - pending
+      - ready
+      - failed
+      type: string
+      description: |-
+        * `none` - Aucun
+        * `pending` - En cours de traitement
+        * `ready` - Disponible
+        * `failed` - Échec
     Register:
       type: object
       properties:
@@ -10877,7 +12795,7 @@ components:
         preview_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
       required:
       - cover_url
       - id
@@ -10915,7 +12833,7 @@ components:
         preview_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         artist_name:
           type: string
           readOnly: true
@@ -11025,7 +12943,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          nullable: true
         release_date:
           type: string
           format: date
@@ -11041,7 +12958,7 @@ components:
         preview_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
       required:
       - artist
       - format
@@ -11063,8 +12980,6 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         cover:
           type: string
-          minLength: 1
-          nullable: true
         release_date:
           type: string
           format: date
@@ -11080,7 +12995,7 @@ components:
         preview_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
       required:
       - artist
       - format
@@ -11233,6 +13148,15 @@ components:
         * `live` - Live
         * `scheduled` - Programmé
         * `recorded` - Enregistré
+    SubscribeRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+      required:
+      - email
     Subscriber:
       type: object
       properties:
@@ -11356,6 +13280,39 @@ components:
       - slug
       - title
       - view_count
+    UploadSignatureRequestRequest:
+      type: object
+      properties:
+        context:
+          type: string
+          minLength: 1
+      required:
+      - context
+    UploadSignatureResponse:
+      type: object
+      properties:
+        signature:
+          type: string
+        timestamp:
+          type: integer
+        api_key:
+          type: string
+        cloud_name:
+          type: string
+        folder:
+          type: string
+        resource_type:
+          type: string
+        upload_url:
+          type: string
+      required:
+      - api_key
+      - cloud_name
+      - folder
+      - resource_type
+      - signature
+      - timestamp
+      - upload_url
     User:
       type: object
       description: User model w/o password
@@ -11467,6 +13424,59 @@ components:
       - is_online
       - listen_count
       - username
+    UserAdminCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        username:
+          type: string
+          minLength: 1
+          title: Nom d’utilisateur
+          description: Requis. 150 caractères maximum. Uniquement des lettres, nombres
+            et les caractères « @ », « . », « + », « - » et « _ ».
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        handle:
+          type: string
+          maxLength: 50
+        bio:
+          type: string
+          maxLength: 200
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+          title: Actif
+          description: Précise si l’utilisateur doit être considéré comme actif. Décochez
+            ceci plutôt que de supprimer le compte.
+        is_verified:
+          type: boolean
+      required:
+      - email
+      - password
+      - username
+    UserBadge:
+      type: object
+      properties:
+        badge:
+          allOf:
+          - $ref: '#/components/schemas/Badge'
+          readOnly: true
+        earned_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - badge
+      - earned_at
     UserBulkUpdateItemRequest:
       type: object
       properties:
@@ -11512,11 +13522,9 @@ components:
           maxLength: 200
         avatar:
           type: string
-          format: uri
           writeOnly: true
         cover_image:
           type: string
-          format: uri
           writeOnly: true
       required:
       - username
@@ -11550,7 +13558,7 @@ components:
         video_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         playback_hls_url:
           type: string
           format: uri
@@ -11564,9 +13572,18 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         location:
           type: string
           maxLength: 100
+        artist_names:
+          type: string
+          readOnly: true
         view_count:
           type: integer
           maximum: 2147483647
@@ -11581,15 +13598,16 @@ components:
           type: string
           format: date-time
       required:
+      - artist_names
       - category
       - comment_count
       - id
       - like_count
       - published_at
+      - recording_status
       - slug
       - thumbnail_url
       - title
-      - video_url
     VideoList:
       type: object
       properties:
@@ -11615,6 +13633,12 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
+        recording_status:
+          allOf:
+          - $ref: '#/components/schemas/RecordingStatusEnum'
+          readOnly: true
         location:
           type: string
           maxLength: 100
@@ -11633,6 +13657,7 @@ components:
       - category
       - id
       - published_at
+      - recording_status
       - slug
       - thumbnail_url
       - title
@@ -11657,6 +13682,8 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
         location:
           type: string
           maxLength: 100
@@ -11686,11 +13713,10 @@ components:
           type: string
         thumbnail:
           type: string
-          nullable: true
         video_url:
           type: string
           format: uri
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -11700,6 +13726,8 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
         location:
           type: string
           maxLength: 100
@@ -11714,7 +13742,6 @@ components:
       - category
       - published_at
       - title
-      - video_url
     VideoWriteRequest:
       type: object
       properties:
@@ -11731,13 +13758,10 @@ components:
           type: string
         thumbnail:
           type: string
-          minLength: 1
-          nullable: true
         video_url:
           type: string
           format: uri
-          minLength: 1
-          maxLength: 200
+          maxLength: 500
         duration:
           type: string
           maxLength: 10
@@ -11747,6 +13771,8 @@ components:
           type: boolean
         is_live:
           type: boolean
+        broadcast_mode:
+          $ref: '#/components/schemas/BroadcastModeEnum'
         location:
           type: string
           maxLength: 100
@@ -11761,7 +13787,6 @@ components:
       - category
       - published_at
       - title
-      - video_url
     _PollOptionInput:
       type: object
       properties:

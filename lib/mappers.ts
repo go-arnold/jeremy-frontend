@@ -28,6 +28,7 @@ import type {
   ApiHeroBanner,
   ApiHit,
   ApiALaUne,
+  ApiContentAUneItem,
   ApiBadge,
   ApiMediaRankingItem,
   ApiSavedItem,
@@ -611,7 +612,7 @@ export function buildCalendarMonth(monthDate: Date, releaseDates: string[]): Cal
 
 // ── Home page mappers ──────────────────────────────────────────────────────
 
-import type { Hero, Track, MagazineArticle, NewsCard } from "@/types";
+import type { Hero, Track, MagazineArticle, NewsCard, ContentCard } from "@/types";
 
 /**
  * Maps API banner object → Hero type used by HeroSection.
@@ -721,6 +722,35 @@ export function mapApiALaUneToNewsCards(aLaUne: ApiALaUne | null | undefined): N
   }
 
   return cards;
+}
+
+const CONTENT_A_UNE_STYLE: Record<
+  string,
+  { badge: string; badgeVariant: ContentCard["badgeVariant"]; ctaLabel: string; ctaVariant: ContentCard["ctaVariant"]; hrefBase: string }
+> = {
+  artist: { badge: "Artiste", badgeVariant: "primary", ctaLabel: "Voir le profil", ctaVariant: "primary", hrefBase: "/artistes" },
+  emission: { badge: "Émission", badgeVariant: "teal", ctaLabel: "Regarder", ctaVariant: "teal", hrefBase: "/emissions" },
+  article: { badge: "Article", badgeVariant: "navy", ctaLabel: "Lire l'article", ctaVariant: "primary", hrefBase: "/blog" },
+};
+
+/**
+ * Maps a single API `contenus_a_la_une` item → ContentCard used by ContentCarousel.
+ * API shape: { type: "artist"|"emission"|"article", id, slug, title, description, image_url }
+ */
+export function mapApiContentAUneToContentCard(item: ApiContentAUneItem): ContentCard {
+  const style = CONTENT_A_UNE_STYLE[item.type || ""] || CONTENT_A_UNE_STYLE.article;
+  const slug = item.slug || item.id?.toString() || "";
+  return {
+    id: `${item.type || "content"}-${item.id ?? slug}`,
+    title: item.title || "",
+    description: item.description || "",
+    image: item.image_url || "",
+    badge: style.badge,
+    badgeVariant: style.badgeVariant,
+    ctaLabel: style.ctaLabel,
+    ctaVariant: style.ctaVariant,
+    href: slug ? `${style.hrefBase}/${slug}` : style.hrefBase,
+  };
 }
 
 /**

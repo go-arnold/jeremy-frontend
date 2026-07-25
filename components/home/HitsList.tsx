@@ -24,10 +24,10 @@ export default function HitsList({
     <div className="flex flex-col gap-3 w-full">
       <div className="mb-3 flex items-end justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#F0EDE8] uppercase tracking-wider">{title}</h2>
-          <p className="text-sm text-[#E63012] font-medium">{subtitle}</p>
+          <h2 className="text-base lg:text-2xl font-bold text-[#F0EDE8] uppercase tracking-wider">{title}</h2>
+          <p className="text-xs lg:text-sm text-[#E63012] font-medium">{subtitle}</p>
         </div>
-        <Link href={seeAllHref} className="text-xs font-bold text-[#8A8178] hover:text-[#F0EDE8] transition-colors">
+        <Link href={seeAllHref} className="text-[10px] lg:text-xs font-bold text-[#8A8178] hover:text-[#F0EDE8] transition-colors">
           {seeAllLabel}
         </Link>
       </div>
@@ -36,27 +36,27 @@ export default function HitsList({
         <Link
           key={track.rank}
           href={track.href}
-          className={`group relative flex items-center gap-4 rounded-xl border p-3 pr-4 transition-all hover:border-[#ffffff]/30 ${
+          className={`group relative flex items-center gap-2 lg:gap-4 rounded-xl border p-2 pr-3 lg:p-3 lg:pr-4 transition-all hover:border-[#ffffff]/30 ${
             track.featured
               ? "border-[#ffffff]/20 bg-[#0d172fd1] inner-glow"
               : "border-[#ffffff]/5 bg-[#0d172fd1]"
           }`}
         >
-          <span className={`flex h-8 w-8 shrink-0 items-center justify-center text-xl font-black ${track.featured ? "text-[#E63012]" : "text-[#4A443E]"}`}>
+          <span className={`flex h-6 w-6 lg:h-8 lg:w-8 shrink-0 items-center justify-center text-sm lg:text-xl font-black ${track.featured ? "text-[#E63012]" : "text-[#4A443E]"}`}>
             {track.rank}
           </span>
-          <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-[#221E1B]">
+          <div className="relative size-9 lg:size-12 shrink-0 overflow-hidden rounded-lg bg-[#221E1B]">
             <Image fill sizes="48px" className="object-cover" alt={track.title} src={track.image} />
           </div>
           <div className="flex flex-1 flex-col justify-center overflow-hidden">
-            <h4 className="truncate text-base font-bold text-[#F0EDE8]">{track.title}</h4>
-            <p className="truncate text-xs font-medium text-[#8A8178]">{track.artist}</p>
+            <h4 className="truncate text-xs lg:text-base font-bold text-[#F0EDE8]">{track.title}</h4>
+            <p className="truncate text-[10px] lg:text-xs font-medium text-[#8A8178]">{track.artist}</p>
           </div>
           <button
             onClick={(e) => e.preventDefault()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EDE8]/5 text-[#4A443E] transition hover:bg-[#E63012] hover:text-white"
+            className="flex h-7 w-7 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-[#F0EDE8]/5 text-[#4A443E] transition hover:bg-[#E63012] hover:text-white"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>thumb_up</span>
+            <span className="material-symbols-outlined text-sm lg:text-xl">thumb_up</span>
           </button>
         </Link>
       ))}

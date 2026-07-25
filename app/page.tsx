@@ -10,14 +10,17 @@ import {
   mapApiALaUneToNewsCards,
   mapApiHitToTrack,
   mapApiMagazineArticle,
+  mapApiContentAUneToContentCard,
   type ApiMagazineArticle,
 } from "@/lib/mappers";
-import type { ApiHeroBanner, ApiALaUne, ApiHit } from "@/lib/api-types";
+import type { ApiHeroBanner, ApiALaUne, ApiHit, ApiContentAUneItem } from "@/lib/api-types";
 
 interface ApiHomeData {
   banner?: ApiHeroBanner;
   a_la_une?: ApiALaUne;
   hits_du_mois?: ApiHit[];
+  hits_du_mois_period?: string;
+  contenus_a_la_une?: ApiContentAUneItem[];
   magazine?: {
     hero?: ApiMagazineArticle;
     articles?: ApiMagazineArticle[];
@@ -84,8 +87,13 @@ export default async function HomePage() {
     ? magArticlesRaw.map(mapApiMagazineArticle)
     : mockedMagazine;
 
-  // Content cards: no direct API equivalent → always use mocked static cards
-  const contentCards = mockedContent;
+  // contenus_a_la_une → ContentCarousel
+  const contentAUneRaw: ApiContentAUneItem[] = homeData?.contenus_a_la_une || [];
+  const contentCards = contentAUneRaw.length > 0
+    ? contentAUneRaw.map(mapApiContentAUneToContentCard)
+    : mockedContent;
+
+  const hitsPeriod = homeData?.hits_du_mois_period || "JUIN 2026";
 
   return (
     
@@ -123,7 +131,7 @@ export default async function HomePage() {
         <aside className="hidden lg:block">
           <Top10Card
             tracks={top10}
-            period="JUIN 2026"
+            period={hitsPeriod}
             seeAllHref="/top-artistes"
           />
         </aside>
@@ -133,7 +141,7 @@ export default async function HomePage() {
       <div className="lg:hidden">
         <Top10Card
           tracks={top10}
-          period="JUIN 2026"
+          period={hitsPeriod}
           seeAllHref="/top-artistes"
         />
       </div>
