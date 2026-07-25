@@ -173,7 +173,7 @@ export default function EventsPageClient({ cities, initialEvents, initialHasMore
         />
 
         {/* ── Corps ── */}
-        <div className="max-w-7xl mx-auto px-8 w-full pt-8 pb-16">
+        <div className="max-w-[1600px] mx-auto px-8 w-full pt-8 pb-16">
 
           {/* Ligne 1 : Featured (55%) + Upcoming (45%) */}
           <div className="grid grid-cols-[11fr_9fr] gap-8 items-start mb-10">
@@ -283,7 +283,7 @@ function EventsHeaderDesktop({
       className="sticky top-16 z-40 border-b border-white/5"
       style={{ background: "rgba(18,34,60,0.85)", backdropFilter: "blur(16px)" }}
     >
-      <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between gap-8">
+      <div className="max-w-[1600px] mx-auto px-8 py-4 flex items-center justify-between gap-8">
 
         {/* Titre + sous-titre */}
         <div className="shrink-0">

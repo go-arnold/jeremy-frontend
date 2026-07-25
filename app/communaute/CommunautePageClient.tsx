@@ -265,7 +265,7 @@ export default function CommunautePageClient({
 
       {/* DESKTOP */}
       <div className="hidden lg:block pb-16">
-        <div className="max-w-7xl mx-auto px-8">
+        <div className="max-w-[1600px] mx-auto px-8">
 
           {/* Page header */}
           <div className="flex items-end justify-between py-10 border-b border-white/10 mb-8">

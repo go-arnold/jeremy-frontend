@@ -109,7 +109,7 @@ export default async function PodcastEpisodePage({ params }: Props) {
           3 colonnes : Cover | Player+Tabs | Sidebar
       ══════════════════════════════════════ */}
       <div className="hidden lg:flex flex-col w-full">
-        <div className="max-w-7xl mx-auto px-8 w-full py-8 pb-16">
+        <div className="max-w-[1600px] mx-auto px-8 w-full py-8 pb-16">
 
           {/* Bouton retour */}
           <div className="mb-6">

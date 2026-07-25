@@ -139,7 +139,7 @@ export default function SortiesPremieresPageClient({
 
       {/* DESKTOP */}
       <div className="hidden lg:block w-full pb-16">
-        <div className="max-w-7xl mx-auto px-8 w-full">
+        <div className="max-w-[1600px] mx-auto px-8 w-full">
 
           <div className="flex items-end justify-between py-10 border-b border-white/10 mb-10">
             <div>

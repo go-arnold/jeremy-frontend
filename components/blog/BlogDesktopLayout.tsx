@@ -19,7 +19,7 @@ export default function BlogDesktopLayout({ featured, posts, categories, active,
   const sidebarSecondary = gridPosts.slice(1, 4);
 
   return (
-    <div className="max-w-7xl mx-auto px-8 w-full">
+    <div className="max-w-[1600px] mx-auto px-8 w-full">
 
       {/* ── Page header ── */}
       <div className="flex items-end justify-between py-10 border-b border-white/10 mb-10">

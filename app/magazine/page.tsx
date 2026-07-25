@@ -66,7 +66,7 @@ export default async function Page() {
       <main className="hidden lg:block mt-16 pb-16">
 
         {/* ── Corps : News (large) + Sidebar (fixe) ── */}
-        <div className="max-w-7xl mx-auto px-8 mt-14">
+        <div className="max-w-[1600px] mx-auto px-8 mt-14">
           <div className="grid grid-cols-[1fr_320px] gap-10 items-start">
 
             {/* ── Colonne principale ── */}
