@@ -156,8 +156,8 @@ export default function PremierSection({ video, variant = "mobile" }: PremierSec
               onClick={() => setIsPlaying(true)}
               className="absolute inset-0 flex items-center justify-center cursor-pointer"
             >
-              <div className="flex size-16 items-center justify-center rounded-full bg-primary/90 text-white shadow-[0_0_20px_rgba(20,156,184,0.5)] backdrop-blur-sm transform group-hover:scale-105 transition-transform">
-                <span className="material-symbols-outlined" style={{ fontSize: "36px", marginLeft: "4px" }}>
+              <div className="flex size-14 items-center justify-center rounded-full bg-primary/90 text-white shadow-[0_0_24px_rgba(230,48,18,0.5)] backdrop-blur-sm transform group-hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined" style={{ fontSize: "32px", marginLeft: "4px" }}>
                   play_arrow
                 </span>
               </div>
@@ -170,7 +170,7 @@ export default function PremierSection({ video, variant = "mobile" }: PremierSec
                   Exclusive{video.location ? ` • ${video.location}` : ""}
                 </p>
                 <Link href={video.href || "/web-tv"} className="pointer-events-auto w-fit">
-                  <h3 className="text-white text-2xl font-bold leading-tight hover:underline">{video.title}</h3>
+                  <h3 className="text-white text-xl font-bold leading-tight hover:underline">{video.title}</h3>
                 </Link>
                 <p className="text-gray-300 text-sm font-medium line-clamp-1">{video.subtitle}</p>
               </div>

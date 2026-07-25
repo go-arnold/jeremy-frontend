@@ -61,38 +61,38 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
   };
 
   return (
-    <article className="bg-surface-dark rounded-xl p-4 sm:p-5 border border-white/5">
-      <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <div className="flex items-center gap-2 text-primary">
-          <span className="material-symbols-outlined text-lg sm:text-xl">bar_chart</span>
-          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Sondage</span>
+    <article className="bg-surface-dark rounded-xl p-3 sm:p-5 border border-white/5 border-t-2 border-t-accent-teal card-glow">
+      <div className="flex justify-between items-center mb-2.5 sm:mb-4">
+        <div className="flex items-center gap-1.5 text-accent-teal">
+          <span className="material-symbols-outlined text-base sm:text-xl">bar_chart</span>
+          <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider">Sondage</span>
         </div>
         <div className="flex items-center gap-2">
           {expiry && (
-            <span className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1">
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>schedule</span>
+            <span className="text-[9px] sm:text-xs text-gray-400 flex items-center gap-1">
+              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>schedule</span>
               {expiry}
             </span>
           )}
-          <span className="text-gray-500 text-[10px] sm:text-xs">{formatCount(poll.vote_count)} votes</span>
+          <span className="text-gray-500 text-[9px] sm:text-xs">{formatCount(poll.vote_count)} votes</span>
         </div>
       </div>
 
-      <h4 className="text-white font-bold text-base sm:text-lg mb-3 sm:mb-4">{poll.question}</h4>
+      <h4 className="text-white font-bold text-sm sm:text-lg mb-2.5 sm:mb-4">{poll.question}</h4>
 
-      <div className="space-y-2.5 sm:space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {poll.options.map((option) => (
           <div key={option.id} className="relative">
-            <div className="flex items-center justify-between mb-1 text-xs sm:text-sm z-10 relative px-1">
+            <div className="flex items-center justify-between mb-1 text-[11px] sm:text-sm z-10 relative px-1">
               <span className="text-white font-medium">{option.text}</span>
-              <span className={`font-bold ${option.id === leadingId ? "text-primary" : "text-gray-400"}`}>
+              <span className={`font-bold ${option.id === leadingId ? "text-accent-teal" : "text-gray-400"}`}>
                 {option.percentage}%
               </span>
             </div>
-            <div className="h-9 sm:h-10 w-full bg-black/50 rounded-lg overflow-hidden relative">
+            <div className="h-7 sm:h-10 w-full bg-black/50 rounded-lg overflow-hidden relative">
               <div
                 className={`absolute top-0 left-0 h-full rounded-lg transition-all ${
-                  option.id === leadingId ? "bg-primary/20 border-r-2 border-primary" : "bg-white/5"
+                  option.id === leadingId ? "bg-accent-teal/20 border-r-2 border-accent-teal" : "bg-white/5"
                 }`}
                 style={{ width: `${option.percentage}%` }}
               />
@@ -106,10 +106,10 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
         ))}
       </div>
 
-      <div className="mt-3 sm:mt-4">
-        {error && <p className="text-xs text-gray-400">{error}</p>}
+      <div className="mt-2.5 sm:mt-4">
+        {error && <p className="text-[11px] sm:text-xs text-gray-400">{error}</p>}
         {!error && (
-          <p className="text-xs text-gray-500">
+          <p className="text-[11px] sm:text-xs text-gray-500">
             {voted
               ? "Merci pour votre vote !"
               : !canVote

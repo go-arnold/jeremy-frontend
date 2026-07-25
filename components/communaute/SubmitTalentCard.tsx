@@ -39,29 +39,29 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
 
   return (
     <section className="p-4 pt-6">
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-surface-dark to-black border border-white/10 p-5 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-dark to-black border border-white/10 p-4 sm:p-5 shadow-lg card-glow">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
             <div>
-              <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Soumettre un Talent</h2>
-              <p className="text-gray-400 text-xs sm:text-sm mt-1">Montre ton talent au Kivu</p>
+              <h2 className="text-base sm:text-2xl font-bold text-white tracking-tight">Soumettre un Talent</h2>
+              <p className="text-gray-400 text-[11px] sm:text-sm mt-1">Montre ton talent au Kivu</p>
             </div>
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: "32px" }}>
+            <span className="material-symbols-outlined text-primary text-2xl sm:text-3xl">
               graphic_eq
             </span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             <input
-              className="w-full bg-black/40 border border-white/10 rounded-lg h-11 sm:h-12 px-4 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
+              className="w-full bg-black/40 border border-white/10 rounded-lg h-10 sm:h-12 px-4 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs sm:text-sm"
               placeholder="Titre du morceau / de la création"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
 
             <textarea
-              className="w-full bg-black/40 border border-white/10 rounded-lg h-20 px-4 py-3 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm resize-none"
+              className="w-full bg-black/40 border border-white/10 rounded-lg h-16 sm:h-20 px-4 py-2.5 text-white placeholder:text-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs sm:text-sm resize-none"
               placeholder="Décris ton talent"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -111,40 +111,40 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
                 onClick={() => imageInputRef.current?.click()}
                 disabled={uploading}
                 title={`Photo/Image (max ${MEDIA_LIMITS.MAX_IMAGE_MB} Mo)`}
-                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                className={`flex items-center justify-center h-9 w-9 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "image" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined text-lg sm:text-xl">add_a_photo</span>
+                <span className="material-symbols-outlined text-base sm:text-xl">add_a_photo</span>
               </button>
               <button
                 type="button"
                 onClick={() => videoInputRef.current?.click()}
                 disabled={uploading}
                 title={`Vidéo (max ${MEDIA_LIMITS.MAX_VIDEO_MB} Mo)`}
-                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                className={`flex items-center justify-center h-9 w-9 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "video" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined text-lg sm:text-xl">videocam</span>
+                <span className="material-symbols-outlined text-base sm:text-xl">videocam</span>
               </button>
               <button
                 type="button"
                 onClick={() => audioInputRef.current?.click()}
                 disabled={uploading}
                 title={`Audio (max ${MEDIA_LIMITS.MAX_AUDIO_MB} Mo)`}
-                className={`flex items-center justify-center h-11 w-12 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
+                className={`flex items-center justify-center h-9 w-9 sm:h-12 sm:w-14 rounded-lg bg-surface-dark border transition-colors disabled:opacity-50 ${selected?.category === "audio" ? "border-primary text-primary" : "border-white/10 text-gray-300 hover:bg-white/5"}`}
               >
-                <span className="material-symbols-outlined text-lg sm:text-xl">mic</span>
+                <span className="material-symbols-outlined text-base sm:text-xl">mic</span>
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={uploading}
-                className="flex-1 h-11 sm:h-12 px-4 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-sm sm:text-base tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+                className="flex-1 h-9 sm:h-12 px-4 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-xs sm:text-base tracking-wide transition-all hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-90"
               >
                 {uploading ? (
-                  <CircularProgress percent={uploadProgress} size={28} strokeWidth={3} className="text-background-dark" />
+                  <CircularProgress percent={uploadProgress} size={22} strokeWidth={3} className="text-background-dark" />
                 ) : (
                   <>
                     <span>Envoyer</span>
-                    <span className="material-symbols-outlined text-[20px]">send</span>
+                    <span className="material-symbols-outlined text-base sm:text-[20px]">send</span>
                   </>
                 )}
               </button>

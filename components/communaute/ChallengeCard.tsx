@@ -69,52 +69,53 @@ export default function ChallengeCard({ challenge, onParticipated, onRespondingC
   }
 
   return (
-    <article className="relative overflow-hidden rounded-xl bg-[#2a2a1a] border border-accent-yellow/30 p-4 sm:p-5">
+    <article className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#2a2a1a] to-[#1c1c12] border border-accent-yellow/30 p-3 sm:p-5 card-glow">
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
             "repeating-linear-gradient(45deg, transparent, transparent 10px, #E6E633 10px, #E6E633 20px)",
         }}
       />
-      <div className="relative z-10 flex flex-col gap-3 sm:gap-4">
+      <div className="relative z-10 flex flex-col gap-2.5 sm:gap-4">
         <div className="flex justify-between items-start gap-3">
-          <h3 className="text-lg sm:text-2xl font-black italic text-white leading-tight uppercase tracking-wide font-display">
+          <h3 className="flex items-center gap-1.5 text-sm sm:text-2xl font-black italic text-white leading-tight uppercase tracking-wide font-display">
+            <span className="material-symbols-outlined text-accent-yellow text-base sm:text-xl not-italic">emoji_events</span>
             {challenge.title}
           </h3>
           {challenge.deadline && (
             <div className="text-right shrink-0">
-              <div className="text-[10px] sm:text-xs text-gray-400 uppercase font-bold tracking-wider">Se termine dans</div>
-              <div className="text-base sm:text-xl font-mono text-white font-bold whitespace-nowrap">{formatCountdown(challenge.deadline)}</div>
+              <div className="text-[9px] sm:text-xs text-gray-400 uppercase font-bold tracking-wider">Se termine dans</div>
+              <div className="text-sm sm:text-xl font-mono text-white font-bold whitespace-nowrap">{formatCountdown(challenge.deadline)}</div>
             </div>
           )}
         </div>
 
-        <div className="bg-black/30 rounded-lg p-3 border border-white/5">
+        <div className="bg-black/30 rounded-lg p-2.5 sm:p-3 border border-white/5">
           {/* Full text always visible — no line-clamp — so this reads completely even in the
            * narrow 300px desktop sidebar. */}
-          <p className="text-gray-300 text-xs sm:text-sm mb-1 whitespace-pre-line">{challenge.description}</p>
+          <p className="text-gray-300 text-[11px] sm:text-sm mb-1 whitespace-pre-line">{challenge.description}</p>
           {challenge.prize && (
-            <p className="text-accent-yellow text-xs font-bold mt-2 flex items-center gap-1">
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>workspace_premium</span>
+            <p className="text-accent-yellow text-[11px] sm:text-xs font-bold mt-2 flex items-center gap-1">
+              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>workspace_premium</span>
               {challenge.prize}
             </p>
           )}
-          <div className="flex items-center gap-1.5 mt-2 text-gray-400 text-xs">
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>group</span>
+          <div className="flex items-center gap-1.5 mt-2 text-gray-400 text-[11px] sm:text-xs">
+            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>group</span>
             {challenge.participant_count} participant{challenge.participant_count > 1 ? "s" : ""}
           </div>
         </div>
 
         {alreadyParticipated ? (
-          <div className="w-full py-2.5 sm:py-3 bg-black/30 border border-accent-yellow/20 text-accent-yellow text-xs sm:text-sm font-bold rounded-lg flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-lg">check_circle</span>
+          <div className="w-full py-2 sm:py-3 bg-black/30 border border-accent-yellow/20 text-accent-yellow text-[11px] sm:text-sm font-bold rounded-lg flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-base sm:text-lg">check_circle</span>
             Vous avez déjà participé à ce défi
           </div>
         ) : (
           <button
             onClick={handleParticiperClick}
-            className="w-full py-2.5 sm:py-3 bg-accent-yellow text-black font-bold uppercase tracking-wider text-sm rounded-lg hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2 sm:py-3 bg-accent-yellow text-black font-bold uppercase tracking-wider text-xs sm:text-sm rounded-lg hover:bg-yellow-400 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,168,67,0.15)]"
           >
             <span>Participer</span>
             <span className="material-symbols-outlined text-sm">arrow_forward</span>

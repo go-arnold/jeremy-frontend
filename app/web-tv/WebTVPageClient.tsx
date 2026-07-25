@@ -11,7 +11,7 @@ import {
   concertVideos as mockedConcerts,
 } from "@/data/webtv";
 import FilterBar from "@/components/webTv/FilterBar";
-import PremierSection from "@/components/webTv/PremierSection";
+import LiveVideosCarousel from "@/components/webTv/LiveVideosCarousel";
 import StudioSessionsSection from "@/components/webTv/StudioSessionsSection";
 import FreestylesSection from "@/components/webTv/FreestylesSection";
 import DocsSection from "@/components/webTv/DocsSection";
@@ -70,9 +70,17 @@ export default function WebTVPageClient({
 
   const showEmptyState = videos.length === 0 && premiers.length === 0;
 
-  // A currently-live video takes priority over the VOD "premier" concept for the hero slot —
-  // they're unrelated (premiers/videos/live/ are three separate backend endpoints).
-  const premierVideo = liveVideo || premiers[0] || videos.find((v) => v.isPremier) || mockedPremier;
+  // Several videos can be live at once (each carries its own `is_live` in the general list) even
+  // though the dedicated `/webtv/videos/live/` endpoint only ever surfaces a single "the" live
+  // video — merge both sources so none is missed, then hand them all to the hero slot. More than
+  // one live video pages through as a carousel; exactly one renders exactly as before.
+  const liveVideos = videos.filter((v) => v.isLive);
+  if (liveVideo && !liveVideos.some((v) => v.id === liveVideo.id)) liveVideos.unshift(liveVideo);
+
+  // No live video at all → falls back to the VOD "premier" concept for the hero slot, same as
+  // before (premiers/videos/live/ are three separate, unrelated backend endpoints).
+  const nonLiveFallback = premiers[0] || videos.find((v) => v.isPremier) || mockedPremier;
+  const heroVideos = liveVideos.length > 0 ? liveVideos : [nonLiveFallback];
   // Real category values are snake_case (WebTVVideo.CATEGORY_CHOICES: freestyles,
   // studio_sessions, docs, interviews, premiers, concerts) — not the Title-Case strings these
   // filters used to compare against, which never matched real API data.
@@ -107,9 +115,9 @@ export default function WebTVPageClient({
           {/* MOBILE */}
           <main className="lg:hidden flex flex-col gap-8 pb-8 pt-4 mx-5">
             <div id="top" className={SCROLL_MT}>
-              <PremierSection video={premierVideo} />
+              <LiveVideosCarousel videos={heroVideos} />
             </div>
-            <LiveVsVideosSeparator isLive={!!liveVideo} />
+            <LiveVsVideosSeparator isLive={liveVideos.length > 0} />
             <div id="studio-sessions" className={SCROLL_MT}><StudioSessionsSection variant="mobile" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} /></div>
             <div id="freestyles" className={SCROLL_MT}><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
             <div id="docs" className={SCROLL_MT}><DocsSection variant="mobile" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
@@ -125,12 +133,12 @@ export default function WebTVPageClient({
           {/* DESKTOP */}
           <main className="hidden lg:flex lg:flex-col mt-20 gap-10 pb-16 pt-6 max-w-7xl mx-auto w-full px-8">
             <div id="top" className={`grid grid-cols-[3fr_2fr] gap-6 items-start ${SCROLL_MT}`}>
-              <PremierSection video={premierVideo} variant="desktop" />
+              <LiveVideosCarousel videos={heroVideos} variant="desktop" />
               <div id="studio-sessions" className={SCROLL_MT}>
                 <StudioSessionsSection variant="desktop" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} />
               </div>
             </div>
-            <LiveVsVideosSeparator isLive={!!liveVideo} />
+            <LiveVsVideosSeparator isLive={liveVideos.length > 0} />
             <div id="freestyles" className={SCROLL_MT}><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
             <div id="docs" className={SCROLL_MT}><DocsSection variant="desktop" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
             <div id="interviews" className={SCROLL_MT}><InterviewsSection variant="desktop" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
@@ -152,7 +160,7 @@ function LiveVsVideosSeparator({ isLive }: { isLive: boolean }) {
   return (
     <div className="flex items-center gap-3">
       {isLive && (
-        <span className="flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">
+        <span className="flex items-center gap-1.5 bg-primary text-white text-[9px] lg:text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider shrink-0 shadow-[0_0_16px_rgba(230,48,18,0.35)]">
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
@@ -161,7 +169,7 @@ function LiveVsVideosSeparator({ isLive }: { isLive: boolean }) {
         </span>
       )}
       <div className="kivu-divider flex-1" />
-      <span className="text-[#8A8178] text-xs font-black uppercase tracking-[0.2em] shrink-0">
+      <span className="text-[#8A8178] text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] shrink-0">
         Toutes les vidéos
       </span>
       <div className="kivu-divider flex-1" />

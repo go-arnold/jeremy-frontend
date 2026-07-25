@@ -15,26 +15,26 @@ export default function ConcertsSection({ concerts, variant }: Props) {
     <>
       {/* ─── Mobile ─── */}
       {variant !== "desktop" && (
-      <section className={`flex flex-col gap-4 px-4 pb-4 ${variant === "mobile" ? "" : "lg:hidden"}`}>
+      <section className={`flex flex-col gap-3 px-4 pb-4 ${variant === "mobile" ? "" : "lg:hidden"}`}>
         <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">music_note</span>
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Concerts</h2>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-primary text-lg">music_note</span>
+            <h2 className="text-white text-base font-bold tracking-tight">Concerts</h2>
           </div>
-          <a className="text-primary text-sm font-bold" href="/concerts">
+          <a className="text-primary text-xs font-bold" href="/concerts">
             Voir tout
           </a>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {concerts.map((concert) => (
             <Link
               key={concert.id}
               href={concert.href || "#"}
-              className="flex flex-col md:flex-row gap-0 rounded-lg overflow-hidden dark:bg-surface-dark shadow-sm ring-1 ring-black/5 dark:ring-white/5 group"
+              className="flex items-stretch gap-3 rounded-lg overflow-hidden bg-surface-dark shadow-sm ring-1 ring-white/5 group card-glow"
             >
               {/* Thumbnail */}
-              <div className="relative w-full md:w-48 aspect-video md:aspect-auto shrink-0 overflow-hidden">
+              <div className="relative w-24 aspect-video shrink-0 overflow-hidden rounded-lg">
                 <div
                   className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
                   data-alt={concert.imageAlt}
@@ -43,29 +43,29 @@ export default function ConcertsSection({ concerts, variant }: Props) {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                   <span
                     className="material-symbols-outlined text-white/90 group-hover:text-primary transition-colors drop-shadow-md"
-                    style={{ fontSize: "32px" }}
+                    style={{ fontSize: "22px" }}
                   >
                     play_circle
                   </span>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-bold">
+                <div className="absolute bottom-1 right-1 bg-black/70 px-1 py-0.5 rounded text-[8px] text-white font-bold">
                   {concert.duration}
                 </div>
               </div>
 
               {/* Info */}
-              <div className="flex flex-col justify-center p-3 gap-1">
-                <h3 className="text-slate-900 dark:text-white font-bold text-base leading-snug group-hover:text-primary transition-colors">
+              <div className="flex flex-col justify-center py-2 pr-3 gap-0.5 min-w-0">
+                <h3 className="text-white font-bold text-xs leading-snug group-hover:text-primary transition-colors line-clamp-2">
                   {concert.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed line-clamp-2">
+                <p className="text-gray-400 text-[10px] leading-relaxed line-clamp-1">
                   {concert.description}
                 </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
                     {concert.tag}
                   </span>
-                  <span className="text-gray-500 dark:text-gray-500 text-[10px]">{concert.date}</span>
+                  <span className="text-gray-500 text-[9px]">{concert.date}</span>
                 </div>
               </div>
             </Link>

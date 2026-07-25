@@ -46,3 +46,9 @@ débuggant :
 - Événements : `events/cities/` renvoie `[]` (aucune ville seedée).
 - Artistes : `artists/genres/` renvoie `[]` (aucun genre seedé).
 - Live-music : `live_music/programme/` renvoie `count: 0`.
+- Communauté : certains posts (`/community/posts/`) renvoient un `image`/`cover_image` tronqué —
+  un fragment brut type `"artdukivu/seed/square/163"` au lieu de l'URL Cloudinary complète.
+  Absorbé côté frontend (2026-07-25) : `isValidImageSrc` (`lib/image-utils.ts`) rejette désormais
+  tout src qui n'est ni une URL absolue (`http(s)://`) ni un chemin relatif au site (`/...`), donc
+  `ContentImage`/`ArtPostCard`/`TalentPostCard` retombent proprement sur le placeholder au lieu de
+  faire planter next/image (`Failed to parse src ... it must start with a leading slash`).
