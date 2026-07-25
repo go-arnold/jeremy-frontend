@@ -4149,7 +4149,12 @@ paths:
   /api/v1/home/:
     get:
       operationId: home_retrieve
-      description: Aggregated homepage payload — cached 15 minutes.
+      description: |-
+        Aggregated homepage payload — cached 15 minutes.
+
+        `sondage_actif.has_voted`/`selected_option_id` are always `false`/`null` here (this response
+        is shared across every visitor for the cache's full 15-minute TTL — a per-user value would
+        leak). Use `GET /community/polls/{id}/` (not cached) for the real per-user vote status.
       tags:
       - Home
       security:
@@ -4168,17 +4173,45 @@ paths:
                     banner:
                       image_url: null
                       title: Bienvenue sur Art du Kivu
+                      title_highlight: Art du Kivu
                       subtitle: ''
                       cta_label: ''
                       cta_url: ''
+                    stats:
+                      total_artists: 142
+                      live_count: 1
                     a_la_une:
                       artist_of_month: null
                       featured_podcast: null
                       featured_event: null
+                    contenus_a_la_une:
+                    - type: artist
+                      id: 49
+                      slug: agathe-le-arnaud
+                      title: Agathe Le Arnaud
+                      description: '...'
+                      image_url: https://res.cloudinary.com/artdukivu/image/upload/v1/artists/photos/49.jpg
                     hits_du_mois: []
+                    hits_du_mois_period: Juillet 2026
+                    sondage_actif:
+                      id: 4
+                      question: Quel format préférez-vous pour découvrir de nouveaux
+                        artistes?
+                      vote_count: 886
+                      options:
+                      - id: 13
+                        text: Vidéo
+                        vote_count: 342
+                        percentage: 39
+                      expires_at: null
+                      is_active: true
+                      created_at: '2026-06-13T17:28:01.842703+02:00'
+                      has_voted: false
+                      selected_option_id: null
                     magazine:
                       hero: null
                       articles: []
+                    blogs: []
                   summary: Payload accueil
           description: ''
   /api/v1/home/banner/:
@@ -10740,6 +10773,9 @@ components:
         title:
           type: string
           maxLength: 200
+        title_highlight:
+          type: string
+          maxLength: 200
         subtitle:
           type: string
           maxLength: 300
@@ -11919,6 +11955,9 @@ components:
         title:
           type: string
           maxLength: 200
+        title_highlight:
+          type: string
+          maxLength: 200
         subtitle:
           type: string
           maxLength: 300
@@ -12375,11 +12414,19 @@ components:
           type: string
           format: date-time
           readOnly: true
+        has_voted:
+          type: string
+          readOnly: true
+        selected_option_id:
+          type: string
+          readOnly: true
       required:
       - created_at
+      - has_voted
       - id
       - options
       - question
+      - selected_option_id
     PollOption:
       type: object
       properties:
