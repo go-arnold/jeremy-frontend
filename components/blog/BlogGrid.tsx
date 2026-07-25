@@ -10,7 +10,7 @@ interface Props {
 export default function BlogGrid({ posts }: Props) {
   return (
     <section className="px-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {posts.map((post) => (
           <BlogCardItem key={post.id} post={post} />
         ))}
@@ -21,12 +21,12 @@ export default function BlogGrid({ posts }: Props) {
 
 // ── Carte individuelle ────────────────────────────────────────────────────────
 function BlogCardItem({ post }: { post: BlogCard }) {
-  // Hauteur image : h-64 si excerpt, h-32 si publishedAt seul, h-40 sinon
+  // Hauteur image réduite pour la grille 2 colonnes (auparavant dimensionnée pour 1 carte/ligne)
   const imgClass = post.excerpt
-    ? "h-64"
+    ? "h-28"
     : post.publishedAt && !post.readTime
-    ? "h-32"
-    : "h-40";
+    ? "h-20"
+    : "h-24";
 
   // Badge sur l'image : catégorie (sauf si card "Société" sans badge explicite)
   const showImageBadge = post.category !== "Société" || !!post.badgeLabel;
@@ -42,11 +42,11 @@ function BlogCardItem({ post }: { post: BlogCard }) {
           src={post.image}
           alt={post.title}
           className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
-          sizes="(max-width: 768px) 100vw, 50vw"
+          sizes="(max-width: 768px) 50vw, 33vw"
         />
         {showImageBadge && (
-          <div className="absolute top-3 left-3">
-            <span className="px-2 py-1 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">
+          <div className="absolute top-2 left-2">
+            <span className="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white uppercase tracking-wider">
               {post.category}
             </span>
           </div>
@@ -54,40 +54,36 @@ function BlogCardItem({ post }: { post: BlogCard }) {
       </div>
 
       {/* Contenu texte */}
-      <div className={`p-3 flex flex-col ${post.excerpt ? "gap-2" : "gap-1"} bg-[#12223ce6]`}>
+      <div className={`p-2.5 flex flex-col ${post.excerpt ? "gap-1.5" : "gap-1"} bg-[#12223ce6]`}>
         {/* Catégorie visible quand pas de badge sur l'image */}
         {!showImageBadge && (
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
             {post.category}
           </span>
         )}
 
-        <h3
-          className={`text-white font-display font-bold leading-snug ${
-            post.excerpt ? "text-lg" : "text-base"
-          }`}
-        >
+        <h3 className="text-white font-display font-bold leading-snug text-xs line-clamp-2">
           {post.title}
         </h3>
 
         {post.excerpt && (
-          <p className="text-gray-400 text-xs line-clamp-2 leading-relaxed">
+          <p className="text-gray-400 text-[10px] line-clamp-2 leading-relaxed">
             {post.excerpt}
           </p>
         )}
 
         {post.publishedAt && (
-          <span className="text-gray-500 text-xs">{post.publishedAt}</span>
+          <span className="text-gray-500 text-[10px]">{post.publishedAt}</span>
         )}
 
         {post.readTime && (
-          <span className="text-primary text-xs font-bold mt-1">
+          <span className="text-primary text-[10px] font-bold mt-1">
             {post.readTime} de lecture
           </span>
         )}
 
         {post.badgeLabel && (
-          <span className="text-primary text-xs font-bold">
+          <span className="text-primary text-[10px] font-bold">
             {post.badgeLabel}
           </span>
         )}
