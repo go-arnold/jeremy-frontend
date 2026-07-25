@@ -227,9 +227,15 @@ export interface ApiRadioOrLiveProgram {
   // Radio vs Live Music return this differently shaped (comma-string vs already-split array) —
   // the shared mapper normalizes either, so both are accepted here.
   artist_names?: string | string[];
+  // `MusicLiveSlot` (live-music's programme/schedule item) only ever sends this — singular,
+  // plain string. Distinct from `artist_names` above (only present on `MusicLiveSession`/
+  // `RadioProgram`-shaped payloads, not the programme schedule).
+  artist_name?: string;
   start_time?: string;
   end_time?: string;
   day_name?: string;
+  // 0=Monday..6=Sunday (`DayOfWeekEnum`) — present on both `RadioProgram` and `MusicLiveSlot`.
+  day_of_week?: number;
   cover_url?: string;
   image_url?: string;
   stream_url?: string;
@@ -377,6 +383,10 @@ export interface ApiEmission {
   stream_url?: string;
   // See file header — real field, not the stale `cf_playback_hls_url` from the spec.
   playback_hls_url?: string;
+  // The recorded replay's actual playable file — despite the name, this is an audio file
+  // (Cloudinary "video" resource type used for storage, not an actual video track). `stream_url`
+  // is empty once an emission is no longer live; this is the real content for `status: "recorded"`.
+  video_url?: string;
   host_names?: string[];
   like_count?: number;
   comment_count?: number;

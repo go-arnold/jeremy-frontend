@@ -24,6 +24,7 @@ export function useAudioLiveStream(hlsUrl: string | null | undefined, autoplay =
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const load = useCallback(async () => {
     const audio = audioRef.current;
@@ -123,5 +124,15 @@ export function useAudioLiveStream(hlsUrl: string | null | undefined, autoplay =
     if (audioRef.current) audioRef.current.volume = v;
   }, []);
 
-  return { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry: load };
+  // Native `audio.muted` preserves the actual volume level automatically — no need to track and
+  // restore a separate "volume before mute" value.
+  const toggleMute = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const next = !audio.muted;
+    audio.muted = next;
+    setIsMuted(next);
+  }, []);
+
+  return { audioRef, isLoading, hasError, isPlaying, isMuted, togglePlay, setVolume, toggleMute, retry: load };
 }

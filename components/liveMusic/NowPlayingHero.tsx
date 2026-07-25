@@ -12,9 +12,11 @@ interface NowPlayingHeroState {
   isLoading: boolean;
   hasError: boolean;
   isPlaying: boolean;
+  isMuted: boolean;
   loadingMessage: string;
   togglePlay: () => void;
   setVolume: (v: number) => void;
+  toggleMute: () => void;
   retry: () => void;
 }
 
@@ -37,16 +39,14 @@ function useNowPlayingHeroState(): NowPlayingHeroState {
  * components/radio-en-direct/LivePlayer.tsx.
  */
 export function NowPlayingHeroProvider({ track, children }: { track: NowPlaying; children: ReactNode }) {
-  const { audioRef, isLoading, hasError, isPlaying, togglePlay, setVolume, retry } = useAudioLiveStream(
-    track.hlsUrl,
-    track.isLive
-  );
+  const { audioRef, isLoading, hasError, isPlaying, isMuted, togglePlay, setVolume, toggleMute, retry } =
+    useAudioLiveStream(track.hlsUrl, track.isLive);
   useConsumptionHeartbeat(isPlaying, "live_music", track.numericId, track.title, track.coverImage);
   const loadingMessage = useLiveLoadingMessages(isLoading && !hasError);
 
   return (
     <NowPlayingHeroContext.Provider
-      value={{ track, audioRef, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry }}
+      value={{ track, audioRef, isLoading, hasError, isPlaying, isMuted, loadingMessage, togglePlay, setVolume, toggleMute, retry }}
     >
       <audio ref={audioRef} />
       {children}
@@ -55,7 +55,7 @@ export function NowPlayingHeroProvider({ track, children }: { track: NowPlaying;
 }
 
 export default function NowPlayingHero() {
-  const { track, isLoading, hasError, isPlaying, loadingMessage, togglePlay, setVolume, retry } =
+  const { track, isLoading, hasError, isPlaying, isMuted, loadingMessage, togglePlay, setVolume, toggleMute, retry } =
     useNowPlayingHeroState();
 
   return (
@@ -152,7 +152,15 @@ export default function NowPlayingHero() {
         )}
 
         <div className="flex items-center gap-3 w-full px-2">
-          <span className="material-symbols-outlined text-text-secondary text-sm">volume_down</span>
+          <button
+            onClick={toggleMute}
+            aria-label={isMuted ? "Réactiver le son" : "Couper le son"}
+            className={`material-symbols-outlined text-sm transition-colors ${
+              isMuted ? "text-primary" : "text-text-secondary hover:text-white"
+            }`}
+          >
+            {isMuted ? "volume_off" : "volume_down"}
+          </button>
           <input
             type="range"
             min="0"
@@ -160,9 +168,19 @@ export default function NowPlayingHero() {
             step="0.01"
             defaultValue="1"
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-primary bg-white/10"
+            className={`flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-primary bg-white/10 transition-opacity ${
+              isMuted ? "opacity-40" : ""
+            }`}
           />
-          <span className="material-symbols-outlined text-text-secondary text-sm">volume_up</span>
+          <button
+            onClick={toggleMute}
+            aria-label={isMuted ? "Réactiver le son" : "Couper le son"}
+            className={`material-symbols-outlined text-sm transition-colors ${
+              isMuted ? "text-primary" : "text-text-secondary hover:text-white"
+            }`}
+          >
+            {isMuted ? "volume_off" : "volume_up"}
+          </button>
         </div>
       </div>
     </section>

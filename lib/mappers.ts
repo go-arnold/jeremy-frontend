@@ -403,7 +403,20 @@ export function mapApiVideoToWebTVVideo(apiVideo: ApiVideo) {
   };
 }
 
+// `artist_names` was historically typed as `string | string[]` but neither real schema
+// (`MusicLiveSession`, `RadioProgram`) ever sends an array — both send a single comma-joined
+// string. Kept defensive here rather than assuming the type comment's claim is accurate.
+function normalizeArtistNames(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ") || undefined;
+  return value || undefined;
+}
+
 export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
+  // `MusicLiveSlot` (live-music's programme item) only ever sends `artist_name` (singular) —
+  // `artist_names`/`presenter`/`host` don't exist on that shape at all, so the previous
+  // `artist_names?.[0]` here always resolved to `undefined` for live-music (and would have
+  // sliced the first *character* off a string even if it had matched).
+  const artistName = apiProgram.artist_name || normalizeArtistNames(apiProgram.artist_names);
   return {
     id: apiProgram.slug || apiProgram.id?.toString(),
     // Real numeric DB id — `id` above is slug-based for routing; gamification's `consumption/`
@@ -413,12 +426,16 @@ export function mapApiRadioToRadioProgram(apiProgram: ApiRadioOrLiveProgram) {
     slug: apiProgram.slug,
     title: apiProgram.title,
     description: apiProgram.description || "",
-    presenter: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0],
-    host: apiProgram.presenter || apiProgram.host || apiProgram.artist_names?.[0] || "",
+    presenter: apiProgram.presenter || apiProgram.host || artistName,
+    host: apiProgram.presenter || apiProgram.host || artistName || "",
     startTime: apiProgram.start_time,
     endTime: apiProgram.end_time,
-    time: `${apiProgram.start_time || ''} - ${apiProgram.end_time || ''}`,
+    // A single clean start time, not a redundant "start - end" range — in a back-to-back
+    // schedule this doubles as "when the previous slot ends", so one timestamp per slot is
+    // enough to read the whole timeline.
+    time: apiProgram.start_time || '',
     day: apiProgram.day_name,
+    dayOfWeek: apiProgram.day_of_week,
     image: apiProgram.cover_url || apiProgram.image_url || "",
     streamUrl: apiProgram.stream_url,
     // Real RadioProgramSerializer/MusicLiveSessionSerializer only ever return
@@ -815,9 +832,20 @@ export function mapApiActivityEntryToActivityEntry(apiEntry: ApiActivityEntry) {
   };
 }
 
-// Émissions has no frontend integration at all today — this mapper is net-new, built directly
-// from `EmissionListSerializer`/`EmissionDetailSerializer` (backend/apps/emissions/serializers.py).
 export function mapApiEmissionToEmissionCard(apiEmission: ApiEmission) {
+  // No `ended_at`/`started_at` field exists on the backend — `endedAt` is the best available
+  // estimate of when a recorded emission's original broadcast finished, derived from
+  // `scheduled_at + duration_minutes`. `null` when `scheduled_at` is missing (never computed
+  // from `created_at`, which is when the DB row was created, not when the show aired).
+  const scheduledAt = apiEmission.scheduled_at;
+  let endedAt: string | null = null;
+  if (scheduledAt) {
+    const start = new Date(scheduledAt);
+    if (!Number.isNaN(start.getTime())) {
+      endedAt = new Date(start.getTime() + (apiEmission.duration_minutes || 0) * 60000).toISOString();
+    }
+  }
+
   return {
     id: apiEmission.slug || apiEmission.id?.toString(),
     slug: apiEmission.slug,
@@ -830,6 +858,7 @@ export function mapApiEmissionToEmissionCard(apiEmission: ApiEmission) {
     viewerCount: apiEmission.viewer_count || 0,
     totalViews: apiEmission.total_views || 0,
     href: apiEmission.slug ? `/emissions/${apiEmission.slug}` : "/emissions",
+    endedAt,
   };
 }
 
@@ -839,6 +868,7 @@ export function mapApiEmissionToEmissionDetail(apiEmission: ApiEmission) {
     description: apiEmission.description || "",
     streamUrl: apiEmission.stream_url || "",
     hlsUrl: apiEmission.playback_hls_url || null,
+    videoUrl: apiEmission.video_url || "",
     hostNames: apiEmission.host_names || [],
     likeCount: apiEmission.like_count || 0,
     commentCount: apiEmission.comment_count || 0,

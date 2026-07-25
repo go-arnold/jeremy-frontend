@@ -82,6 +82,12 @@ export default function WebTVPageClient({
   const interviewVideos = videos.filter((v) => v.category === "interviews");
   const concertVideos = videos.filter((v) => v.category === "concerts");
 
+  // Both the fixed site header (h-16 = 64px) and this sticky FilterBar sit on top of the
+  // viewport once scrolled — a raw `#anchor`/`scrollIntoView` jump ignores them entirely and
+  // lands each section's heading right underneath, looking like the click did nothing.
+  // `scroll-mt-*` compensates so the section actually clears both bars.
+  const SCROLL_MT = "scroll-mt-32 lg:scroll-mt-28";
+
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
 
@@ -100,13 +106,15 @@ export default function WebTVPageClient({
         <>
           {/* MOBILE */}
           <main className="lg:hidden flex flex-col gap-8 pb-8 pt-4 mx-5">
-            <PremierSection video={premierVideo} />
+            <div id="top" className={SCROLL_MT}>
+              <PremierSection video={premierVideo} />
+            </div>
             <LiveVsVideosSeparator isLive={!!liveVideo} />
-            <div id="studio-sessions"><StudioSessionsSection variant="mobile" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} /></div>
-            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
-            <div id="docs"><DocsSection variant="mobile" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
-            <div id="interviews"><InterviewsSection variant="mobile" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
-            <div id="concerts"><ConcertsSection variant="mobile" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
+            <div id="studio-sessions" className={SCROLL_MT}><StudioSessionsSection variant="mobile" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} /></div>
+            <div id="freestyles" className={SCROLL_MT}><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
+            <div id="docs" className={SCROLL_MT}><DocsSection variant="mobile" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
+            <div id="interviews" className={SCROLL_MT}><InterviewsSection variant="mobile" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
+            <div id="concerts" className={SCROLL_MT}><ConcertsSection variant="mobile" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
             <VoirPlusPagination
               onLoadMore={loadMore}
               hasMore={hasMore}
@@ -116,15 +124,17 @@ export default function WebTVPageClient({
 
           {/* DESKTOP */}
           <main className="hidden lg:flex lg:flex-col mt-20 gap-10 pb-16 pt-6 max-w-7xl mx-auto w-full px-8">
-            <div className="grid grid-cols-[3fr_2fr] gap-6 items-start">
+            <div id="top" className={`grid grid-cols-[3fr_2fr] gap-6 items-start ${SCROLL_MT}`}>
               <PremierSection video={premierVideo} variant="desktop" />
-              <StudioSessionsSection variant="desktop" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} />
+              <div id="studio-sessions" className={SCROLL_MT}>
+                <StudioSessionsSection variant="desktop" sessions={studioSessions.length > 0 ? studioSessions : mockedStudio} />
+              </div>
             </div>
             <LiveVsVideosSeparator isLive={!!liveVideo} />
-            <div id="freestyles"><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
-            <div id="docs"><DocsSection variant="desktop" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
-            <div id="interviews"><InterviewsSection variant="desktop" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
-            <div id="concerts"><ConcertsSection variant="desktop" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
+            <div id="freestyles" className={SCROLL_MT}><FreestylesSection videos={freestyleVideos.length > 0 ? freestyleVideos.map(toFreestyleVideo) : mockedFreestyles} /></div>
+            <div id="docs" className={SCROLL_MT}><DocsSection variant="desktop" docs={docVideos.length > 0 ? docVideos : mockedDocs} /></div>
+            <div id="interviews" className={SCROLL_MT}><InterviewsSection variant="desktop" interviews={interviewVideos.length > 0 ? interviewVideos : mockedInterviews} /></div>
+            <div id="concerts" className={SCROLL_MT}><ConcertsSection variant="desktop" concerts={concertVideos.length > 0 ? concertVideos : mockedConcerts} /></div>
             <VoirPlusPagination
               onLoadMore={loadMore}
               hasMore={hasMore}
