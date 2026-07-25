@@ -1,5 +1,14 @@
 # Communauté — besoins backend (Défis, Talents, Sondages)
 
+> **2026-07-25 — Les 5 points de la section 3 (Défis) ont été confirmés
+> résolus côté backend** (vérifié en direct contre le vrai backend :
+> `participate/` et `publish_result/` répondent 401 donc existent,
+> `challenge_response` est dans `PostTypeEnum`, `has_participated` et
+> `is_pinned_result`/`challenge` sont bien présents dans les réponses
+> réelles). Suivi de statut à jour dans `BACKEND_GAPS.md` — ce document
+> garde la valeur de référence technique (formes de payload, exemples)
+> mais n'est plus le suivi de statut actif.
+
 Document de coordination frontend → backend pour la refonte de la page
 Communauté. Basé sur une lecture de `docs/Art_du_Kivu_API.yaml` (état actuel).
 Chaque section liste : ce qui existe déjà (OK, rien à faire), ce qui manque,

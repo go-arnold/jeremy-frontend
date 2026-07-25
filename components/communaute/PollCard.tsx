@@ -35,8 +35,11 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
   )?.id;
 
   const expiry = formatExpiry(poll.expires_at);
+  const isExpired = expiry === "Terminé";
+  const canVote = poll.is_active && !isExpired;
 
   const handleVote = async (optionId: number) => {
+    if (!canVote) return;
     if (!isAuthenticated) {
       setAuthPrompt(true);
       return;
@@ -95,7 +98,7 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
               />
               <button
                 onClick={() => handleVote(option.id)}
-                disabled={voted || voting}
+                disabled={voted || voting || !canVote}
                 className="absolute inset-0 w-full h-full flex items-center px-4 text-left focus:outline-none disabled:cursor-default"
               />
             </div>
@@ -107,7 +110,11 @@ export default function PollCard({ poll: initialPoll }: { poll: ApiPoll }) {
         {error && <p className="text-xs text-gray-400">{error}</p>}
         {!error && (
           <p className="text-xs text-gray-500">
-            {voted ? "Merci pour votre vote !" : "Cliquez sur une option pour voter"}
+            {voted
+              ? "Merci pour votre vote !"
+              : !canVote
+              ? "Ce sondage est terminé."
+              : "Cliquez sur une option pour voter"}
           </p>
         )}
       </div>

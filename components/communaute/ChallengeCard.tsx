@@ -19,15 +19,29 @@ function formatCountdown(deadline: string): string {
 interface Props {
   challenge: ApiChallenge;
   onParticipated?: () => void;
+  /** Lets a carousel-hosting parent (see DesktopChallengesSection in CommunautePageClient.tsx)
+   * pause its auto-advance while this card's response form is open — otherwise the card would
+   * scroll away from under the user mid-typing every few seconds. */
+  onRespondingChange?: (responding: boolean) => void;
 }
 
-export default function ChallengeCard({ challenge, onParticipated }: Props) {
+export default function ChallengeCard({ challenge, onParticipated, onRespondingChange }: Props) {
   const { isAuthenticated } = useAuth();
   const [authPrompt, setAuthPrompt] = useState(false);
   const [responding, setResponding] = useState(false);
 
-  // `has_participated` is a proposed field (docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.3), not
-  // live yet — undefined is treated as "not participated" so the button still works today.
+  const startResponding = () => {
+    setResponding(true);
+    onRespondingChange?.(true);
+  };
+
+  const stopResponding = () => {
+    setResponding(false);
+    onRespondingChange?.(false);
+  };
+
+  // Live on the backend (confirmed 2026-07-25, see BACKEND_GAPS.md) — undefined (e.g. anonymous
+  // requests) still treated as "not participated" so the button works either way.
   const alreadyParticipated = challenge.has_participated === true;
 
   const handleParticiperClick = () => {
@@ -35,7 +49,7 @@ export default function ChallengeCard({ challenge, onParticipated }: Props) {
       setAuthPrompt(true);
       return;
     }
-    setResponding(true);
+    startResponding();
   };
 
   // Authenticated + "Participer" clicked → the form takes over this exact card slot (no modal)
@@ -45,9 +59,9 @@ export default function ChallengeCard({ challenge, onParticipated }: Props) {
       <ChallengeResponseForm
         challengeSlug={challenge.slug}
         challengeTitle={challenge.title}
-        onCancel={() => setResponding(false)}
+        onCancel={stopResponding}
         onSubmitted={() => {
-          setResponding(false);
+          stopResponding();
           onParticipated?.();
         }}
       />

@@ -85,6 +85,7 @@ interface CommunautePageClientProps {
   initialHasMore: boolean;
   initialChallenges: ApiChallenge[];
   initialPolls: ApiPoll[];
+  initialTalentCount: number;
 }
 
 export default function CommunautePageClient({
@@ -92,6 +93,7 @@ export default function CommunautePageClient({
   initialHasMore,
   initialChallenges,
   initialPolls,
+  initialTalentCount,
 }: CommunautePageClientProps) {
   const [posts, setPosts] = useState<MappedPost[]>(initialPosts);
   const [challenges, setChallenges] = useState<ApiChallenge[]>(initialChallenges);
@@ -277,7 +279,7 @@ export default function CommunautePageClient({
           <div className="grid grid-cols-[280px_1fr_300px] gap-8 items-start">
             <aside className="sticky top-24 flex flex-col gap-5">
               <SubmitTalentDesktop onSubmitted={() => fetchPosts(activeFilter, 1, false)} />
-              <CommunityStatsWidget />
+              <CommunityStatsWidget talentCount={initialTalentCount} activeChallengeCount={activeChallenges.length} pollCount={polls.length} />
             </aside>
 
             <main className="flex flex-col gap-6">
@@ -339,6 +341,10 @@ function DesktopChallengesSection({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  // A card's response form takes over its own slot in the carousel (see ChallengeCard.tsx) — if
+  // the auto-advance kept running while it's open, it would scroll the form out from under the
+  // user mid-typing every few seconds.
+  const [anyResponding, setAnyResponding] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const active = challenges.filter((c) => c.is_active);
   const joinable = active.filter((c) => !c.has_participated);
@@ -349,14 +355,15 @@ function DesktopChallengesSection({
   // bounds for one render.
   const safeIndex = joinable.length > 0 ? activeIndex % joinable.length : 0;
 
-  // Auto-advance every few seconds when several défis are joinable at once.
+  // Auto-advance every few seconds when several défis are joinable at once — paused while a
+  // response form is open anywhere in the carousel.
   useEffect(() => {
-    if (!showCarousel) return;
+    if (!showCarousel || anyResponding) return;
     const id = setInterval(() => {
       setActiveIndex((i) => (i + 1) % joinable.length);
     }, 5000);
     return () => clearInterval(id);
-  }, [showCarousel, joinable.length]);
+  }, [showCarousel, joinable.length, anyResponding]);
 
   useEffect(() => {
     if (!showCarousel) return;
@@ -382,7 +389,7 @@ function DesktopChallengesSection({
       {expanded ? (
         <div className="flex flex-col gap-4">
           {active.map((c) => (
-            <ChallengeCard key={c.id} challenge={c} onParticipated={onParticipated} />
+            <ChallengeCard key={c.id} challenge={c} onParticipated={onParticipated} onRespondingChange={setAnyResponding} />
           ))}
         </div>
       ) : showCarousel ? (
@@ -390,7 +397,7 @@ function DesktopChallengesSection({
           <div ref={scrollRef} className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1 -mx-1 px-1">
             {joinable.map((c) => (
               <div key={c.id} className="min-w-full snap-center">
-                <ChallengeCard challenge={c} onParticipated={onParticipated} />
+                <ChallengeCard challenge={c} onParticipated={onParticipated} onRespondingChange={setAnyResponding} />
               </div>
             ))}
           </div>
@@ -404,7 +411,7 @@ function DesktopChallengesSection({
           </div>
         </>
       ) : singleCard ? (
-        <ChallengeCard challenge={singleCard} onParticipated={onParticipated} />
+        <ChallengeCard challenge={singleCard} onParticipated={onParticipated} onRespondingChange={setAnyResponding} />
       ) : null}
     </div>
   );
@@ -540,7 +547,7 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
               type="button"
               onClick={handleSubmit}
               disabled={uploading}
-              className="flex-1 h-10 rounded-xl bg-primary hover:bg-[#B8240C] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+              className="flex-1 h-10 px-4 rounded-xl bg-primary hover:bg-[#B8240C] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
             >
               {uploading ? (
                 <CircularProgress percent={uploadProgress} size={22} strokeWidth={2.5} className="text-white" />
@@ -573,12 +580,22 @@ function SubmitTalentDesktop({ onSubmitted }: { onSubmitted?: () => void }) {
 }
 
 // ── Stats communauté ────────────────────────────────
-function CommunityStatsWidget() {
+// No real "total members" count is available from the API (no public/authenticated endpoint
+// exposes one) — that stat is dropped rather than shown as an invented number. See
+// BACKEND_GAPS.md if a members-count endpoint gets added later.
+function CommunityStatsWidget({
+  talentCount,
+  activeChallengeCount,
+  pollCount,
+}: {
+  talentCount: number;
+  activeChallengeCount: number;
+  pollCount: number;
+}) {
   const stats = [
-    { icon: "group",          value: "2.4k",  label: "Membres" },
-    { icon: "music_note",     value: "380+",  label: "Talents" },
-    { icon: "emoji_events",   value: "12",    label: "Défis actifs" },
-    { icon: "bar_chart",      value: "54",    label: "Sondages" },
+    { icon: "music_note",     value: String(talentCount),        label: "Talents" },
+    { icon: "emoji_events",   value: String(activeChallengeCount), label: "Défis actifs" },
+    { icon: "bar_chart",      value: String(pollCount),           label: "Sondages" },
   ];
 
   return (
