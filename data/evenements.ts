@@ -1,10 +1,10 @@
 import type {
   FeaturedEvent,
-  EventGridItem,
   EventCard,
   EventDetail,
   EventCity,
 } from "@/types/evenements";
+import type { mapApiEventToEvent } from "@/lib/mappers";
 
 // ── Filtres villes ────────────────────────────────────────────────────────────
 export const eventCities: EventCity[] = ["Tous", "Goma", "Bukavu"];
@@ -23,7 +23,12 @@ export const featuredEvent: FeaturedEvent = {
 };
 
 // ── Grille "Prochainement" (masonry) ─────────────────────────────────────────
-export const upcomingEvents: EventGridItem[] = [
+// `app/evenements/page.tsx` falls back to this array (cast to the wider `mapApiEventToEvent`
+// shape) when the real API fails — every field that mapper produces is included here too
+// (`dateShort`, `description`, `isFeatured`, `time`, `monthKey`/`monthLabel`), not just the
+// `EventGridItem` subset, so that fallback path never reads an undefined field again (see the
+// 2026-07-25 CI build crash on `event.dateShort.month`).
+export const upcomingEvents: ReturnType<typeof mapApiEventToEvent>[] = [
   {
     id: "2",
     slug: "concert-acoustique-voix-kivu",
@@ -35,6 +40,14 @@ export const upcomingEvents: EventGridItem[] = [
     city: "Bukavu",
     venue: "Centre Culturel Ndaro",
     aspectRatio: "aspect-[3/4]",
+    date: "18 février 2026",
+    dateShort: { month: "FÉV", day: "18" },
+    location: "Centre Culturel Ndaro",
+    description: "Une soirée acoustique intimiste avec les voix montantes du Kivu.",
+    isFeatured: false,
+    time: "19:00",
+    monthKey: "2026-02",
+    monthLabel: "Février 2026",
   },
   {
     id: "3",
@@ -47,6 +60,14 @@ export const upcomingEvents: EventGridItem[] = [
     city: "Goma",
     venue: "Galerie Yole!",
     aspectRatio: "aspect-[4/3]",
+    date: "20 février 2026",
+    dateShort: { month: "FÉV", day: "20" },
+    location: "Galerie Yole!",
+    description: "Une exposition collective sur la résilience à travers l'art moderne.",
+    isFeatured: false,
+    time: "10:00",
+    monthKey: "2026-02",
+    monthLabel: "Février 2026",
   },
   {
     id: "4",
@@ -59,6 +80,14 @@ export const upcomingEvents: EventGridItem[] = [
     city: "Goma",
     venue: "Institut Français",
     aspectRatio: "aspect-[3/5]",
+    date: "22 février 2026",
+    dateShort: { month: "FÉV", day: "22" },
+    location: "Institut Français",
+    description: "Une scène ouverte de slam et de poésie urbaine.",
+    isFeatured: false,
+    time: "20:00",
+    monthKey: "2026-02",
+    monthLabel: "Février 2026",
   },
   {
     id: "5",
@@ -71,6 +100,14 @@ export const upcomingEvents: EventGridItem[] = [
     city: "Bukavu",
     venue: "Stade de la Concorde",
     aspectRatio: "aspect-square",
+    date: "25 février 2026",
+    dateShort: { month: "FÉV", day: "25" },
+    location: "Stade de la Concorde",
+    description: "Un atelier ouvert à tous pour découvrir la danse urbaine.",
+    isFeatured: false,
+    time: "15:00",
+    monthKey: "2026-02",
+    monthLabel: "Février 2026",
   },
 ];
 

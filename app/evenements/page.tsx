@@ -40,7 +40,7 @@ export default async function EvenementsPage() {
     cities = cityResults.map((c) => (typeof c === "string" ? c : c.name) || "").filter(Boolean);
   } catch (error) {
     console.error("Failed to fetch events initial data:", error);
-    events = mockedUpcoming as unknown as ReturnType<typeof mapApiEventToEvent>[];
+    events = mockedUpcoming;
     cities = mockedCities;
   }
 
