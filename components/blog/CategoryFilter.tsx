@@ -1,19 +1,15 @@
 "use client";
-import { useState } from "react";
 import type { BlogCategory, BlogCard } from "@/types/blog";
 import BlogGrid from "./BlogGrid";
 
 interface Props {
   categories: BlogCategory[];
+  active: BlogCategory;
+  onCategoryChange: (category: BlogCategory) => void;
   posts: BlogCard[];
 }
 
-export default function CategoryFilter({ categories, posts }: Props) {
-  const [active, setActive] = useState<BlogCategory>("Tous");
-
-  const filtered =
-    active === "Tous" ? posts : posts.filter((p) => p.category === active);
-
+export default function CategoryFilter({ categories, active, onCategoryChange, posts }: Props) {
   return (
     <>
       {/* Barre catégories sticky */}
@@ -22,7 +18,7 @@ export default function CategoryFilter({ categories, posts }: Props) {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActive(cat)}
+              onClick={() => onCategoryChange(cat)}
               className={`flex shrink-0 items-center justify-center rounded-full h-9 px-5 text-sm font-bold transition-transform active:scale-95 ${
                 active === cat
                   ? "bg-white text-background-dark"
@@ -36,8 +32,7 @@ export default function CategoryFilter({ categories, posts }: Props) {
       </div>
 
       {/* Grille filtrée */}
-      <BlogGrid posts={filtered} />
+      <BlogGrid posts={posts} />
     </>
   );
 }
-

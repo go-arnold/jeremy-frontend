@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BlogCard } from "@/types/blog";
+import ContentImage from "@/components/ui/ContentImage";
 
 export default function RelatedPosts({ posts }: { posts: BlogCard[] }) {
   if (!posts.length) return null;
@@ -16,10 +17,8 @@ export default function RelatedPosts({ posts }: { posts: BlogCard[] }) {
             href={`/blog/${post.slug}`}
             className="flex-shrink-0 w-60 group cursor-pointer"
           >
-            <div
-              className="w-full h-40 rounded-xl bg-cover bg-center mb-3 relative overflow-hidden"
-              style={{ backgroundImage: `url('${post.image}')` }}
-            >
+            <div className="w-full h-40 rounded-xl mb-3 relative overflow-hidden">
+              <ContentImage src={post.image} alt={post.title} className="absolute inset-0" sizes="240px" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300" />
             </div>
             <span className="text-xs font-bold text-primary uppercase tracking-wide">

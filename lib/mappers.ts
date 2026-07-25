@@ -4,6 +4,7 @@ import { PodcastEpisode, PodcastListItem, PodcastShow } from "@/types/podcasts"
 import type { HeroArticle, NewsArticle } from "@/types/magazine";
 import type { EmissionStatus } from "@/types/emissions";
 import type { EventDetail } from "@/types/evenements";
+import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import type {
   ApiArtistList,
   ApiArtistDetail,
@@ -162,11 +163,15 @@ export function mapApiBlogToBlogCard(apiArticle: ApiArticleList): BlogCard {
 }
 
 export function mapApiArticleToBlogPost(apiArticle: ApiArticleDetail): BlogPost {
-  const paragraphs = apiArticle.content?.split('\n\n') || [];
-  const blocks: ArticleBlock[] = paragraphs.map((p: string) => ({
-    type: "paragraph",
-    content: p.trim()
-  }));
+  const rawContent = apiArticle.content?.trim() || "";
+  const containsHtml = /<\/?[a-z][\s\S]*>/i.test(rawContent);
+  const blocks: ArticleBlock[] = containsHtml
+    ? [{ type: "html", content: sanitizeArticleHtml(rawContent) }]
+    : rawContent
+      .split("\n\n")
+      .map((p: string) => p.trim())
+      .filter(Boolean)
+      .map((content) => ({ type: "paragraph", content }));
 
   return {
     id: apiArticle.slug || apiArticle.id?.toString(),

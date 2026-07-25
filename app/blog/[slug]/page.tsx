@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBlogPost as getMockedBlogPost, getRelatedCards } from "@/data/blog";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api-client";
-import { mapApiArticleToBlogPost } from "@/lib/mappers";
-import type { ApiArticleDetail } from "@/lib/api-types";
+import { fetchArticle, fetchRelatedArticles } from "@/lib/services/articles";
 
 import ReadingProgress  from "@/components/blog/ReadingProgress";
 import ArticleHero      from "@/components/blog/ArticleHero";
@@ -25,8 +23,7 @@ interface Props {
 
 async function getArticle(slug: string) {
   try {
-    const data = await apiFetch<ApiArticleDetail>(`/api/v1/articles/${slug}/`);
-    return mapApiArticleToBlogPost(data);
+    return await fetchArticle(slug);
   } catch (error) {
     console.error(`Failed to fetch article ${slug}:`, error);
     return null;
@@ -69,7 +66,14 @@ export default async function BlogPostPage({ params }: Props) {
   
   if (!post) notFound();
 
-  const related = getRelatedCards(post.relatedPosts);
+  let related: BlogCard[] = [];
+  try {
+    related = post.relatedPosts.length
+      ? getRelatedCards(post.relatedPosts)
+      : await fetchRelatedArticles(post.slug, post.categories[0], 3);
+  } catch {
+    related = getRelatedCards(post.relatedPosts);
+  }
 
   return (
     <div className="relative flex flex-col w-full min-h-screen overflow-x-hidden">
@@ -371,4 +375,3 @@ function TableOfContents({ blocks }: { blocks: ArticleBlock[] }) {
     </div>
   );
 }
-

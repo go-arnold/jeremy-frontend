@@ -1,14 +1,13 @@
 
 import Link from "next/link";
 import type { BlogCard } from "@/types/blog";
+import ContentImage from "@/components/ui/ContentImage";
 
 interface Props {
   posts: BlogCard[];
 }
 
 export default function BlogGrid({ posts }: Props) {
-  const left  = posts.filter((_, i) => i % 2 === 0);
-  const right = posts.filter((_, i) => i % 2 !== 0);
   return (
     <section className="px-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -35,13 +34,16 @@ function BlogCardItem({ post }: { post: BlogCard }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group relative flex flex-col rounded-xl bg-surface-dark overflow-hidden shadow-lg border border-white/5 block"
+      className="group relative flex flex-col rounded-xl bg-surface overflow-hidden shadow-lg border border-white/5 block"
     >
       {/* Image */}
-      <div
-        className={`${imgClass} bg-cover bg-center transition-opacity duration-300 group-hover:opacity-90 relative`}
-        style={{ backgroundImage: post.image ? `url('${post.image}')` : 'linear-gradient(#222, #444)' }}
-      >
+      <div className={`${imgClass} relative`}>
+        <ContentImage
+          src={post.image}
+          alt={post.title}
+          className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
         {showImageBadge && (
           <div className="absolute top-3 left-3">
             <span className="px-2 py-1 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">
@@ -53,12 +55,6 @@ function BlogCardItem({ post }: { post: BlogCard }) {
 
       {/* Contenu texte */}
       <div className={`p-3 flex flex-col ${post.excerpt ? "gap-2" : "gap-1"} bg-[#12223ce6]`}>
-        {/* Catégorie en texte (si pas de badge image ET pas d'excerpt) */}
-        {!post.excerpt && !showImageBadge && (
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-            {post.category}
-          </span>
-        )}
         {/* Catégorie visible quand pas de badge sur l'image */}
         {!showImageBadge && (
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">

@@ -1,24 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import type { BlogCard, BlogCategory } from "@/types/blog";
+import ContentImage from "@/components/ui/ContentImage";
 
 interface Props {
   featured?: BlogCard & { author?: string };
   posts: BlogCard[];
   categories: BlogCategory[];
+  active: BlogCategory;
+  onCategoryChange: (category: BlogCategory) => void;
 }
 
-export default function BlogDesktopLayout({ featured, posts, categories }: Props) {
-  const [active, setActive] = useState<BlogCategory>("Tous");
-
-  const filtered =
-    active === "Tous" ? posts : posts.filter((p) => p.category === active);
-
+export default function BlogDesktopLayout({ featured, posts, categories, active, onCategoryChange }: Props) {
+  const gridPosts = featured ? posts.filter((post) => post.id !== featured.id) : posts;
   // Article mis en avant dans la sidebar (2e article de la liste)
-  const sidebarHighlight = posts[0];
-  const sidebarSecondary = posts.slice(1, 4);
+  const sidebarHighlight = gridPosts[0];
+  const sidebarSecondary = gridPosts.slice(1, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-8 w-full">
@@ -48,9 +46,12 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
           {/* Featured grande carte */}
           <Link href={`/blog/${featured.slug}`} className="group block">
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl">
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                style={{ backgroundImage: featured.image ? `url('${featured.image}')` : "linear-gradient(#222, #444)" }}
+              <ContentImage
+                src={featured.image}
+                alt={featured.title}
+                className="absolute inset-0"
+                imageClassName="transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 1280px) 60vw, 900px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#12223c] via-[#12223c]/30 to-transparent" />
               {/* Badge */}
@@ -96,9 +97,12 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
                   className="relative rounded-xl overflow-hidden"
                   style={{ height: "200px" }}
                 >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                    style={{ backgroundImage: sidebarHighlight.image ? `url('${sidebarHighlight.image}')` : "linear-gradient(#222, #444)" }}
+                  <ContentImage
+                    src={sidebarHighlight.image}
+                    alt={sidebarHighlight.title}
+                    className="absolute inset-0"
+                    imageClassName="transition-transform duration-500 group-hover:scale-105"
+                    sizes="400px"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-0 p-4">
@@ -121,9 +125,11 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
                   href={`/blog/${post.slug}`}
                   className="group flex items-start gap-3 py-3 hover:bg-white/3 transition-colors rounded-lg px-1"
                 >
-                  <div
-                    className="w-16 h-16 rounded-lg bg-cover bg-center shrink-0"
-                    style={{ backgroundImage: post.image ? `url('${post.image}')` : "linear-gradient(#222, #444)" }}
+                  <ContentImage
+                    src={post.image}
+                    alt={post.title}
+                    className="w-16 h-16 rounded-lg shrink-0"
+                    sizes="64px"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-[10px] font-black text-primary uppercase tracking-wider block mb-0.5">
@@ -153,7 +159,7 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setActive(cat)}
+                onClick={() => onCategoryChange(cat)}
                 className={`relative px-4 py-3 text-sm font-bold transition-all duration-200 whitespace-nowrap ${
                   active === cat
                     ? "text-white"
@@ -167,18 +173,18 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
               </button>
             ))}
             <span className="ml-auto text-[#8A8178] text-xs font-medium pb-3">
-              {filtered.length} article{filtered.length > 1 ? "s" : ""}
+              {posts.length} article{posts.length > 1 ? "s" : ""}
             </span>
           </div>
 
           {/* Grille 3 colonnes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {filtered.map((post) => (
+            {gridPosts.map((post) => (
               <BlogCardDesktop key={post.id} post={post} />
             ))}
           </div>
 
-          {filtered.length === 0 && (
+          {gridPosts.length === 0 && (
             <div className="flex flex-col items-center py-20 gap-3 text-center">
               <span className="material-symbols-outlined text-[#4A443E] text-5xl">article</span>
               <p className="text-[#8A8178] text-sm">Aucun article dans cette catégorie.</p>
@@ -228,7 +234,7 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
                 return (
                   <button
                     key={cat}
-                    onClick={() => setActive(cat)}
+                    onClick={() => onCategoryChange(cat)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
                       active === cat
                         ? "bg-primary/15 text-primary border border-primary/25"
@@ -254,9 +260,12 @@ export default function BlogDesktopLayout({ featured, posts, categories }: Props
               className="group block rounded-2xl overflow-hidden"
               style={{ border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              <div
-                className="w-full aspect-video bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                style={{ backgroundImage: posts[posts.length - 1].image ? `url('${posts[posts.length - 1].image}')` : "linear-gradient(#222, #444)" }}
+              <ContentImage
+                src={posts[posts.length - 1].image}
+                alt={posts[posts.length - 1].title}
+                className="w-full aspect-video"
+                imageClassName="transition-transform duration-500 group-hover:scale-105"
+                sizes="300px"
               />
               <div
                 className="p-4"
@@ -287,9 +296,12 @@ function BlogCardDesktop({ post }: { post: BlogCard }) {
     >
       {/* Image */}
       <div className="relative overflow-hidden aspect-video">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-          style={{ backgroundImage: post.image ? `url('${post.image}')` : "linear-gradient(#222, #444)" }}
+        <ContentImage
+          src={post.image}
+          alt={post.title}
+          className="absolute inset-0"
+          imageClassName="transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 1280px) 33vw, 360px"
         />
         <div className="absolute top-3 left-3">
           <span className="px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-[10px] font-black text-white uppercase tracking-wider">

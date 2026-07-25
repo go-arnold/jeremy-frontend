@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeDate, typeToHref, buildCalendarMonth } from "./mappers";
+import { formatRelativeDate, typeToHref, buildCalendarMonth, mapApiArticleToBlogPost } from "./mappers";
+import type { ApiArticleDetail } from "./api-types";
 
 describe("formatRelativeDate", () => {
   it("returns a fallback for null/undefined/invalid input", () => {
@@ -36,5 +37,27 @@ describe("buildCalendarMonth", () => {
     expect(month.days.find((d) => d.day === 15)?.hasEvent).toBe(true);
     // A release date outside the target month must not be flagged.
     expect(month.days.every((d) => d.day !== 1 || d.hasEvent === false)).toBe(true);
+  });
+});
+
+describe("mapApiArticleToBlogPost", () => {
+  it("maps HTML article bodies to a sanitized html block", () => {
+    const apiArticle: ApiArticleDetail = {
+      id: 1,
+      slug: "article-html",
+      title: "Article HTML",
+      content:
+        `<p style="color:black">Bonjour <strong>Kivu</strong></p>` +
+        `<script>alert(1)</script>` +
+        `<a href="javascript:alert(1)">lien</a>`,
+    };
+
+    const mapped = mapApiArticleToBlogPost(apiArticle);
+    expect(mapped.blocks[0]).toEqual({
+      type: "html",
+      content:
+        `<p>Bonjour <strong>Kivu</strong></p>` +
+        `<a href="#" rel="noopener noreferrer">lien</a>`,
+    });
   });
 });

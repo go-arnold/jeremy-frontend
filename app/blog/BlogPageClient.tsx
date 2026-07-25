@@ -1,34 +1,62 @@
 "use client";
 
 import React, { useState } from "react";
-import { blogCategories } from "@/data/blog";
+import { blogCards as mockedBlogCards } from "@/data/blog";
 import FeaturedArticle  from "@/components/blog/FeaturedArticle";
 import CategoryFilter   from "@/components/blog/CategoryFilter";
 import NewsletterBanner from "@/components/blog/NewsletterBanner";
 import BlogDesktopLayout from "@/components/blog/BlogDesktopLayout";
-import { apiFetch, PaginatedResponse } from "@/lib/api-client";
-import { mapApiBlogToBlogCard } from "@/lib/mappers";
+import { fetchArticles } from "@/lib/services/articles";
 import EmptyState from "@/components/ui/EmptyState";
 import VoirPlusPagination from "@/components/ui/VoirPlusPagination";
-import type { BlogCard } from "@/types/blog";
-import type { ApiArticleList } from "@/lib/api-types";
+import type { BlogCard, BlogCategory } from "@/types/blog";
 
 export default function BlogPageClient({
   initialPosts,
   initialHasMore,
+  initialCategories,
 }: {
   initialPosts: BlogCard[];
   initialHasMore: boolean;
+  initialCategories: BlogCategory[];
 }) {
+  const [activeCategory, setActiveCategory] = useState<BlogCategory>("Tous");
   const [posts, setPosts] = useState<BlogCard[]>(initialPosts);
+  const [categories] = useState<BlogCategory[]>(initialCategories);
   const [loadingMore, setLoadingLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialHasMore);
+
+  const loadCategory = async (category: BlogCategory) => {
+    setActiveCategory(category);
+    setLoadingLoadingMore(true);
+    try {
+      const data = await fetchArticles(1, 15, category === "Tous" ? undefined : category);
+      setPosts(data.results);
+      setHasMore(!!data.next);
+    } catch (error) {
+      console.error("Failed to filter articles by category:", error);
+      const fallbackPosts = mockedBlogCards as unknown as BlogCard[];
+      setPosts(
+        category === "Tous"
+          ? fallbackPosts
+          : fallbackPosts.filter((post) => post.category === category)
+      );
+      setHasMore(false);
+    } finally {
+      setLoadingLoadingMore(false);
+    }
+  };
 
   const loadMore = async (page: number) => {
     setLoadingLoadingMore(true);
     try {
-      const data = await apiFetch<PaginatedResponse<ApiArticleList>>(`/api/v1/articles/?page=${page}&page_size=15`);
-      const newPosts = data.results.map(mapApiBlogToBlogCard);
+      const data = await fetchArticles(
+        page,
+        15,
+        activeCategory === "Tous" ? undefined : activeCategory
+      );
+      const existingIds = new Set(posts.map((p) => p.id));
+      const newPosts = data.results.filter((post) => !existingIds.has(post.id));
       setPosts(prev => [...prev, ...newPosts]);
       setHasMore(!!data.next);
     } catch (error) {
@@ -60,8 +88,14 @@ export default function BlogPageClient({
           {/* MOBILE */}
           <main className="lg:hidden flex-1 pb-24 max-w-md mx-auto w-full px-4">
             {featured && <FeaturedArticle post={featured} />}
-            <CategoryFilter categories={blogCategories} posts={restOfPosts} />
+            <CategoryFilter
+              categories={categories}
+              active={activeCategory}
+              onCategoryChange={loadCategory}
+              posts={restOfPosts}
+            />
             <VoirPlusPagination
+              key={`mobile-${activeCategory}`}
               onLoadMore={loadMore}
               hasMore={hasMore}
               isLoading={loadingMore}
@@ -73,11 +107,14 @@ export default function BlogPageClient({
           <main className="hidden lg:block flex-1 pb-16">
             <BlogDesktopLayout
               featured={featured}
-              posts={restOfPosts}
-              categories={blogCategories}
+              posts={posts}
+              categories={categories}
+              active={activeCategory}
+              onCategoryChange={loadCategory}
             />
             <div className="max-w-7xl mx-auto px-8">
               <VoirPlusPagination
+                key={`desktop-${activeCategory}`}
                 onLoadMore={loadMore}
                 hasMore={hasMore}
                 isLoading={loadingMore}

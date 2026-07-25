@@ -16,6 +16,7 @@ export interface ApiArtistList {
   id: number;
   slug: string;
   name: string;
+  bio?: string;
   city?: string;
   photo_url?: string;
   is_featured?: boolean;
@@ -45,6 +46,7 @@ export interface ApiRelease {
   slug?: string;
   title?: string;
   cover_url?: string;
+  listen_count?: number;
   release_date?: string;
   format?: string;
   is_featured?: boolean;
