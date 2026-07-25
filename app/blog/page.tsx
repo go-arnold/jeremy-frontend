@@ -3,6 +3,9 @@ import { fetchArticleCategories, fetchArticles } from "@/lib/services/articles";
 import type { BlogCard, BlogCategory } from "@/types/blog";
 import BlogPageClient from "./BlogPageClient";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 function buildCategories(posts: BlogCard[], apiCategoryNames: string[] = []): BlogCategory[] {
   const merged = [...apiCategoryNames, ...posts.map((p) => p.category).filter(Boolean)];
   const unique = Array.from(new Set(merged));

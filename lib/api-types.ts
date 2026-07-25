@@ -277,9 +277,10 @@ export interface ApiCommunityPost {
   duration?: string;
   tags?: (string | { name?: string; label?: string })[];
   is_verified?: boolean;
-  // Not yet returned by the backend — proposed in
-  // docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2/§3.5 for challenge participations. Optional so
-  // existing talent/art/news posts (which never send these) keep working unchanged.
+  // Live on the backend (confirmed 2026-07-25, see BACKEND_GAPS.md) — real shape (object vs
+  // plain slug string) not yet confirmed since no real challenge_response post exists to
+  // inspect. Optional so existing talent/art/news posts (which never send these) keep working
+  // unchanged.
   challenge?: { id?: number | string; slug?: string; title?: string } | string | null;
   is_pinned_result?: boolean;
 }
@@ -405,9 +406,9 @@ export interface ApiChallenge {
   deadline: string;
   participant_count: number;
   is_active: boolean;
-  // Not yet returned by the backend — proposed in
-  // docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.3. Optional/undefined means "unknown", not "false" —
-  // treated as not-yet-participated until the backend actually sends this field.
+  // Live on the backend (confirmed 2026-07-25, see BACKEND_GAPS.md). Still optional —
+  // undefined/missing (e.g. anonymous requests) is treated as "not participated" rather than
+  // failing closed.
   has_participated?: boolean;
 }
 

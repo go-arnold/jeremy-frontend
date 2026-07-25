@@ -2,6 +2,9 @@ import { fetchEmissions, fetchLiveEmission } from "@/lib/services/emissions";
 import EmissionsPageClient from "./EmissionsPageClient";
 import type { EmissionCard, EmissionDetail } from "@/types/emissions";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 async function getInitialData() {
   let emissions: EmissionCard[] = [];
   let hasMore = false;

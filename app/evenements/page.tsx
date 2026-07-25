@@ -5,6 +5,9 @@ import { mapApiEventToEvent } from "@/lib/mappers";
 import { fetchFeaturedEvent } from "@/lib/services/events";
 import EmptyState from "@/components/ui/EmptyState";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 interface CityApiItem {
   name?: string;
 }
@@ -37,7 +40,7 @@ export default async function EvenementsPage() {
     cities = cityResults.map((c) => (typeof c === "string" ? c : c.name) || "").filter(Boolean);
   } catch (error) {
     console.error("Failed to fetch events initial data:", error);
-    events = mockedUpcoming as unknown as ReturnType<typeof mapApiEventToEvent>[];
+    events = mockedUpcoming;
     cities = mockedCities;
   }
 

@@ -137,7 +137,7 @@ export default function SubmitTalentCard({ onSubmitted }: { onSubmitted?: () => 
                 type="button"
                 onClick={handleSubmit}
                 disabled={uploading}
-                className="flex-1 h-11 sm:h-12 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-sm sm:text-base tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+                className="flex-1 h-11 sm:h-12 px-4 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold text-sm sm:text-base tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
               >
                 {uploading ? (
                   <CircularProgress percent={uploadProgress} size={28} strokeWidth={3} className="text-background-dark" />

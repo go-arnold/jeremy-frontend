@@ -523,10 +523,17 @@ export function mapApiPostToCommunityItem(apiPost: ApiCommunityPost | null | und
     title: apiPost.title || "",
     duration: apiPost.duration || "0:00",
     tags: Array.isArray(apiPost.tags) ? apiPost.tags.map((t) => typeof t === 'string' ? t : (t.name || t.label || "")) : [],
-    // Both fields are proposed additions (docs/COMMUNAUTE_BACKEND_REQUIREMENTS.md §3.2/§3.5) —
-    // undefined/false on every post until the backend actually sends them.
+    // Both fields are live on the backend now (confirmed 2026-07-25, see BACKEND_GAPS.md).
     isPinnedResult: !!apiPost.is_pinned_result,
-    challengeTitle: typeof apiPost.challenge === "object" && apiPost.challenge ? apiPost.challenge.title : undefined,
+    // `challenge` may come back as `{id, slug, title}` or as a plain slug string — the real
+    // shape hasn't been confirmed yet (no real challenge_response post existed to inspect at
+    // the time this was written). Handling both rather than assuming one.
+    challengeTitle:
+      typeof apiPost.challenge === "object" && apiPost.challenge
+        ? apiPost.challenge.title
+        : typeof apiPost.challenge === "string"
+        ? apiPost.challenge
+        : undefined,
   };
 
   return {

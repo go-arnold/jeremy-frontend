@@ -50,10 +50,10 @@ export default function FeaturedEventCard({ event }: { event: FeaturedEvent }) {
           {/* Badge date */}
           <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-2 flex flex-col items-center justify-center text-center min-w-[3.5rem]">
             <span className="text-xs font-bold text-primary uppercase">
-              {event.dateShort.month}
+              {event.dateShort?.month || "—"}
             </span>
             <span className="text-xl font-black text-white leading-none">
-              {event.dateShort.day}
+              {event.dateShort?.day || "—"}
             </span>
           </div>
 

@@ -145,7 +145,7 @@ export default function ChallengeResponseForm({ challengeSlug, challengeTitle, o
               type="button"
               onClick={handleSubmit}
               disabled={uploading}
-              className="flex-1 h-11 rounded-lg bg-accent-yellow hover:bg-yellow-400 text-black font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
+              className="flex-1 h-11 px-4 rounded-lg bg-accent-yellow hover:bg-yellow-400 text-black font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 disabled:opacity-90"
             >
               {uploading ? (
                 <CircularProgress percent={uploadProgress} size={26} strokeWidth={3} className="text-black" />

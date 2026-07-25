@@ -5,6 +5,9 @@ import type { ApiVideo } from "@/lib/api-types";
 
 type WebTVVideo = ReturnType<typeof mapApiVideoToWebTVVideo>;
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 export default async function WebTVPage() {
   let videos: WebTVVideo[] = [];
   let premiers: WebTVVideo[] = [];

@@ -364,8 +364,8 @@ function FeaturedEventDesktop({ event }: { event: FeaturedEvent }) {
 
           {/* Badge date */}
           <div className="absolute top-5 left-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 flex flex-col items-center min-w-[56px]">
-            <span className="text-xs font-black text-primary uppercase">{event.dateShort.month}</span>
-            <span className="text-2xl font-black text-white leading-none">{event.dateShort.day}</span>
+            <span className="text-xs font-black text-primary uppercase">{event.dateShort?.month || "—"}</span>
+            <span className="text-2xl font-black text-white leading-none">{event.dateShort?.day || "—"}</span>
           </div>
 
           {/* Contenu bas */}

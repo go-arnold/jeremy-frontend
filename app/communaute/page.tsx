@@ -5,6 +5,9 @@ import { fetchChallenges, fetchPolls } from "@/lib/services/community";
 import type { ApiChallenge, ApiPoll, ApiCommunityPost } from "@/lib/api-types";
 import CommunautePageClient from "./CommunautePageClient";
 
+// ISR — refetches at most every 60s instead of freezing at build time forever.
+export const revalidate = 60;
+
 type MappedPost = ReturnType<typeof mapApiPostToCommunityItem>;
 
 async function getInitialData() {
@@ -40,11 +43,23 @@ async function getInitialData() {
     polls = mockPolls;
   }
 
-  return { posts, hasMore, challenges, polls };
+  // Real total count for the "Talents" stat — a `page_size=1` fetch only reads `.count` from
+  // the response, never the actual post, so this stays cheap.
+  let talentCount = 0;
+  try {
+    const data = await apiFetch<PaginatedResponse<ApiCommunityPost>>(
+      `/api/v1/community/posts/?post_type=talent&page_size=1`
+    );
+    talentCount = data.count;
+  } catch {
+    talentCount = 0;
+  }
+
+  return { posts, hasMore, challenges, polls, talentCount };
 }
 
 export default async function CommunautePage() {
-  const { posts, hasMore, challenges, polls } = await getInitialData();
+  const { posts, hasMore, challenges, polls, talentCount } = await getInitialData();
 
   return (
     <CommunautePageClient
@@ -52,6 +67,7 @@ export default async function CommunautePage() {
       initialHasMore={hasMore}
       initialChallenges={challenges}
       initialPolls={polls}
+      initialTalentCount={talentCount}
     />
   );
 }
